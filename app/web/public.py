@@ -56,7 +56,9 @@ def login_page_post(credentials: UserLogin, request: Request):
         token = handle_token_creation(username=credentials.username, password=credentials.password)
         context["notification"] = 1
         context["notification_type"] = "success"
-        context["notification_content"] = token
+        context["notification_content"] = "Success! Redirecting."
+        context["bearer_token"] = token
+        context["redirect_to"] = request.url_for("dashboard") # This needs to be dependent on user.
     except IncorectCredentials as e:
         context["notification"] = 1
         context["notification_type"] = "danger"
@@ -72,12 +74,12 @@ def login_page_post(credentials: UserLogin, request: Request):
         context["notification_type"] = "danger"
         context["notification_content"] = "Error occured."
         status_code = 401
+        raise
 
     if credentials.username:
         context["username"] = credentials.username
         context["focus_input_name"] = "password"
         
-
     response = jinja.TemplateResponse(
             name="public/login.html",
             context=context,

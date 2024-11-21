@@ -10,7 +10,7 @@ async def non_htmx_request_exception_handler(request: Request, exc: Exception) -
             "request": request,
             "title":"Loading...",
             "description":"Loading the page. Please wait.",
-            "path": request.url,
+            "redirect_to": request.url,
             }
 
     return jinja.TemplateResponse(

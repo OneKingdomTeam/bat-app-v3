@@ -1,3 +1,4 @@
+from fastapi import HTTPException, Request
 from app.config import ACCESS_TOKEN_EXPIRE_MINUTES, \
         SECRET_KEY, ALGORITHM
 
@@ -5,6 +6,8 @@ from jose import ExpiredSignatureError, JWTError, jwt
 from passlib.context import CryptContext
 from datetime import datetime, timedelta, timezone
 
+from app.exception.database import RecordNotFound
+from app.exception.web import NonHTMXRequestException
 from app.exception.service import IncorectCredentials, InvalidBearerToken
 from app.model.user import User
 
@@ -91,4 +94,24 @@ def get_current_user(token: str) -> User | None:
         raise InvalidBearerToken("Invalid Bearer Token")
     if (user := get_user_by_id(id)):
         return user
+
+
+async def user_htmx_dep(request: Request) -> User | None:
+
+    is_htmx = request.headers.get("HX-Request") == "true"
+    token = request.headers.get("Authorization")
+
+    if not is_htmx:
+        raise NonHTMXRequestException(detail="Wait while we redirect your request.")
+
+    if token:
+        token_stripped = token.split("Bearer ")[1]
+        try:
+            current_user = get_current_user(token=token_stripped)
+            return current_user
+        except InvalidBearerToken as e:
+            raise HTTPException(status_code=401, detail=e.msg)
+        
+    raise HTTPException(status_code=401, detail="Failed to authorize your request. Maybe not logged in?")
+
 

@@ -1,8 +1,11 @@
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from app.exception.web import NonHTMXRequestException, non_htmx_request_exception_handler
-from app.web.public import router as public_router
 from pathlib import Path
+
+
+from app.web.public import router as public_router
+from app.web.dashboard.dashboard import router as dashboard_router
 
 
 # Main app to start
@@ -19,3 +22,4 @@ app.mount("/images", StaticFiles(directory=static_dir / "static" / "images"), na
 
 # Routers
 app.include_router(public_router)
+app.include_router(dashboard_router, prefix="/dashboard")
