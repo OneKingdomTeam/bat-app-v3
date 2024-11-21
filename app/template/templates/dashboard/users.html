@@ -1,0 +1,73 @@
+{% extends "dashboard/dashboard.html" %}
+
+{% block body %}
+<section class="bat-main-content is-flex pt-6">
+    <div class="container">
+        {% block body_content %}
+        <h2 class="title is-2 has-text-centered">Users</h2>
+        <div class="is-flex is-justify-content-center">
+            <table class="table is-fullwidth vertical-align">
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>E-mail</th>
+                        <th>Role</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="users-table">
+                    {% for user in users %}
+                        <tr
+                            class="is-clickable"
+                            hx-get="{{ url_for("dashboard_users_page") }}/{{ user.id }}"
+                            hx-target=".bat-body"
+                            hx-select=".bat-body"
+                            hx-swap="outerHTML"
+                            hx-push-url="true"
+                        >
+                            <td>
+                                {{ user.username }}{% if current_user.id == user.id %} (you) {% endif %}
+                            </td>
+                            <td>
+                                <a href="mailto:{{ user.email }}">{{ user.email }}</a>
+                            </td>
+                            <td>
+                                {{ user.role.value }}
+                            </td>
+                            <td class="is-flex is-flex-direction-row has-gap">
+                                <button
+                                    class="button is-warning is-light"
+                                    hx-get="{{ url_for("dashboard_users_page") }}/{{ user.id }}"
+                                    hx-target="body"
+                                    hx-swap="outerHTML"
+                                    hx-push-url="true"
+                                    >
+                                    Edit
+                                </button>
+                                {% if current_user.id != user.id %}
+                                <button
+                                    class="button is-danger is-light"
+                                    hx-delete="{{ url_for("dashboard_users_page") }}/{{ user.id }}"
+                                    hx-confirm="Delete user {{ user.username }}?"
+                                    hx-target=".message-{{ user.id }}"
+                                    hx-push-url="false"
+                                    hx-swap="innerHTML">
+                                    Delete
+                                </button>
+                                {% endif %}
+                                <div class="message-{{ user.id }}"></div>
+                            </td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="content pt-5 is-flex is-justify-content-flex-end">
+            <a href="{{ url_for("dashboard_user_add_page") }}" hx-boost="true">
+                <button class="button is-link">Add User</button>
+            </a>
+        </div>
+    {% endblock %}
+    </div>
+</section>
+{% endblock %}

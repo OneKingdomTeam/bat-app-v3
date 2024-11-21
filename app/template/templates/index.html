@@ -10,30 +10,45 @@
         <link href="{{ url_for("css", path="style.css") }}" rel="stylesheet">
         <script src="{{ url_for("js", path="htmx.min.js") }}"></script>
         <script src="{{ url_for("js", path="json-enc.js") }}"></script>
-
+        <script src="{{ url_for("js", path="htmx-process-errors.js") }}"></script>
         {% block header_scripts %}
         {% endblock %}
 
     </head>
     <body>
-        <div class="bat-menu">
-        {% block menu %}
-            {% include "menu.html" %}
-        {% endblock %}
+        <div class="bat-body">
+
+            <div class="bat-menu">
+                <section class="has-background-text-95">
+                    <div class="container">
+                        <nav class="navbar has-background-text-95" hx-boost="true">
+                            <div class="navbar-brand p-3">
+                                <a href="{{ url_for("homepage") }}">
+                                    <img class="navbar-logo" src="{{ url_for("images", path="bat-logo-300x66.png") }}" alt="OneKingdom Bat Tool Logo">
+                                </a>
+                            </div>
+                            {% block menu %}
+                            {% include "menu.html" %}
+                            {% endblock %}
+                        </nav>
+                    </div>
+                </section>
+            </div>
+
+            <div class="bat-content">
+                {% block body %}
+                {% endblock %}
+            </div>
+
+            <div class="bat-footer">
+                {% block footer %}
+                {% include "footer.html" %}
+                {% endblock %}
+            </div>
+
+            {% block footer_scripts %}
+            {% endblock %}
         </div>
 
-        <div class="bat-content">
-        {% block body %}
-        {% endblock %}
-        </div>
-
-        <div class="bat-footer">
-        {% block footer %}
-            {% include "footer.html" %}
-        {% endblock %}
-        </div>
-
-        {% block footer_scripts %}
-        {% endblock %}
     </body>
 </html>

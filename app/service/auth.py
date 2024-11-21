@@ -7,7 +7,7 @@ from passlib.context import CryptContext
 from datetime import datetime, timedelta, timezone
 
 from app.exception.database import RecordNotFound
-from app.exception.web import NonHTMXRequestException
+from app.exception.web import NonHTMXRequestException, RedirectToLoginException
 from app.exception.service import IncorectCredentials, InvalidBearerToken
 from app.model.user import User
 
@@ -110,8 +110,8 @@ async def user_htmx_dep(request: Request) -> User | None:
             current_user = get_current_user(token=token_stripped)
             return current_user
         except InvalidBearerToken as e:
-            raise HTTPException(status_code=401, detail=e.msg)
+            raise RedirectToLoginException(detail=e.msg)
         
-    raise HTTPException(status_code=401, detail="Failed to authorize your request. Maybe not logged in?")
+    raise RedirectToLoginException(detail="Unauthorized, probalby expired session or not loged in.")
 
 

@@ -1,10 +1,10 @@
 {% if redirect_to %}
     <div
         hx-get="{{ redirect_to }}"
-        hx-swap="outerHTML"
-        hx-target="body"
-        hx-select="body"
-        hx-trigger="load delay:1s"
+        hx-swap="outeHTML"
+        hx-target=".bat-body"
+        hx-select=".bat-body"
+        hx-trigger="load delay:0.5s"
         hx-push-url="true">
     </div>
 {% endif %}

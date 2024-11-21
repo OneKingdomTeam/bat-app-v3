@@ -1,0 +1,22 @@
+{% extends "index.html" %}
+
+{# HEADER PART #}
+{% block title %}{{ title }}{% endblock %}
+{% block description %}{{ description }}{% endblock %}
+
+{% block menu %}
+{% include "dashboard/menu.html" %}
+{% endblock %}
+
+{# CONTENT #}
+{% block body %}
+<section class="bat-main-content is-flex is-align-items-center">
+    <div class="container">
+        <div class="columns is-flex is-justify-content-center">
+            <div class="column is-one-third content">
+                Hello world
+            </div>       
+        </div>
+    </div>
+</section>
+{% endblock %}

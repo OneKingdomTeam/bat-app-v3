@@ -15,6 +15,8 @@ router = APIRouter()
 def homepage_get(request: Request):
     
     context = {
+            "title": "BAT App",
+            "description": "Benchmark Assessment Tool.",
             "request": request,
             }
 
@@ -28,11 +30,18 @@ def homepage_get(request: Request):
 
  
 @router.get("/login", response_class=HTMLResponse, name="login_page")
-def login_page_get(request: Request):
+def login_page_get(request: Request, expired_session: int = 0):
     
-    context = {
+    context: dict = {
             "request": request,
+            "title": "Login",
+            "description": "Login to your BAT account.",
             }
+
+    if expired_session == 1:
+        context["notification"] = 1
+        context["notification_type"] = "warning"
+        context["notification_content"] = "Not logged in, or session expired. Log in again."
 
     response = jinja.TemplateResponse(
             name="public/login.html",
@@ -46,6 +55,8 @@ def login_page_get(request: Request):
 def login_page_post(credentials: UserLogin, request: Request):
 
     context: dict = {
+            "title": "Login",
+            "description": "Login to your BAT account.",
             "request": request,
             "focus_input_name": "username",
             }

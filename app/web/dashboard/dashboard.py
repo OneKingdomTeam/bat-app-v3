@@ -13,6 +13,8 @@ router = APIRouter()
 def get_dashboard(request: Request, current_user: User = Depends(user_htmx_dep)):
     
     context = {
+            "title": "Dasboard",
+            "description": "Overview for navigating the tool.",
             "request": request,
             }
 
