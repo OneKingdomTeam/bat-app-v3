@@ -88,3 +88,8 @@ class User(BaseModel):
             return True
         else:
             return False
+
+    def can_manage_questions(self) -> bool:
+        if self.role == UserRoleEnum.admin or self.role == UserRoleEnum.coach:
+            return True
+        return False

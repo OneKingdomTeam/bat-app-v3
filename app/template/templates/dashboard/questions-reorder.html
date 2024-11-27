@@ -1,0 +1,102 @@
+{% extends "dashboard/questions.html" %}
+{% block body_content %}
+<h2 class="title is-2 has-text-centered pb-5">{{ title }}</h2>
+<div class="container is-max-tablet">
+    <div class="content">
+        <p>Drag'n Drop the categories in the new order. After saving the numbers will change.</p>
+    </div>
+    <div class="bat-questions-sortable is-flex is-justify-content-center is-flex-direction-column">
+        {% for questions_category in questions_categories %}
+        <div class="card p-3 is-clickable bat-hover-scale"
+            data-category_order="{{ questions_category.category_order }}"
+            data-new_category_order="{{ questions_category.category_order }}"
+            data-category_id="{{ questions_category.category_id }}"
+        >
+            <h5 class="title is-5 is-inline is-order-number">{{ questions_category.category_order + 1 }}. </h5>
+            <h5 class="title is-5 is-inline" >{{ questions_category.category_name }}</h5>
+        </div>
+        {% endfor %}
+    </div>
+    <div class="content is-flex is-justify-content-space-around is-flex-direction-row mt-6">
+        <div class="button is-warning is-light"
+            hx-get="{{ url_for("dashboard_questions_page") }}"
+            hx-select=".bat-body"
+            hx-target=".bat-body"
+            hx-push-url="true"
+            hx-swap="outerHTML">
+            Return
+        </div>
+    </div>
+</div>
+<script>
+    async function loadLibrary() {
+        return new Promise((resolve, reject) => {
+            const script = document.createElement('script');
+            script.src = '{{ url_for("js", path="sortable.min.js") }}';
+            script.onload = resolve;
+            script.onerror = reject;
+            document.body.appendChild(script);
+        });
+    }
+
+    async function saveChanges() {
+        let batQuestionsCatWrapper = document.querySelector(".bat-questions-sortable");
+        let elements = Array.from(batQuestionsCatWrapper.children);
+        let order_data = [];
+        let i = 0;
+        elements.forEach((e)=>{
+            // { "starting_question_id": "new_category_order" }
+            let category_id = parseInt(e.dataset.category_id);
+            let category_order = parseInt(e.dataset.new_category_order);
+            let newOrderItem = {
+                "category_id": category_id,
+                "category_order": category_order,
+            }
+            order_data.push(newOrderItem);
+            i++;
+        })
+
+        let headers = {"Content-Type":"application/json"}
+
+        let data = {
+                "reorder_data": order_data
+            };
+
+        let response = await fetch("{{ request.url }}", {
+            "method": "POST",
+            "headers": {
+                "Authorization": window.localStorage.getItem("access_token"),
+                "Content-Type": "application/json",
+                "HX-Request": "true"
+            },
+            "body": JSON.stringify(data),
+        });
+
+    }
+
+    (async () => {
+        try {
+            await loadLibrary();
+            startSortable();
+        } catch (error) {
+            console.error('Failed to load Sortable.');
+        }
+    })();
+
+    function startSortable(){
+        let sortableCategories = new Sortable( document.querySelector(".bat-questions-sortable"), {
+            animation: 150,
+            onEnd: (e)=>{
+                let siblings = Array.from(e.from.children)
+                let i = 0;
+                siblings.forEach((element)=>{
+                    element.querySelector(".is-order-number").innerHTML = `${i+1}. `;
+                    element.dataset.new_category_order = `${i}`;
+                    i++;
+                })
+            saveChanges()   
+            }
+        });
+    }
+</script>
+{% endblock %}

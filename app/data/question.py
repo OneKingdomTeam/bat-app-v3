@@ -1,6 +1,6 @@
 from sqlite3 import Cursor, IntegrityError
 from app.data.init import conn, curs
-from app.model.question import Question, QuestionCategory
+from app.model.question import Question, QuestionCategory, QuestionCategoryRename, QuestionCategoryReorderItem
 from app.model.user import User
 from app.exception.database import RecordNotFound, UsernameOrEmailNotUnique
 
@@ -75,7 +75,7 @@ def get_all() -> list[Question]:
 def get_all_categories() -> list[QuestionCategory]:
 
     qry = """select category_id, category_name,
-    category_order from questions_categories"""
+    category_order from questions_categories order by category_order asc"""
 
     cursor = conn.cursor()
     try:
@@ -87,6 +87,79 @@ def get_all_categories() -> list[QuestionCategory]:
             raise RecordNotFound(msg="No categories were found")
     finally:
         cursor.close()
+
+
+def get_all_questions_for_category(category_id: int) -> list[Question]:
+
+    qry = """select question_id, question, question_description, question_order,
+    option_yes, option_mid, option_no, category_id, category_name,
+    category_order from questions natural join questions_categories where
+    category_id = :category_id order by question_order asc"""
+
+    params = {"category_id":category_id}
+
+    cursor = conn.cursor()
+    try:
+        cursor.execute(qry, params)
+        rows = cursor.fetchall()
+        if rows:
+            return [row_to_model_question(row) for row in rows]
+        else:
+            raise RecordNotFound(msg="No questions were found")
+    finally:
+        cursor.close()
+
+def get_questions_category(category_id: int) -> QuestionCategory:
+
+    qry = """select category_id, category_name,
+    category_order from questions_categories where category_id = :category_id"""
+
+    params = {"category_id":category_id}
+    cursor = conn.cursor()
+    try:
+        cursor.execute(qry, params)
+        row = cursor.fetchone()
+        if row:
+            return row_to_model_question_category(row)
+        else:
+            raise RecordNotFound(msg="No category with provided id was found")
+    finally:
+        cursor.close()
+
+def rename_questions_category(category_rename: QuestionCategoryRename) -> QuestionCategory:
+
+    qry = """update questions_categories set category_name = :category_name
+    where category_id = :category_id"""
+
+    params = {
+            "category_id":category_rename.category_id,
+            "category_name":category_rename.category_name,
+            }
+
+    cursor = conn.cursor()
+    try:
+        cursor.execute(qry, params)
+        return get_questions_category(category_id=category_rename.category_id)
+    finally:
+        cursor.close()
+
+def reorder_questions_category(category_reorder_item: QuestionCategoryReorderItem) -> bool:
+
+    qry = """update questions_categories set category_order = :category_order
+    where category_id = :category_id"""
+
+    params = {
+            "category_id":category_reorder_item.category_id,
+            "category_order":category_reorder_item.category_order,
+            }
+
+    cursor = conn.cursor()
+    try:
+        cursor.execute(qry, params)
+        return True
+    finally:
+        cursor.close()
+
 
 
 # -------------------------------

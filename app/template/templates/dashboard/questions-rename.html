@@ -1,0 +1,18 @@
+{% extends "dashboard/questions-list.html" %}
+
+{% block question_category_rename %}
+<form
+    class="is-flex is-fullwidth has-gap"
+    hx-post="{{ request.url }}"
+    hx-select=".bat-main-content"
+    hx-target=".bat-main-content"
+    hx-swap="outerHTML"
+    hx-ext="json-enc">
+    <input class="input disabled is-hidden" type="number" name="category_id" value="{{ category_for_edit.category_id }}" readonly>
+    <input class="input category-rename-input" type="text" name="category_name" value="{{ category_for_edit.category_name }}">
+    <input type="submit" class="button is-link is-light" value="Save">
+</form>
+<script>
+    document.querySelector(".category-rename-input").focus()
+</script>
+{% endblock %}

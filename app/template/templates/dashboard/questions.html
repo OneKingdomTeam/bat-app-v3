@@ -1,3 +1,5 @@
+{# This is the root page of the questions link. Other sublinks are derived from this page #}
+
 {% extends "dashboard/dashboard.html" %}
 
 {% block body %}
@@ -8,7 +10,7 @@
         <div class="columns">
             <div class="column">
                 <div class="button is-link is-light mb-4"
-                    {# hx-get="{{ url_for("reorganize_questions_page") }}" #}
+                    hx-get="{{ url_for("dashboard_questions_reorder_category") }}"
                     hx-select=".bat-main-content"
                     hx-target=".bat-main-content"
                     hx-swap="outerHTML"
@@ -18,7 +20,7 @@
                 </div>
                 <div class="is-flex is-justify-content-center is-flex-direction-column">
                     {% for question_category in questions_categories %}
-                    <div class="card p-3 is-clickable bat-hover-scale"
+                    <div class="card p-3 is-clickable bat-hover-scale {% if question_category.category_id == current_category_id %}card-active{% endif %}"
                         hx-select=".bat-main-content"
                         hx-get="{{ url_for("dashboard_questions_page") }}/{{ question_category.category_id }}"
                         hx-push-url="true"

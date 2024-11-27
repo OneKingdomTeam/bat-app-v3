@@ -111,6 +111,8 @@ async def user_htmx_dep(request: Request) -> User | None:
             return current_user
         except InvalidBearerToken as e:
             raise RedirectToLoginException(detail=e.msg)
+        except RecordNotFound as e:
+            raise RedirectToLoginException(detail=e.msg)
         
     raise RedirectToLoginException(detail="Unauthorized, probalby expired session or not loged in.")
 
