@@ -17,32 +17,33 @@
         {% endblock %}
     </div>
     {% for question in questions_in_category %}
-    <div class="pb-5">
+    <div class="pb-3">
         <div class="is-flex is-flex-direction-row">
-            <h6 class="title is-6">{{ question.question_order }}.&nbsp;</h6>
+            <h6 class="title is-5">{{ question.question_order }}.&nbsp;</h6>
             <h6 class="title is-6">{{ question.question }}</h6>
         </div>
-
-        <p>
-        <b>Description:</b><br>
-        {{ question.question_description }}
-        </p>
-        <div class="container pl-4">
-            <ul>
-                <li><b>Agree: </b>{{ question.option_yes }}</li>
-                <li><b>Uncertain: </b>{{ question.option_mid }}</li>
-                <li><b>Disagree: </b>{{ question.option_no }}</li>
-            </ul>
-        </div>
-        <div class="container py-3">
-            <div class="button is-primary ml-6"
-                hx-get="{{ request.url }}/{{ question.question_id }}"
-                hx-select="#question-editor"
-                hx-target="#question-editor"
-                hx-push-url="true"
-                hx-swap="outerHTML">
-                Edit
+        <div class="pl-6">
+            <p>
+            <b>Description:</b><br>
+            {{ question.question_description }}
+            </p>
+            <div class="container pl-4">
+                <ul>
+                    <li><b>Agree: </b>{{ question.option_yes }}</li>
+                    <li><b>Uncertain: </b>{{ question.option_mid }}</li>
+                    <li><b>Disagree: </b>{{ question.option_no }}</li>
+                </ul>
             </div>
+        </div>
+    </div>
+    <div class="container mb-6 pl-3">
+        <div class="button is-primary px-6"
+            hx-get="{{ request.url }}/{{ question.question_id }}"
+            hx-select="#question-editor"
+            hx-target="#question-editor"
+            hx-push-url="true"
+            hx-swap="outerHTML">
+            Edit
         </div>
     </div>
     {% endfor %}
