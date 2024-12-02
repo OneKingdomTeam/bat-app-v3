@@ -1,10 +1,6 @@
-from sqlite3 import Cursor, IntegrityError
-
-from fastapi import params
 from app.data.init import conn, curs
 from app.model.question import Question, QuestionCategory, QuestionCategoryRename, QuestionCategoryReorderItem, QuestionEditContent
-from app.model.user import User
-from app.exception.database import RecordNotFound, UsernameOrEmailNotUnique
+from app.exception.database import RecordNotFound
 
 curs.execute("""create table if not exists questions_categories(
     category_id integer primary key,
@@ -22,6 +18,8 @@ curs.execute("""create table if not exists questions(
     option_mid text,
     option_no text
     )""")
+
+
 
 # -------------------------------
 #   CRUDs

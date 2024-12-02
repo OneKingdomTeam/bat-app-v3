@@ -60,6 +60,7 @@
             let heading = document.querySelector("#question-category-name")
             let headingPosition = heading.getBoundingClientRect().y
             let positionTop = headingPosition + window.scrollY
+            document.querySelector(".selected-input").focus()
        window.scrollTo(0, positionTop)
         }, 100)
     </script>
