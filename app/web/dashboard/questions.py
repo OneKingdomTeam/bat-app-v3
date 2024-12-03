@@ -31,7 +31,7 @@ def get_questions(request: Request, current_user: User = Depends(user_htmx_dep))
     return response
 
 
-@router.get("/reorganize", response_class=HTMLResponse, name="dashboard_questions_reorder_category")
+@router.get("/reorganize", response_class=HTMLResponse, name="dashboard_questions_reorder_category_page")
 def get_questions_reorder_category(request: Request, current_user: User = Depends(user_htmx_dep)):
 
     try:
@@ -55,7 +55,7 @@ def get_questions_reorder_category(request: Request, current_user: User = Depend
 
     return response
 
-@router.post("/reorganize", response_class=HTMLResponse, name="dashboard_questions_reorder_category")
+@router.post("/reorganize", response_class=HTMLResponse)
 def post_questions_reorder_category(category_new_order: QuestionCategoryReorder, request: Request, current_user: User = Depends(user_htmx_dep)):
 
     try:
@@ -65,7 +65,7 @@ def post_questions_reorder_category(category_new_order: QuestionCategoryReorder,
     return ""
 
 
-@router.get("/{category_id}/rename", response_class=HTMLResponse, name="dashboard_question_category_rename")
+@router.get("/{category_id}/rename", response_class=HTMLResponse, name="dashboard_question_category_rename_page")
 def get_question_category_rename(category_id: int, request: Request, current_user: User = Depends(user_htmx_dep)):
 
     questions_categories: list[QuestionCategory] = service.get_all_categories(current_user=current_user)
@@ -92,7 +92,7 @@ def get_question_category_rename(category_id: int, request: Request, current_use
     return response
 
 
-@router.post("/{category_id}/rename", response_class=HTMLResponse, name="dashboard_question_category_rename")
+@router.post("/{category_id}/rename", response_class=HTMLResponse)
 def post_question_category_rename(category_id: int, category_rename: QuestionCategoryRename, request: Request, response: Response,  current_user: User = Depends(user_htmx_dep)):
 
     try: 

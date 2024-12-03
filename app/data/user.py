@@ -64,7 +64,7 @@ def get_by(field: str, value: str|int ) -> User:
 
 
 def create(user: User) -> User:
-    qry = """insert into user(user_id, username, email, hash, role) 
+    qry = """insert into users(user_id, username, email, hash, role) 
             values( :user_id, :username, :email, :hash, :role)"""
     try:
         params = model_to_dict(user)

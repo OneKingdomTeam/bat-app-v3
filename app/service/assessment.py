@@ -25,6 +25,14 @@ def get_assessment(assessment_id: str, current_user: User) -> Assessment:
     return assessment
 
 
+def get_all(current_user: User) -> list[Assessment]:
+
+    if not current_user.can_manage_assessments():
+        raise Unauthorized(msg="You cannot view all assessments.")
+
+    return data.get_all()
+
+
 def save_answer():
 
     return
@@ -33,3 +41,4 @@ def save_answer():
 def get_question():
 
     return
+

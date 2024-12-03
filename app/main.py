@@ -8,6 +8,7 @@ from app.web.public import router as public_router
 from app.web.dashboard.dashboard import router as dashboard_router
 from app.web.dashboard.users import router as dashboard_users_router
 from app.web.dashboard.questions import router as dashboard_questions_router
+from app.web.dashboard.assessments import router as dashboard_assessments_router
 
 
 # Main app to start
@@ -27,3 +28,4 @@ app.include_router(public_router)
 app.include_router(dashboard_router, prefix="/dashboard")
 app.include_router(dashboard_users_router, prefix="/dashboard/users")
 app.include_router(dashboard_questions_router, prefix="/dashboard/questions")
+app.include_router(dashboard_assessments_router, prefix="/dashboard/assessments")

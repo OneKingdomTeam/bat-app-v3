@@ -1,0 +1,21 @@
+{% extends "dashboard/dashboard.html" %}
+
+{% block body %}
+<section class="bat-main-content is-flex pt-6">
+    <div class="container">
+        {% block body_content %}
+        <h2 class="title is-2 has-text-centered">Users</h2>
+        {% include "helpers/notification.html" %}
+        <div class="is-flex is-justify-content-center">
+            <pre>
+            </pre>
+        </div>
+        <div class="content pt-5 is-flex is-justify-content-flex-end">
+            <a href="{{ url_for("dashboard_assessment_create_page") }}" hx-boost="true">
+                <button class="button is-link">Create New</button>
+            </a>
+        </div>
+    {% endblock %}
+    </div>
+</section>
+{% endblock %}
