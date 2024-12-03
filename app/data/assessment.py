@@ -1,7 +1,8 @@
 from app.data.init import conn, curs
 import app.data.question as question_data
-from app.model.assesment import AssessmentNew
-from app.model.question import QuestionCategory
+from app.exception.database import RecordNotFound
+from app.model.assesment import Assessment, AssessmentNew
+from app.model.question import Question, QuestionCategory
 
 
 curs.execute("""create table if not exists assessments(
@@ -45,6 +46,24 @@ curs.execute("""create table if not exists assessments_answers(
 #   CRUDs
 # -------------------------------
 
+def assessment_row_to_model(row: tuple) -> Assessment:
+
+    assessment_id, assessment_name, owner_id, \
+            owner_name, last_editor, last_editor_name = row
+
+    return Assessment(
+            assessment_id=assessment_id,
+            assessment_name=assessment_name,
+            owner_id=owner_id,
+            owner_name=owner_name,
+            last_editor=last_editor,
+            last_editor_name=last_editor_name
+            )
+
+# -------------------------------
+#   CRUDs
+# -------------------------------
+
 
 def create_assessment(assessment_new: AssessmentNew) -> Assessment:
 
@@ -55,7 +74,7 @@ def create_assessment(assessment_new: AssessmentNew) -> Assessment:
     params = {
             "assessment_id": assessment_new.assessment_id,
             "assessment_name": assessment_new.assessment_name,
-            "owner_id": assessment_new.onwer_id
+            "owner_id": assessment_new.owner_id
             }
 
     cursor = conn.cursor()
@@ -66,9 +85,10 @@ def create_assessment(assessment_new: AssessmentNew) -> Assessment:
         cursor.close()
 
 
-def freeze_questions_categories(assessment_id: str) -> bool:
+def freeze_questions_categories(assessment_id: str) -> dict:
 
     questions_cateogies: list[QuestionCategory] = question_data.get_all_categories()
+    category_id_map: dict = {}
 
     for category in questions_cateogies:
         
@@ -82,18 +102,83 @@ def freeze_questions_categories(assessment_id: str) -> bool:
                 "category_order": category.category_order
                 }
 
+
         cursor = conn.cursor()
         try:
             cursor.execute(qry, params)
+            category_id_map[category.category_name] = cursor.lastrowid
+            conn.commit()
         finally:
             cursor.close()
     
+    return category_id_map
+
+
+def freeze_questions(assessment_id: str, category_id_map: dict) -> bool:
+
+    questions: list[Question] = question_data.get_all()
+
+    for question in questions:
+        qry = """insert into
+        assessments_questions(assessment_id, category_id, question, question_description,
+                              question_order, option_yes, option_mid, option_no)
+        values(:assessment_id, :category_id, :question, :question_description,
+               :question_order, :option_yes, :option_mid, :option_no)
+        """
+
+        category_id = category_id_map[question.category_name]
+
+        params = {
+                "assessment_id": assessment_id,
+                "category_id": category_id,
+                "question": question.question,
+                "question_description,": question.question_description,
+                "question_order": question.question_order,
+                "option_yes": question.option_yes,
+                "option_mid": question.option_mid,
+                "option_no": question.option_no
+                }
+
+        cursor = conn.cursor()
+        try:
+            cursor.execute(qry, params)
+            conn.commit()
+        finally:
+            cursor.close()
+
     return True
 
 
-def freeze_questions(assessment_id: str) -> bool:
+def get_one(assessment_id: str) -> Assessment:
+    
+    qry = """
+    SELECT
+        a.assessment_id,
+        a.assessment_name,
+        a.owner_id,
+        u1.username as owner_name,
+        a.last_editor,
+        u2.username as last_editor_name,   
+        a.last_edit
+    FROM
+        assessments a
+    LEFT JOIN
+        users u1 ON a.owner_id = u1.user_id
+    LEFT JOIN
+        users u2 ON a.last_editor = u2.user_id
+    WHERE 
+        a.assessment_id = :assessment_id
+    """
 
+    params = {"assessment_id": assessment_id }
 
-    return True
-
-
+    cursor = conn.cursor()
+    try:
+        cursor.execute(qry, params)
+        row = cursor.fetchone()
+        if row:
+            return assessment_row_to_model(row)
+        else:
+            raise RecordNotFound(msg="Requested assessment was not found.")
+    finally:
+        cursor.close()

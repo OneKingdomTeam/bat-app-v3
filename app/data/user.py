@@ -4,7 +4,7 @@ from app.model.user import User
 from app.exception.database import RecordNotFound, UsernameOrEmailNotUnique
 
 
-curs.execute("""create table if not exists user(
+curs.execute("""create table if not exists users(
     user_id text PRIMARY KEY,
     username text unique,
     email text unique,
@@ -34,7 +34,7 @@ def model_to_dict(user: User) -> dict:
 
 
 def get_one(user_id: str | None) -> User:
-    qry = "select * from user where user_id = :user_id"
+    qry = "select * from users where user_id = :user_id"
     params = {"user_id": user_id}
     curs.execute(qry, params)
     row = curs.fetchone()
@@ -45,13 +45,13 @@ def get_one(user_id: str | None) -> User:
 
 
 def get_all() -> list[User]:
-    qry = "select * from user"
+    qry = "select * from users"
     curs.execute(qry)
     return [row_to_model(row) for row in curs.fetchall()]
 
 
 def get_by(field: str, value: str|int ) -> User:
-    qry = f"select * from user where {field} = :value"
+    qry = f"select * from users where {field} = :value"
     params = {
             "value": value,
         }
@@ -106,7 +106,7 @@ def modify(user_id: str, user_updated: User) -> User:
 
 def delete(user_id: str) -> User:
     deleted_user = get_one(user_id)
-    qry = "delete from user where user_id = :user_id"
+    qry = "delete from users where user_id = :user_id"
     params = {
             "user_id": user_id
         }

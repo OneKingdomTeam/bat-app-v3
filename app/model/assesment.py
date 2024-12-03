@@ -2,6 +2,11 @@ from pydantic import BaseModel
 
 class Assessment(BaseModel):
     assessment_id: str
+    assessment_name: str
+    owner_id: str | None
+    owner_name: str | None
+    last_editor: str | None
+    last_editor_name: str | None
 
 
 class AssessmentNew(BaseModel):
