@@ -7,6 +7,7 @@ class Assessment(BaseModel):
     owner_name: str | None
     last_editor: str | None
     last_editor_name: str | None
+    last_edit: str | None
 
 
 class AssessmentPost(BaseModel):

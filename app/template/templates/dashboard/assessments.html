@@ -10,9 +10,9 @@
         <div class="is-flex is-justify-content-center">
         {% if assessments %}
         {% for assessment in assessments %}
-        <div class="card">
-            <h1 class="title is-1">{{ assessment.assessment_name }}</h1>
-            <h3 class="title is-3" data-owner_id="{{ assessment.owner_id }}">{{ assessment.owner_name }}</h3>
+        <div class="card p-4">
+            <h3 class="title is-3">{{ assessment.assessment_name }}</h3>
+            <p data-owner_id="{{ assessment.owner_id }}"><b>Owner:</b> {{ assessment.owner_name }}</p>
         </div> 
         {% endfor %}
         {% else %}

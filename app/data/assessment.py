@@ -50,7 +50,8 @@ curs.execute("""create table if not exists assessments_answers(
 def assessment_row_to_model(row: tuple) -> Assessment:
 
     assessment_id, assessment_name, owner_id, \
-            owner_name, last_editor, last_editor_name = row
+            owner_name, last_editor, \
+            last_editor_name, last_edit = row
 
     return Assessment(
             assessment_id=assessment_id,
@@ -58,7 +59,8 @@ def assessment_row_to_model(row: tuple) -> Assessment:
             owner_id=owner_id,
             owner_name=owner_name,
             last_editor=last_editor,
-            last_editor_name=last_editor_name
+            last_editor_name=last_editor_name,
+            last_edit=last_edit
             )
 
 # -------------------------------
@@ -83,7 +85,9 @@ def create_assessment(assessment_new: AssessmentNew) -> Assessment:
     try:
         cursor.execute(qry, params)
         conn.commit()
-        return get_one(assessment_id=params["assessment_id"])
+        category_id_map: dict = freeze_questions_categories(assessment_new.assessment_id)
+        freeze_questions(assessment_id=assessment_new.assessment_id, category_id_map=category_id_map)
+        return get_one(assessment_id=assessment_new.assessment_id)
     finally:
         cursor.close()
 
@@ -135,7 +139,7 @@ def freeze_questions(assessment_id: str, category_id_map: dict) -> bool:
                 "assessment_id": assessment_id,
                 "category_id": category_id,
                 "question": question.question,
-                "question_description,": question.question_description,
+                "question_description": question.question_description,
                 "question_order": question.question_order,
                 "option_yes": question.option_yes,
                 "option_mid": question.option_mid,
