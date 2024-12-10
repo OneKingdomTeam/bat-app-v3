@@ -1,4 +1,5 @@
 from uuid import uuid4
+from app.exception.database import RecordNotFound
 from app.model.assesment import Assessment, AssessmentNew, AssessmentPost, AssessmentQA
 from app.model.user import User
 from app.exception.service import Unauthorized
@@ -60,7 +61,7 @@ def get_all_qa(assessment_id: str, current_user: User) -> list[AssessmentQA]:
     return data.get_assessment_qa(assessment_id=assessment_id)
 
 
-def render_wheel(assessment_qa: list[AssessmentQA]) -> str:
+def prepare_wheel_context(assessment_qa: list[AssessmentQA]) -> dict:
 
     context: dict = {
             "assessment_id":assessment_qa[0].assessment_id
@@ -70,6 +71,11 @@ def render_wheel(assessment_qa: list[AssessmentQA]) -> str:
         category_name_key = f"category_name_{qa.category_order:02}"
         if category_name_key not in context:
             context[category_name_key] = qa.category_name
+
+        category_order_key = f"category_{qa.category_order:02}_order"
+        if category_order_key not in context:
+            context[category_order_key] = f"{qa.category_order}"
+
         field_color: str = "#000000"
         match qa.answer_option:
             case "yes":
@@ -83,17 +89,18 @@ def render_wheel(assessment_qa: list[AssessmentQA]) -> str:
         question_key = f"category_{qa.category_order:02}_question_{qa.question_order}"
         context[question_key] = field_color
 
-    template = jinja.get_template("wheel/wheel.svg")
-    rendered_string = template.render(**context)
+    return context
 
-    print("\n\n\n")
-    print(context)
-    print("\n\n\n")
-    print(rendered_string)
-    print("\n\n\n")
 
-    return rendered_string
+def get_current_assessment_question(assessment_qa: list[AssessmentQA], category_order: int, question_order: int) -> AssessmentQA:
 
+    for qa in assessment_qa:
+        print(f"Current Question Category order: {qa.category_order}")
+        print(f"Current Question Question order: {qa.question_order}")
+        if qa.category_order == category_order and qa.question_order == question_order:
+            return qa
+
+    raise RecordNotFound(msg=f"Unable to find Assessment Q&A with cateogory order: {category_order} and question_order: {question_order}")
 
 def save_answer():
 

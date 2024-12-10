@@ -1,0 +1,36 @@
+{% extends "dashboard/assessments-edit.html" %}
+
+{% block assessment_question_panel %}
+    <form class="main-form" hx-post="{{ url_for("dashboard_user_add_page") }}" hx-ext="json-enc" hx-target="body">
+        <pre>
+        {{ current_question.category_name }}
+        {{ current_question.question }}
+        {{ current_question.option_yes }}
+        {{ current_question.option_mid }}
+        {{ current_question.option_no }}
+        </pre>
+        <div class="field">
+            <label class="label">E-mail</label>
+            <div class="control">
+                <input name="email" class="input selected-input" type="email" placeholder="john@doe.com">
+            </div>
+        </div>
+        <div class="field">
+            <label class="label">Username</label>
+            <div class="control">
+                <input name="username" class="input" type="text" placeholder="JohnDoe">
+            </div>
+        </div>
+        <div class="field">
+            <label class="label">Password</label>
+            <div class="control">
+                <input name="password" class="input" type="password" placeholder="******">
+            </div>
+        </div>
+        <div class="is-fullwidth pt-4 is-flex is-justify-content-space-around is-flex-direction-row-reverse">
+            <div class="control">
+                <input type="submit" value="Create User" class="button is-link">
+            </div>
+        </div>
+    </form>
+{% endblock %}

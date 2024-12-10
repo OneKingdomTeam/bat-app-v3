@@ -2,11 +2,49 @@
 
 {% extends "dashboard/dashboard.html" %}
 {% block body %}
-<div class="container is-max-tablet">
-    <h2 class="title is-2 has-text-centered">{{ title }}</h2>
-    {% include "helpers/notification.html" %}
-    {{ wheel | safe }}
-</div>
+<section class="bat-main-content is-flex pt-6">
+    <div class="container">
+        {% block body_content %}
+        <h2 class="title is-2 has-text-centered">{{ title }}</h2>
+        <div class="columns">
+            <div class="column assessment-wheel-panel">
+                {% include "wheel/wheel.svg" %}
+            </div>
+            <div id="assessment-question-panel" class="column">
+                {% block assessment_question_panel %}
+                <div class="block  pt-6 px-6">
+                    <div class="block content has-text-left">
+                        <p>
+                        Thank you for taking your time to share with us little more details about your M2M effort!
+                        </p>
+                        <p>
+                        By answering these questions we hope to have better idea about how we can be more helpful for you.
+                        </p>
+                        <p>
+                        Asnwers are automatically saved every dozen of seconds. The wheel on the left also changes colors based 
+                        on your answers, so you can easily see what parts you already filled in.
+                        </p>
+                        <p>
+                        You can start by hitting the button below, or just select the part of the wheel (topic) you want to work on.
+                        </p>
+                    </div>
+                    <div class="block pt-5 has-text-centered">
+                        <button class="button is-info pl-6 pr-6 mt-4 thet-start-assessment"
+                            hx-get="{{ url_for("dashboard_assessments_page") }}/edit/{{ wheel.assessment_id }}/{{ wheel.category_00_order }}/1"
+                            hx-push-url="true"
+                            hx-target=".bat-main-content"
+                            hx-select=".bat-main-content"
+                            hx-swap="outerHTML"
+                            >Let’s do it!</button>
+                    </div>
+                </div> 
+                {% endblock %}
+            </div>
+
+        </div>
+        {% endblock %}
+    </div>
+</section>
 {% endblock %}
 
 {% block footer_scripts %}

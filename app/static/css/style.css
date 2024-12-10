@@ -47,3 +47,7 @@ input.disabled {
     transform: translateX(1rem);
     text-decoration: underline;
 }
+
+.bat-interactive-circle {
+    cursor: pointer;
+}
