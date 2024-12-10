@@ -1,5 +1,5 @@
 from uuid import uuid4
-from app.model.assesment import Assessment, AssessmentNew, AssessmentPost
+from app.model.assesment import Assessment, AssessmentNew, AssessmentPost, AssessmentQA
 from app.model.user import User
 from app.exception.service import Unauthorized
 import app.data.assessment as data
@@ -40,12 +40,23 @@ def delete_assessment(assessment_id: str, current_user: User) -> Assessment:
 
     return assessment
 
+
 def get_all(current_user: User) -> list[Assessment]:
 
     if not current_user.can_manage_assessments():
         raise Unauthorized(msg="You cannot view all assessments.")
 
     return data.get_all()
+
+
+def get_all_qa(assessment_id: str, current_user: User) -> list[AssessmentQA]:
+
+    assessment = data.get_one(assessment_id=assessment_id)
+
+    if not current_user.can_manage_assessments() or current_user.user_id != assessment.owner_id:
+        raise Unauthorized(msg="You cannot access this assessment data.")
+
+    return data.get_assessment_qa(assessment_id=assessment_id)
 
 
 def save_answer():

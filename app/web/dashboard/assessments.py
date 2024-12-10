@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
 
-from app.model.assesment import AssessmentPost
+from app.model.assesment import AssessmentPost, AssessmentQA
 from app.template.init import jinja
 from app.model.user import User
 from app.service.auth import user_htmx_dep
@@ -97,7 +97,27 @@ def post_assessment_create(assessment_new: AssessmentPost, request: Request, cur
 @router.get("/edit/{assessment_id}", response_class=HTMLResponse, name="dashboard_assessment_edit_page")
 def get_assessment_edit(assessment_id: str, request:Request, current_user: User = Depends(user_htmx_dep)):
 
-    return ""
+    context = {
+            "request": request,
+            "title":"Assessment Details",
+            "description":"Assessment detail",
+            "current_user": current_user,
+            }
+
+    try:
+        assessment_qa: list[AssessmentQA] = service.get_all_qa(assessment_id=assessment_id, current_user=current_user)
+        context["assessment_qa"] = assessment_qa
+    except:
+        # NotImplemented
+        raise
+
+
+    response = jinja.TemplateResponse(
+            name="dashboard/assessments-edit.html",
+            context=context
+            )
+
+    return response
 
 
 @router.get("/{assessment_id}", response_class=HTMLResponse, name="dashboard_assessment_page")

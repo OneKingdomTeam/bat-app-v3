@@ -5,41 +5,9 @@
 <div class="container is-max-tablet">
     <h2 class="title is-2 has-text-centered">{{ title }}</h2>
     {% include "helpers/notification.html" %}
-    <form class="main-form"
-        hx-post="{{ request.url }}"
-        hx-ext="json-enc"
-        hx-target="body">
-        <div class="field">
-            <label class="label">Assessment Name</label>
-            <div class="control">
-                <input name="assessment_name" class="input selected-input" type="text">
-            </div>
-        </div>
-        <div class="field">
-            <label class="label">Owner</label>
-            <div class="select is-fullwidth">
-                <select name="owner_id">
-                    {% for user in users %}
-                    <option value="{{ user.user_id }}" {% if user.user_id == assessment.owner_id %}selected{% endif %}>{{ user.username }}</option>
-                    {% endfor %}
-                </select>
-            </div>
-        </div>
-        <div class="field is-hidden">
-            <label class="label">ID</label>
-            <div class="control">
-                <input name="assessment_id" class="input disabled" type="text" value="{{ assessment.assessment_id }}" readonly>
-            </div>
-        </div>
-        <div class="is-fullwidth pt-4 is-flex is-justify-content-space-around is-flex-direction-row-reverse">
-            <div class="control">
-                <input type="submit" value="Create Assessment" class="button is-link">
-            </div>
-            <div class="control">
-                <a class="button is-warning" href="{{ url_for("dashboard_assessments_page") }}" hx-boost="true">Return</a>
-            </div>
-        </div>
-    </form>
+    <pre>
+    
+    </pre>
 </div>
 {% endblock %}
 {% block footer_scripts %}

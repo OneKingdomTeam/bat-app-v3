@@ -2,7 +2,7 @@ from uuid import uuid4
 from app.data.init import conn, curs
 import app.data.question as question_data
 from app.exception.database import RecordNotFound
-from app.model.assesment import Assessment, AssessmentNew, AssessmentQuestion
+from app.model.assesment import Assessment, AssessmentNew, AssessmentQA
 from app.model.question import Question, QuestionCategory
 
 
@@ -65,13 +65,14 @@ def assessment_row_to_model(row: tuple) -> Assessment:
             )
 
 
-def assessment_question_row_to_model(row: tuple) -> AssessmentQuestion:
+def assessment_question_row_to_model(row: tuple) -> AssessmentQA:
 
     question_id, assessment_id, assessment_name, owner_id, \
             last_edit, last_editor, category_id, \
-            category_name, category_order = row
+            category_name, category_order, \
+            answer_option, answer_description = row
 
-    return AssessmentQuestion(
+    return AssessmentQA(
             question_id=question_id,
             assessment_id=assessment_id,
             assessment_name=assessment_name,
@@ -80,7 +81,9 @@ def assessment_question_row_to_model(row: tuple) -> AssessmentQuestion:
             last_editor=last_editor,
             category_id=category_id,
             category_name=category_name,
-            category_order=category_order
+            category_order=category_order,
+            answer_option=answer_option,
+            answer_description=answer_description
             )
 
 # -------------------------------
@@ -179,7 +182,7 @@ def freeze_questions(assessment_id: str, category_id_map: dict) -> bool:
 
 def prepare_answers(assessment_id: str) -> bool:
 
-    questions: list[AssessmentQuestion] = get_assessment_questions(assessment_id=assessment_id)
+    questions: list[AssessmentQA] = get_assessment_qa(assessment_id=assessment_id)
 
     qry = """insert into assessments_answers(answer_id, assessment_id, question_id)
     values(:answer_id, :assessment_id, :question_id)"""
@@ -298,12 +301,31 @@ def delete_assessment(assessment_id: str) -> Assessment:
     finally:
         cursor.close()
 
-def get_assessment_questions(assessment_id: str) -> list[AssessmentQuestion]:
+def get_assessment_qa(assessment_id: str) -> list[AssessmentQA]:
 
-    qry = """select question_id, assessment_id, assessment_name, owner_id, last_edit,
-    last_editor, category_id, category_name, category_order from 
-    assessments_questions natural join assessments natural join assessments_questions_categories
-    where assessment_id = :assessment_id"""
+    qry = """select
+        q.question_id,
+        q.assessment_id,
+        a.assessment_name,
+        a.owner_id,
+        a.last_edit,
+        a.last_editor,
+        qc.category_id,
+        qc.category_name,
+        qc.category_order,
+        aw.answer_option,
+        aw.answer_description
+    from 
+        assessments_questions as q
+    natural join
+        assessments as a
+    natural join
+        assessments_questions_categories as qc
+    left join 
+        assessments_answers as aw
+        on q.assessment_id = aw.assessment_id
+    where
+        q.assessment_id = :assessment_id"""
 
     params = {"assessment_id":assessment_id}
 
@@ -318,9 +340,3 @@ def get_assessment_questions(assessment_id: str) -> list[AssessmentQuestion]:
     finally:
         cursor.close()
             
-
-    
-
-
-
-
