@@ -67,13 +67,33 @@ def assessment_row_to_model(row: tuple) -> Assessment:
 
 def assessment_question_row_to_model(row: tuple) -> AssessmentQA:
 
-    question_id, assessment_id, assessment_name, owner_id, \
-            last_edit, last_editor, category_id, \
-            category_name, category_order, \
-            answer_option, answer_description = row
+    question_id, \
+    question, \
+    question_description, \
+    question_order, \
+    option_yes, \
+    option_mid, \
+    option_no, \
+    assessment_id, \
+    assessment_name, \
+    owner_id, \
+    last_edit, \
+    last_editor, \
+    category_id, \
+    category_name, \
+    category_order, \
+    answer_id, \
+    answer_option, \
+    answer_description = row
 
     return AssessmentQA(
             question_id=question_id,
+            question=question,
+            question_description=question_description,
+            question_order=question_order,
+            option_yes=option_yes,
+            option_mid=option_mid,
+            option_no=option_no,
             assessment_id=assessment_id,
             assessment_name=assessment_name,
             owner_id=owner_id,
@@ -82,6 +102,7 @@ def assessment_question_row_to_model(row: tuple) -> AssessmentQA:
             category_id=category_id,
             category_name=category_name,
             category_order=category_order,
+            answer_id=answer_id,
             answer_option=answer_option,
             answer_description=answer_description
             )
@@ -305,6 +326,12 @@ def get_assessment_qa(assessment_id: str) -> list[AssessmentQA]:
 
     qry = """select
         q.question_id,
+        q.question,
+        q.question_description,
+        q.question_order,
+        q.option_yes,
+        q.option_mid,
+        q.option_no,
         q.assessment_id,
         a.assessment_name,
         a.owner_id,
@@ -313,17 +340,21 @@ def get_assessment_qa(assessment_id: str) -> list[AssessmentQA]:
         qc.category_id,
         qc.category_name,
         qc.category_order,
+        aw.answer_id,
         aw.answer_option,
         aw.answer_description
     from 
         assessments_questions as q
-    natural join
+    left join 
         assessments as a
-    natural join
+        on q.assessment_id = a.assessment_id
+    left join
         assessments_questions_categories as qc
+        on q.category_id = qc.category_id
     left join 
         assessments_answers as aw
-        on q.assessment_id = aw.assessment_id
+        on q.question_id = aw.question_id
+        and q.assessment_id = aw.assessment_id
     where
         q.assessment_id = :assessment_id"""
 

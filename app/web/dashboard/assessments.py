@@ -111,6 +111,18 @@ def get_assessment_edit(assessment_id: str, request:Request, current_user: User 
         # NotImplemented
         raise
 
+    for qa in assessment_qa:
+        print()
+        print(f"Category Order: {qa.category_order}")
+        print(f"Category Name: {qa.category_name}")
+        print(f"Quesion Order: {qa.question_id}")
+        print(f"Quesion: {qa.question}")
+        print()
+
+    print("\n\n\n")
+    lenght = len(assessment_qa)
+    print(f"len: {lenght}")
+
 
     response = jinja.TemplateResponse(
             name="dashboard/assessments-edit.html",

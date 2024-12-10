@@ -24,6 +24,12 @@ class AssessmentNew(BaseModel):
 
 class AssessmentQA(BaseModel):
     question_id: int
+    question: str
+    question_description: str
+    question_order: int
+    option_yes: str
+    option_mid: str
+    option_no: str
     assessment_id: str
     assessment_name: str
     owner_id: str
@@ -32,6 +38,7 @@ class AssessmentQA(BaseModel):
     category_id: int
     category_name: str
     category_order: int
+    answer_id: str | None
     answer_option: str | None
     answer_description: str | None
 
