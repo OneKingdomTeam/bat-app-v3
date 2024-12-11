@@ -2,7 +2,7 @@ from uuid import uuid4
 from app.data.init import conn, curs
 import app.data.question as question_data
 from app.exception.database import RecordNotFound
-from app.model.assesment import Assessment, AssessmentNew, AssessmentQA
+from app.model.assesment import Assessment, AssessmentAnswerPost, AssessmentNew, AssessmentQA
 from app.model.question import Question, QuestionCategory
 
 
@@ -374,3 +374,26 @@ def get_assessment_qa(assessment_id: str) -> list[AssessmentQA]:
     finally:
         cursor.close()
             
+
+def save_answer(answer_data: AssessmentAnswerPost):
+
+    qry = """
+    update assessments_answers set 
+        answer_option = :answer_option,
+        answer_description = :answer_description
+    where
+        answer_id = :answer_id
+    """
+    
+    params = {
+            "answer_option":answer_data.answer_option,
+            "answer_description":answer_data.answer_description,
+            "answer_id":answer_data.answer_id
+            }
+
+    cursor = conn.cursor()
+    try:
+        cursor.execute(qry, params)
+        conn.commit()
+    finally:
+        cursor.close()

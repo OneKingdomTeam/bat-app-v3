@@ -1,6 +1,6 @@
 from uuid import uuid4
 from app.exception.database import RecordNotFound
-from app.model.assesment import Assessment, AssessmentNew, AssessmentPost, AssessmentQA
+from app.model.assesment import Assessment, AssessmentAnswerPost, AssessmentNew, AssessmentPost, AssessmentQA
 from app.model.user import User
 from app.exception.service import Unauthorized
 from app.template.init import jinja
@@ -103,8 +103,8 @@ def get_assessment_qa(assessment_qa: list[AssessmentQA], category_order: int, qu
 def get_neighbouring_questions(assessment_qa: list[AssessmentQA], category_order: int, question_order: int):
 
     orders: list = []
-    for i in range(0, 12):
-        for y in range(1, 4):
+    for i in range(0, 13):
+        for y in range(1, 5):
             orders.append((i,y))
 
     previous_question = None
@@ -124,15 +124,12 @@ def get_neighbouring_questions(assessment_qa: list[AssessmentQA], category_order
     return (previous_question, next_question)
 
     
+def save_answer(answer_data: AssessmentAnswerPost, current_user: User):
 
+    targeted_assessment = get_assessment(assessment_id=answer_data.assessment_id, current_user=current_user)
     
-
-
-
-
-def save_answer():
-
-    return
+    if current_user.can_manage_assessments() or current_user.user_id == targeted_assessment.owner_id:
+        data.save_answer(answer_data=answer_data)
 
 
 def get_question():

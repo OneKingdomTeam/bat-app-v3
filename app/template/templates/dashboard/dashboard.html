@@ -13,7 +13,14 @@
 <section class="bat-main-content is-flex is-align-items-center">
     <div class="container">
         <div class="columns is-flex is-justify-content-center">
-            <div class="column is-one-third content">
+            <div class="column is-one-third content"
+                hx-get="{{ url_for("dashboard_assessments_page") }}"
+                hx-trigger="load"
+                hx-select=".bat-body"
+                hx-target=".bat-body"
+                hx-swap="outerHTML"
+                hx-push-url="true"
+                >
                 Hello world
             </div>       
         </div>

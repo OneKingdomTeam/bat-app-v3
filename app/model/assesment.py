@@ -16,6 +16,14 @@ class AssessmentPost(BaseModel):
     owner_id: str
 
 
+class AssessmentAnswerPost(BaseModel):
+    answer_id: str
+    assessment_id: str
+    question_order: int
+    answer_option: str
+    answer_description: str
+
+
 class AssessmentNew(BaseModel):
     assessment_id: str
     assessment_name: str

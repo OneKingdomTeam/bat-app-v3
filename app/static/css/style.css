@@ -51,3 +51,19 @@ input.disabled {
 .bat-interactive-circle {
     cursor: pointer;
 }
+
+.breadcrumb .is-active {
+    font-weight: bold;
+}
+
+.bat-interactive-circle .category:hover{
+	filter: drop-shadow(0px 0px 5px purple);
+}
+
+.bat-interactive-circle .category.active{
+	filter: drop-shadow(0px 0px 5px orange);
+}
+
+.bat-interactive-circle {
+    overflow: visible;
+}
