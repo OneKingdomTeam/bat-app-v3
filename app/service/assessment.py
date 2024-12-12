@@ -27,7 +27,7 @@ def get_assessment(assessment_id: str, current_user: User) -> Assessment:
 
     assessment = data.get_one(assessment_id=assessment_id)
     
-    if not current_user.can_manage_assessments() or assessment.owner_id != current_user.user_id:
+    if not current_user.can_manage_assessments() and assessment.owner_id != current_user.user_id:
         raise Unauthorized(msg="You cannot access this assessment.")
 
     return assessment
@@ -51,11 +51,22 @@ def get_all(current_user: User) -> list[Assessment]:
     return data.get_all()
 
 
+def get_all_for_user(current_user: User) -> list[Assessment]:
+
+    return data.get_all_for_user(user_id=current_user.user_id) # pyright: ignore
+
+    
+
 def get_all_qa(assessment_id: str, current_user: User) -> list[AssessmentQA]:
 
     assessment = data.get_one(assessment_id=assessment_id)
 
-    if not current_user.can_manage_assessments() or current_user.user_id != assessment.owner_id:
+    print()
+    print(f"current_id: {current_user.user_id}")
+    print(f"assessment_owner_id: {assessment.owner_id}")
+    print()
+
+    if not current_user.can_manage_assessments() and current_user.user_id != assessment.owner_id:
         raise Unauthorized(msg="You cannot access this assessment data.")
 
     return data.get_assessment_qa(assessment_id=assessment_id)

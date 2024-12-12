@@ -82,7 +82,7 @@ def create(user: User) -> User:
 
 def modify(user_id: str, user_updated: User) -> User:
 
-    qry = """update user set
+    qry = """update users set
         username=:username,
         email=:email,
         hash=:hash,

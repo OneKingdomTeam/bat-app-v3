@@ -262,6 +262,42 @@ def get_one(assessment_id: str) -> Assessment:
         cursor.close()
 
 
+def get_all_for_user(user_id: str) -> list[Assessment]:
+
+    qry = """
+    SELECT
+        a.assessment_id,
+        a.assessment_name,
+        a.owner_id,
+        u1.username as owner_name,
+        a.last_editor,
+        u2.username as last_editor_name,
+        a.last_edit
+    FROM
+        assessments a
+    LEFT JOIN
+        users u1 ON a.owner_id = u1.user_id
+    LEFT JOIN
+        users u2 ON a.last_editor = u2.user_id
+    WHERE
+        owner_id = :user_id
+    """
+
+    cursor = conn.cursor()
+    try:
+        cursor.execute(qry, {"user_id":user_id})
+        rows = cursor.fetchall()
+        if rows:
+            return [assessment_row_to_model(row) for row in rows]
+        else:
+            return []
+    finally:
+        cursor.close()
+    qry = """
+    seelct
+    """
+
+
 def get_all() -> list[Assessment]:
 
     qry = """

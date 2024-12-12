@@ -4,7 +4,7 @@ from app.exception.database import RecordNotFound
 from app.exception.service import IncorectCredentials
 from app.model.user import UserLogin
 from app.template.init import jinja
-from app.service.auth import handle_token_creation
+from app.service.auth import handle_token_creation, auth_user
 
 
 router = APIRouter()
@@ -26,7 +26,6 @@ def homepage_get(request: Request):
             )
 
     return response
-
 
  
 @router.get("/login", response_class=HTMLResponse, name="login_page")
@@ -69,7 +68,13 @@ def login_page_post(credentials: UserLogin, request: Request):
         context["notification_type"] = "success"
         context["notification_content"] = "Success! Redirecting."
         context["bearer_token"] = token
-        context["redirect_to"] = request.url_for("dashboard") # This needs to be dependent on user.
+
+        current_user = auth_user(username=credentials.username, password=credentials.password)
+        user_role = current_user.role.value
+        if user_role == "user":
+            context["redirect_to"] = request.url_for("app_assessments_page")
+        if user_role == "coach" or user_role == "admin":
+            context["redirect_to"] = request.url_for("dashboard_assessments_page")
     except IncorectCredentials as e:
         context["notification"] = 1
         context["notification_type"] = "danger"

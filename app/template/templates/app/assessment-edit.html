@@ -1,6 +1,6 @@
 {# This is the root page of the questions link. Other sublinks are derived from this page #}
 
-{% extends "dashboard/dashboard.html" %}
+{% extends "app/app.html" %}
 {% block body %}
 <section class="bat-main-content is-flex pt-6">
     <div class="container">
@@ -30,7 +30,7 @@
                     </div>
                     <div class="block pt-5 has-text-centered">
                         <button class="button is-info pl-6 pr-6 mt-4 thet-start-assessment"
-                            hx-get="{{ url_for("dashboard_assessments_page") }}/edit/{{ wheel.assessment_id }}/{{ wheel.category_00_order }}/1"
+                            hx-get="{{ url_for("app_assessments_page") }}/edit/{{ wheel.assessment_id }}/{{ wheel.category_00_order }}/1"
                             hx-push-url="true"
                             hx-target=".bat-main-content"
                             hx-select=".bat-main-content"
@@ -45,7 +45,4 @@
         {% endblock %}
     </div>
 </section>
-{% endblock %}
-
-{% block footer_scripts %}
 {% endblock %}
