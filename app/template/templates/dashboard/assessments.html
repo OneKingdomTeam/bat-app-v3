@@ -26,11 +26,16 @@
                                 >
                                 Edit
                             </button>
-                            <a href="{{ url_for("dashboard_assessments_page") }}/{{ assessment.assessment_id }}"
-                                class="button is-link is-light"
-                                hx-boost="true">
+                            <button
+                                class="button is-warning is-light"
+                                hx-get="{{ url_for("dashboard_assessments_page") }}/view/{{ assessment.assessment_id }}/0"
+                                hx-select=".bat-main-content"
+                                hx-target=".bat-main-content"
+                                hx-swap="outerHTML"
+                                hx-push-url="true"
+                                >
                                 View
-                            </a>
+                            </button>
                             <button
                                 class="button is-danger is-light"
                                 hx-delete="{{ url_for("dashboard_assessments_page") }}/{{ assessment.assessment_id }}"

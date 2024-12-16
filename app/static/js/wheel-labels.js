@@ -28,8 +28,8 @@ function handleMouseOverBody(show, element) {
             // Update the position of the label as the mouse moves
             const mouseMoveHandler = (moveEvent) => {
                 if (labelDiv) { // Ensure labelDiv exists
-                    labelDiv.style.left = `${moveEvent.pageX + 10}px`;
-                    labelDiv.style.top = `${moveEvent.pageY + 10}px`;
+                    labelDiv.style.left = `${moveEvent.pageX + 20}px`;
+                    labelDiv.style.top = `${moveEvent.pageY + 20}px`;
                 }
             };
 

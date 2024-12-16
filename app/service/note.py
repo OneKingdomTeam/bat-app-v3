@@ -5,7 +5,7 @@ from app.model.user import User
 import app.data.note as data
 
 
-def get_note(assessment_id: str, category_order: int, current_user: User) -> Note
+def get_note(assessment_id: str, category_order: int, current_user: User) -> Note:
 
     if not current_user.can_manage_notes():
         raise Unauthorized(msg="You cannot manage notes.")

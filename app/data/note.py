@@ -10,7 +10,7 @@ from app.model.report import Report
 
 
 conn.execute("""
-             create table if not exists notes(
+             create table if not exists assessments_notes(
                  note_id integer primary key,
                  assessment_id text references assessments( assessment_id ),
                  category_order int,
@@ -48,7 +48,7 @@ def create_notes(assessment_id: str, category_order: int) -> bool:
 
     qry = """
     insert into
-        notes(assessment_id, category_order)
+        assessments_notes(assessment_id, category_order)
         values(:assessment_id, :category_order)
     """
 
@@ -72,7 +72,7 @@ def get_note(assessment_id: str, category_order: int) -> Note:
         category_order,
         note_content
     form
-        notes
+        assessments_notes
     where
         assessment_id = :assessment_id and
         category_order = :category_order
@@ -103,7 +103,7 @@ def get_note_by_id(note_id: int) -> Note:
         category_order,
         note_content
     form
-        notes
+        assessments_notes
     where
         note_id = :note_id
     """

@@ -223,6 +223,29 @@ def prepare_answers(assessment_id: str) -> bool:
         cursor.close()
 
 
+def prepare_notes(assessment_id: str, category_order: int) -> bool:
+
+    questions: list[AssessmentQA] = get_assessment_qa(assessment_id=assessment_id)
+
+    qry = """insert into (answer_id, assessment_id, question_id)
+    values(:answer_id, :assessment_id, :question_id)"""
+
+    cursor = conn.cursor()
+    try:
+        for question in questions:
+            params = {
+                    "answer_id": str(uuid4()),
+                    "assessment_id": assessment_id,
+                    "question_id": question.question_id
+                    }
+            cursor.execute(qry, params);
+        conn.commit()
+        return True
+    finally:
+        cursor.close()
+
+
+
 # -------------------------------
 #   CRUDs
 # -------------------------------

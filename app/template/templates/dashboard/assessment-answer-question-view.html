@@ -1,0 +1,110 @@
+{% extends "dashboard/assessment-edit.html" %}
+
+{% block assessment_question_panel %}
+<div class="content pt-4">
+    <h4 class="title is-4 has-text-centered">{{ current_question.category_name }}</h4>
+    <nav class="breadcrumb" aria-label="breadcrumbs">
+        <ul>
+            <li class="is-hidden"></li>
+            {% for i in range(1,5) %}
+            <li
+                hx-get="{{ url_for("dashboard_assessments_page") }}/edit/{{ current_question.assessment_id }}/{{ current_question.category_order }}/{{ i }}"
+                hx-select=".bat-main-content"
+                hx-target=".bat-main-content"
+                hx-swap="outerHTML"
+                hx-push-url="true"
+                {% if current_question.question_order == i %}
+                class="is-active"
+                {% endif %}
+                ><a>Question {{ i }}</a></li>
+            {% endfor %}
+        </ul>
+    </nav>
+    <form class="main-form"
+        hx-post="{{ request.url }}"
+        hx-ext="json-enc"
+        hx-trigger="change"
+        hx-select=".bat-main-content"
+        hx-target=".bat-main-content"
+        hx-swap="outerHTML"
+        >
+        <div id="answer-value-wrapper" class="control">
+            <label class="label">{{ current_question.question }}</label>
+            <div class="pb-2">
+                <label class="radio p-2 is-fullwidth">
+                    <input type="radio" name="answer_option" value="yes" {% if current_question.answer_option == "yes" %}checked{% endif %}/>
+                    {{ current_question.option_yes }}   
+                </label>
+            </div>
+            <div class="pb-2">
+                <label class="radio p-2 is-fullwidth">
+                    <input type="radio" name="answer_option" value="mid" {% if current_question.answer_option == "mid" %}checked{% endif %}/>
+                    {{ current_question.option_mid }}   
+                </label>
+            </div>
+            <div class="pb-2">
+                <label class="radio p-2 is-fullwidth">
+                    <input type="radio" name="answer_option" value="no" {% if current_question.answer_option == "no" %}checked{% endif %}/>
+                    {{ current_question.option_no }}   
+                </label>
+            </div>
+            <div class="pb-2 is-hidden">
+                <label class="radio p-2 is-fullwidth">
+                    <input id="clear-answer-option" type="radio" name="answer_option" value=""/>
+                    Clear
+                </label>
+            </div>
+            <div id="clear-answer-button" class="button is-link is-light mt-3" onclick="document.querySelector('#clear-answer-option').click()">
+                Clear answer
+            </div>
+        </div>
+        <div class="p-3"></div>
+        <p>{{ current_question.question_description }}</p>
+        <textarea
+            class="textarea"
+            name="answer_description"
+            placeholder="Place to expend your answer or share comment with us..."
+        >{% if current_question.answer_description %}{{ current_question.answer_description }}{% endif %}</textarea>
+
+        <div class="field is-hidden">
+            <div class="control">
+                <input name="answer_id" class="input disabled" type="text" value="{{ current_question.answer_id }}" readonly>
+            </div>
+        </div>
+        <div class="field is-hidden">
+            <div class="control">
+                <input name="assessment_id" class="input disabled" type="text" value="{{ current_question.assessment_id }}" readonly>
+            </div>
+        </div>
+        <div class="field is-hidden">
+            <div class="control">
+                <input name="question_order" class="input disabled" type="text" value="{{ current_question.question_order }}" readonly>
+            </div>
+        </div>
+
+        <div class="is-flex is-justify-content-space-around py-4">
+            {% if previous_question %}
+            <div class="button is-link is-light"
+                hx-get="{{ url_for("dashboard_assessments_page") }}/edit/{{ previous_question.assessment_id }}/{{ previous_question.category_order }}/{{ previous_question.question_order }}"
+                hx-select=".bat-main-content"
+                hx-target=".bat-main-content"
+                hx-push-url="true"
+                hx-swap="outerHTML">
+            Previous
+            </div>
+            {% endif %}
+            {% if next_question %}
+            <div class="button is-link is-light"
+                hx-get="{{ url_for("dashboard_assessments_page") }}/edit/{{ next_question.assessment_id }}/{{ next_question.category_order }}/{{ next_question.question_order }}"
+                hx-select=".bat-main-content"
+                hx-target=".bat-main-content"
+                hx-push-url="true"
+                hx-swap="outerHTML">
+            Next
+            </div>
+            {% endif %}
+        </div>
+    </form>
+</div>
+{% endblock %}
+
