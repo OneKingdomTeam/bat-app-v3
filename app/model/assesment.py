@@ -56,3 +56,10 @@ class AssessmentQuestionCategory(BaseModel):
     assessment_id: str
     category_name: str
     category_order: int
+
+
+class AssessmentNote(BaseModel):
+    note_id: int | None
+    assessment_id: str
+    category_order: int
+    note_content: str | None

@@ -34,14 +34,20 @@ def model_to_dict(user: User) -> dict:
 
 
 def get_one(user_id: str | None) -> User:
+
     qry = "select * from users where user_id = :user_id"
     params = {"user_id": user_id}
-    curs.execute(qry, params)
-    row = curs.fetchone()
-    if row:
-        return row_to_model(row)
-    else:
-        raise RecordNotFound(msg="User was not found")
+
+    cursor = conn.cursor()
+    try:
+        cursor.execute(qry, params)
+        row = cursor.fetchone()
+        if row:
+            return row_to_model(row)
+        else:
+            raise RecordNotFound(msg="User was not found")
+    finally:
+        cursor.close()
 
 
 def get_all() -> list[User]:

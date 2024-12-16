@@ -1,13 +1,15 @@
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
 
-from app.model.assesment import AssessmentAnswerPost, AssessmentPost, AssessmentQA
+from app.data.note import get_note
+from app.model.assesment import AssessmentAnswerPost, AssessmentNote, AssessmentPost, AssessmentQA
 from app.template.init import jinja
 from app.model.user import User
 from app.service.auth import user_htmx_dep
 
 import app.service.user as user_service
 import app.service.assessment as service
+import app.service.note as note_service
 from app.web import prepare_notification
 
 
@@ -154,14 +156,54 @@ def get_answer_question_page(assessment_id: str, category_order: int, question_o
     return response
 
 
-@router.get("/view/{assessment_id}/{category_order}", response_class=HTMLResponse, name="dashboard_assessment_answer_question_page")
-def get_answer_question_page(assessment_id: str, category_order: int,  request:Request, current_user: User = Depends(user_htmx_dep)):
+@router.get("/view/{assessment_id}/{category_order}", response_class=HTMLResponse, name="dashboard_assessment_answer_question_view_page")
+def get_answer_question_view_page(assessment_id: str, category_order: int,  request:Request, current_user: User = Depends(user_htmx_dep)):
 
     context = {
             "request": request,
             "title":"View Assessment",
             "description":"View assessment",
             "current_user": current_user,
+            "current_category_order": category_order,
+            }
+
+    # For handling the assessment name etc. in the current_question
+    question_order = 1
+
+    try:
+        assessment_qa: list[AssessmentQA] = service.get_all_qa(assessment_id=assessment_id, current_user=current_user)
+        assessment_note: AssessmentNote = note_service.get_note(assessment_id=assessment_id, category_order=category_order, current_user=current_user)
+        current_question: AssessmentQA = service.get_assessment_qa(assessment_qa=assessment_qa, category_order=category_order, question_order=question_order)
+        previous_question, next_question = service.get_neighbouring_questions(assessment_qa=assessment_qa, category_order=category_order, question_order=question_order)
+
+        context["assessment_qa"] = assessment_qa
+        context["assessment_note"] = assessment_note
+        context["title"] = f"{assessment_qa[0].assessment_name}"
+        context["current_question"] = current_question
+        context["wheel"] = service.prepare_wheel_context(assessment_qa=assessment_qa)
+        context["previous_question"] = previous_question
+        context["next_question"] = next_question
+    except:
+        # NotImplemented
+        raise
+
+    response = jinja.TemplateResponse(
+            name="dashboard/assessment-answer-question-view.html",
+            context=context
+            )
+
+    return response
+
+
+@router.put("/view/{assessment_id}/{category_order}", response_class=HTMLResponse)
+def put_answer_question_view_page(assessment_id: str, category_order: int,  request:Request, current_user: User = Depends(user_htmx_dep)):
+
+    context = {
+            "request": request,
+            "title":"View Assessment",
+            "description":"View assessment",
+            "current_user": current_user,
+            "current_category_order": category_order,
             }
 
     # For handling the assessment name etc. in the current_question

@@ -1,7 +1,7 @@
 from app.data.init import conn
 from app.exception.database import RecordNotFound
-from app.model.note import Note
-from app.model.report import Report
+from app.model.assesment import AssessmentNote
+
 
 
 # -------------------------------
@@ -23,14 +23,14 @@ conn.execute("""
 #   Central Functions
 # -------------------------------
 
-def row_to_note_model(row: tuple) -> Note:
+def row_to_note_model(row: tuple) -> AssessmentNote:
 
     note_id, \
     assessment_id, \
     category_order, \
     note_content = row
 
-    return Note(
+    return AssessmentNote(
             note_id=note_id,
             assessment_id=assessment_id,
             category_order=category_order,
@@ -63,7 +63,7 @@ def create_notes(assessment_id: str, category_order: int) -> bool:
 
 
 
-def get_note(assessment_id: str, category_order: int) -> Note:
+def get_note(assessment_id: str, category_order: int) -> AssessmentNote:
     
     qry = """
     select
@@ -71,7 +71,7 @@ def get_note(assessment_id: str, category_order: int) -> Note:
         assessment_id,
         category_order,
         note_content
-    form
+    from
         assessments_notes
     where
         assessment_id = :assessment_id and
@@ -88,13 +88,16 @@ def get_note(assessment_id: str, category_order: int) -> Note:
     try:
         cursor.execute(qry, params)
         row = cursor.fetchone()
-        return row_to_note_model(row)
+        if row:
+            return row_to_note_model(row)
+        else:
+            raise RecordNotFound(msg="No note found.")
     finally:
-        conn.close()
+        cursor.close()
         
 
 
-def get_note_by_id(note_id: int) -> Note:
+def get_note_by_id(note_id: int) -> AssessmentNote:
     
     qry = """
     select
@@ -117,11 +120,14 @@ def get_note_by_id(note_id: int) -> Note:
     try:
         cursor.execute(qry, params)
         row = cursor.fetchone()
-        return row_to_note_model(row)
+        if row:
+            return row_to_note_model(row)
+        else:
+            raise RecordNotFound(msg="No note found.")
     finally:
-        conn.close()
+        cursor.close()
 
-def update_note(note_id: int, note_content: str) -> Note:
+def update_note(note_id: int, note_content: str) -> AssessmentNote:
 
     qry = """
     update

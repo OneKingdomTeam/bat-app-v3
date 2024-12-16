@@ -132,6 +132,7 @@ def create_assessment(assessment_new: AssessmentNew) -> Assessment:
         category_id_map: dict = freeze_questions_categories(assessment_new.assessment_id)
         freeze_questions(assessment_id=assessment_new.assessment_id, category_id_map=category_id_map)
         prepare_answers(assessment_id=assessment_new.assessment_id)
+        prepare_notes(assessment_id=assessment_new.assessment_id)
         return get_one(assessment_id=assessment_new.assessment_id)
     finally:
         cursor.close()
@@ -223,22 +224,15 @@ def prepare_answers(assessment_id: str) -> bool:
         cursor.close()
 
 
-def prepare_notes(assessment_id: str, category_order: int) -> bool:
+def prepare_notes(assessment_id: str) -> bool:
 
-    questions: list[AssessmentQA] = get_assessment_qa(assessment_id=assessment_id)
-
-    qry = """insert into (answer_id, assessment_id, question_id)
-    values(:answer_id, :assessment_id, :question_id)"""
+    qry = """insert into assessments_notes(assessment_id, category_order)
+    values(:assessment_id, :category_order)"""
 
     cursor = conn.cursor()
     try:
-        for question in questions:
-            params = {
-                    "answer_id": str(uuid4()),
-                    "assessment_id": assessment_id,
-                    "question_id": question.question_id
-                    }
-            cursor.execute(qry, params);
+        for i in range(0, 13):
+            cursor.execute(qry, {"assessment_id":assessment_id, "category_order":i})
         conn.commit()
         return True
     finally:
@@ -359,6 +353,9 @@ def delete_assessment(assessment_id: str) -> Assessment:
     qry_qa = """delete from assessments_answers where assessment_id = :assessment_id"""
     params_qa = {"assessment_id": assessment_id}
 
+    qry_an = """delete from assessments_notes where assessment_id = :assessment_id"""
+    params_an = {"assessment_id": assessment_id}
+
     qry_q = """delete from assessments_questions where assessment_id = :assessment_id"""
     params_q = {"assessment_id": assessment_id}
 
@@ -372,6 +369,7 @@ def delete_assessment(assessment_id: str) -> Assessment:
     cursor = conn.cursor()
     try:
         cursor.execute(qry_qa, params_qa)
+        cursor.execute(qry_an, params_an)
         cursor.execute(qry_q, params_q)
         cursor.execute(qry_qc, params_qc)
         cursor.execute(qry_qc, params_qc)
