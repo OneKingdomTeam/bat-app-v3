@@ -5,6 +5,16 @@
     <div class="content">
         <p>Drag'n Drop the categories in the new order. After saving the numbers will change.</p>
     </div>
+    <div class="content">
+        <div class="button is-warning is-light"
+            hx-get="{{ url_for("dashboard_questions_page") }}"
+            hx-select=".bat-body"
+            hx-target=".bat-body"
+            hx-push-url="true"
+            hx-swap="outerHTML">
+            Return
+        </div>
+    </div>
     <div class="bat-questions-sortable is-flex is-justify-content-center is-flex-direction-column">
         {% for questions_category in questions_categories %}
         <div class="card p-3 is-clickable bat-hover-scale"
@@ -17,7 +27,7 @@
         </div>
         {% endfor %}
     </div>
-    <div class="content is-flex is-justify-content-space-around is-flex-direction-row mt-6">
+    <div class="content pt-5">
         <div class="button is-warning is-light"
             hx-get="{{ url_for("dashboard_questions_page") }}"
             hx-select=".bat-body"
