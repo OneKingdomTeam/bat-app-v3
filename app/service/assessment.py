@@ -98,6 +98,7 @@ def prepare_wheel_context(assessment_qa: list[AssessmentQA]) -> dict:
     return context
 
 
+def filter_assessment_qa_by_category_order_and_question_id(assessment_qa: list[AssessmentQA], category_order: int, question_order: int) -> AssessmentQA:
 def get_assessment_qa(assessment_qa: list[AssessmentQA], category_order: int, question_order: int) -> AssessmentQA:
 
     for qa in assessment_qa:
@@ -105,6 +106,15 @@ def get_assessment_qa(assessment_qa: list[AssessmentQA], category_order: int, qu
             return qa
 
     raise RecordNotFound(msg=f"Unable to find Assessment Q&A with cateogory order: {category_order} and question_order: {question_order}")
+
+def filter_assessment_qa_by_category(assessment_qa: list[AssessmentQA], category_order: int) -> AssessmentQA:
+
+    for qa in assessment_qa:
+        if qa.category_order == category_order and qa.question_order == question_order:
+            return qa
+
+    raise RecordNotFound(msg=f"Unable to find Assessment Q&A with cateogory order: {category_order} and question_order: {question_order}")
+
 
 def get_neighbouring_questions(assessment_qa: list[AssessmentQA], category_order: int, question_order: int):
 
@@ -136,9 +146,3 @@ def save_answer(answer_data: AssessmentAnswerPost, current_user: User):
     
     if current_user.can_manage_assessments() or current_user.user_id == targeted_assessment.owner_id:
         data.save_answer(answer_data=answer_data)
-
-
-def get_question():
-
-    return
-

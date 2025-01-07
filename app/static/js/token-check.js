@@ -4,16 +4,17 @@ function tokenLoginCheck(){
         let headers = new Headers();
         headers.append("Authorization", window.localStorage.getItem("access_token") );
         fetch(tokenCheckUrl, {
-                "method": 'GET',
-                "headers": headers
+            "method": 'GET',
+            "headers": headers
+        }
+        ).then(
+            (response) => {
+                responseData = response;
+                if( responseData.ok ){
+                    data = responseData.json();
+                    window.location.href = data.redirect_to;
                 }
-             ).then(
-                 response => response.json()
-                 ).then(data => {
-                     window.location.href = data.redirect_to;
-                     }).catch((error)=>{
-                         console.log('Error:', error);
-                         })
+            })
     }
 }
 

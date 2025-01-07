@@ -8,60 +8,18 @@
         <h2 class="title is-2 has-text-centered">{{ title }}</h2>
         <div class="columns">
             <div class="column assessment-wheel-panel is-two-fifths">
-                <form class="main-form"
-                    hx-put="{{ request.url }}"
-                    hx-ext="json-enc"
-                    hx-target=".bat-body"
-                    hx-select=".bat-body"
-                    hx-swap="outerHTML"
-                >
-                    <div class="field">
-                        <label class="label">Notes</label>
-                        <div class="control">
-                            <textarea class="textarea" name="note_content" rows="20">{% if assessment_note.note_content %}{{ assessment_note.note_content }}{% endif %}</textarea>
-                        </div>
-                    </div>
-                    <div class="field is-hidden">
-                        <input type="number" name="note_id" value="{{ assessment_note.note_id }}" readonly>
-                        <input type="text" name="assessment_id" value="{{ assessment_note.assessment_id }}" readonly>
-                        <input type="category_order" name="category_order" value="{{ assessment_note.category_order }}" readonly>
-                    </div>
-                    <div class="is-fullwidth pt-4 is-flex is-justify-content-space-around is-flex-direction-row-reverse">
-                        <div class="control">
-                            <input type="submit" value="Save" class="button is-link">
-                        </div>
-                    </div>
-                </form>
+                {% include "wheel/wheel-review.svg" %}
             </div>
             <div id="assessment-question-panel" class="column">
-                {% block assessment_question_panel %}
-                <div class="block  pt-6 px-6">
-                    <div class="block content has-text-left">
-                        <p>
-                        Thank you for taking your time to share with us little more details about your M2M effort!
-                        </p>
-                        <p>
-                        By answering these questions we hope to have better idea about how we can be more helpful for you.
-                        </p>
-                        <p>
-                        Asnwers are automatically saved every dozen of seconds. The wheel on the left also changes colors based 
-                        on your answers, so you can easily see what parts you already filled in.
-                        </p>
-                        <p>
-                        You can start by hitting the button below, or just select the part of the wheel (topic) you want to work on.
-                        </p>
-                    </div>
-                    <div class="block pt-5 has-text-centered">
-                        <button class="button is-info pl-6 pr-6 mt-4 thet-start-assessment"
-                            hx-get="{{ url_for("dashboard_assessments_page") }}/edit/{{ wheel.assessment_id }}/{{ wheel.category_00_order }}/1"
-                            hx-push-url="true"
-                            hx-target=".bat-main-content"
-                            hx-select=".bat-main-content"
-                            hx-swap="outerHTML"
-                            >Let’s do it!</button>
-                    </div>
-                </div> 
-                {% endblock %}
+                {% set assessments_categories = [] %}
+                {% for qa in assessment_qa %}
+                    {% if qa.category_name not in assessments_categories %}
+                        {% set assessments_categories = assessments_categories.append(qa.category_name) %}
+                        <div class="card p-4 is-clickable">
+                            <h5 class="title is-5">{{ qa.category_order + 1 }} {{ qa.category_name }}</h5>
+                        </div>
+                    {% endif %}
+                {% endfor %}
             </div>
 
         </div>
