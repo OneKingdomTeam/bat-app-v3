@@ -21,7 +21,7 @@ data-assessment_id="{{ wheel.assessment_id }}">
         <path class="question-1" d="M303 338.25C322.468 338.25 338.25 322.468 338.25 303C338.25 283.532 322.468 267.75 303 267.75C283.532 267.75 267.75 283.532 267.75 303C267.75 322.468 283.532 338.25 303 338.25Z" fill="{{ wheel.category_00_question_1 }}"/>
         <path d="M303 161.441C225.129 161.441 162 224.569 162 302.441C162 380.314 225.129 443.441 303 443.441C380.873 443.441 444 380.314 444 302.441C444 224.569 380.873 161.441 303 161.441Z"
         fill="rgba(255,255,255,0)"
-        hx-get="{{ url_for("dashboard_assessments_page") }}/view/{{ wheel.assessment_id }}/{{ wheel.category_00_order }}"
+        hx-get="{{ url_for("dashboard_assessments_page") }}/review/{{ wheel.assessment_id }}/{{ wheel.category_00_order }}"
         hx-push-url="true"
         hx-target=".bat-main-content"
         hx-select=".bat-main-content"
@@ -35,7 +35,7 @@ data-assessment_id="{{ wheel.assessment_id }}">
         <path class="question-1" d="M256.91 121.584L266.193 156.228C278.176 153.25 290.477 151.741 302.824 151.736C315.168 151.763 327.462 153.294 339.436 156.293L348.733 121.594C334.033 117.9 318.647 115.936 302.801 115.936C286.97 115.936 271.598 117.897 256.91 121.584Z" fill="{{ wheel.category_01_question_1 }}"/>
         <path d="M302.824 0C277.265 0.003622 251.809 3.24082 227.062 9.63086L231.707 26.9648L236.352 44.2969L236.609 45.2598L237.408 48.2383L245.891 79.8984L246.15 80.8672L256.654 120.062L256.912 121.025H256.91L263.475 145.52L266.193 155.67C278.176 152.692 290.477 151.183 302.824 151.178C315.168 151.205 327.462 152.735 339.436 155.734L343.521 140.484L348.732 121.035L348.99 120.072L359.492 80.877L359.752 79.9102L369.033 45.2695L369.291 44.3086L373.914 27.0586L378.535 9.80664C353.812 3.3629 328.373 0.0664279 302.824 0Z"
         fill="rgba(255,255,255,0)"
-        hx-get="{{ url_for("dashboard_assessments_page") }}/view/{{ wheel.assessment_id }}/{{ wheel.category_01_order }}"
+        hx-get="{{ url_for("dashboard_assessments_page") }}/review/{{ wheel.assessment_id }}/{{ wheel.category_01_order }}"
         hx-push-url="true"
         hx-target=".bat-main-content"
         hx-select=".bat-main-content"
@@ -49,7 +49,7 @@ data-assessment_id="{{ wheel.assessment_id }}">
         <path class="question-1" d="M354.948 123.074L345.666 157.719C357.532 161.13 368.94 165.974 379.635 172.144C390.312 178.338 400.193 185.811 409.063 194.396L434.464 168.994C423.58 158.445 411.238 149.051 397.515 141.128C383.805 133.212 369.511 127.225 354.948 123.074Z" fill="{{ wheel.category_02_question_1 }}"/>
         <path d="M384.797 11.1211L375.508 45.7871L375.25 46.75H375.248L365.967 81.3887H365.969L365.709 82.3574H365.707L355.205 121.553L354.947 122.516L351.801 134.26L345.666 157.16C357.532 160.571 368.94 165.416 379.635 171.586C390.312 177.78 400.193 185.253 409.062 193.838L417.68 185.221L434.465 168.436L464.568 138.33L489.928 112.971L490.631 112.268L515.887 87.0098C497.698 69.0679 477.316 53.4942 455.223 40.6621C433.086 27.8858 409.424 17.9607 384.797 11.1211Z"
         fill="rgba(255,255,255,0)"
-        hx-get="{{ url_for("dashboard_assessments_page") }}/view/{{ wheel.assessment_id }}/{{ wheel.category_02_order }}"
+        hx-get="{{ url_for("dashboard_assessments_page") }}/review/{{ wheel.assessment_id }}/{{ wheel.category_02_order }}"
         hx-push-url="true"
         hx-target=".bat-main-content"
         hx-select=".bat-main-content"
@@ -63,7 +63,7 @@ data-assessment_id="{{ wheel.assessment_id }}">
         <path class="question-1" d="M438.113 172.944L412.752 198.306C421.323 207.194 428.78 217.093 434.958 227.783C441.107 238.487 445.928 249.899 449.317 261.768L484.016 252.47C479.865 237.893 473.873 223.586 465.95 209.863C458.035 196.153 448.65 183.821 438.113 172.944Z" fill="{{ wheel.category_03_question_1 }}"/>
         <path d="M519.66 90.8398L494.283 116.217L493.578 116.922L468.221 142.279L466.068 144.432L438.818 171.68L438.113 172.385L425.432 185.066L412.752 197.748C421.323 206.636 428.779 216.535 434.957 227.225C441.106 237.929 445.927 249.34 449.316 261.209L466.666 256.561L484.016 251.912L511.822 244.461L524.174 241.15L577.994 226.73V226.729L595.244 222.107C588.463 197.474 578.6 173.796 565.883 151.637C553.1 129.504 537.567 109.076 519.66 90.8398Z"
         fill="rgba(255,255,255,0)"
-        hx-get="{{ url_for("dashboard_assessments_page") }}/view/{{ wheel.assessment_id }}/{{ wheel.category_03_order }}"
+        hx-get="{{ url_for("dashboard_assessments_page") }}/review/{{ wheel.assessment_id }}/{{ wheel.category_03_order }}"
         hx-push-url="true"
         hx-target=".bat-main-content"
         hx-select=".bat-main-content"
@@ -77,7 +77,7 @@ data-assessment_id="{{ wheel.assessment_id }}">
         <path class="question-1" d="M485.453 257.459L450.809 266.742C453.788 278.725 455.296 291.026 455.301 303.373C455.274 315.717 453.743 328.011 450.744 339.985L485.443 349.281C489.137 334.582 491.102 319.196 491.102 303.35C491.102 287.519 489.14 272.146 485.453 257.459Z" fill="{{ wheel.category_04_question_1 }}"/>
         <path d="M596.848 227.053L562.182 236.342L561.219 236.6L526.58 245.881L525.611 246.141L486.416 256.643L485.453 256.9L483.312 257.475L468.131 261.541V261.543L450.809 266.184C453.788 278.167 455.296 290.467 455.301 302.814C455.274 315.158 453.743 327.452 450.744 339.426L468.094 344.074L485.443 348.723L486.406 348.98L525.602 359.482L526.568 359.742L561.209 369.023L562.17 369.281L596.672 378.525C603.116 353.802 606.413 328.363 606.479 302.814C606.476 277.255 603.238 251.8 596.848 227.053Z"
         fill="rgba(255,255,255,0)"
-        hx-get="{{ url_for("dashboard_assessments_page") }}/view/{{ wheel.assessment_id }}/{{ wheel.category_04_order }}"
+        hx-get="{{ url_for("dashboard_assessments_page") }}/review/{{ wheel.assessment_id }}/{{ wheel.category_04_order }}"
         hx-push-url="true"
         hx-target=".bat-main-content"
         hx-select=".bat-main-content"
@@ -91,7 +91,7 @@ data-assessment_id="{{ wheel.assessment_id }}">
         <path class="question-1" d="M484.274 354.561L449.629 345.278C446.218 357.145 441.374 368.552 435.204 379.247C429.009 389.924 421.536 399.805 412.952 408.675L438.354 434.076C448.902 423.193 458.297 410.851 466.22 397.128C474.135 383.417 480.123 369.124 484.274 354.561Z" fill="{{ wheel.category_05_question_1 }}"/>
         <path d="M449.629 344.719C446.218 356.586 441.373 367.993 435.203 378.688C429.008 389.364 421.535 399.247 412.951 408.117L425.652 420.816L438.354 433.518L439.059 434.223L467.752 462.914L468.461 463.623L493.818 488.98L494.521 489.686L507.15 502.314L519.779 514.943C537.721 496.754 553.297 476.37 566.129 454.277C578.905 432.141 588.83 408.477 595.67 383.85L578.336 379.207L563.094 375.123L561.002 374.562L560.039 374.305V374.303L525.4 365.021V365.023L524.432 364.764V364.762L485.236 354.26L484.273 354.002L466.951 349.361L449.629 344.719Z"
         fill="rgba(255,255,255,0)"
-        hx-get="{{ url_for("dashboard_assessments_page") }}/view/{{ wheel.assessment_id }}/{{ wheel.category_05_order }}"
+        hx-get="{{ url_for("dashboard_assessments_page") }}/review/{{ wheel.assessment_id }}/{{ wheel.category_05_order }}"
         hx-push-url="true"
         hx-target=".bat-main-content"
         hx-select=".bat-main-content"
@@ -105,7 +105,7 @@ data-assessment_id="{{ wheel.assessment_id }}">
         <path class="question-1" d="M434.493 438.935L409.131 413.574C400.243 422.145 390.345 429.602 379.654 435.779C368.951 441.928 357.539 446.749 345.669 450.139L354.968 484.838C369.545 480.686 383.851 474.695 397.575 466.772C411.285 458.856 423.617 449.471 434.493 438.935Z" fill="{{ wheel.category_06_question_1 }}"/>
         <path d="M409.131 413.016C400.243 421.587 390.345 429.044 379.654 435.221C368.951 441.37 357.54 446.19 345.67 449.58L350.318 466.93L354.969 484.279L365.988 525.404L375.271 560.045L375.527 561.004L384.773 595.506C409.406 588.725 433.084 578.86 455.244 566.143C477.377 553.361 497.803 537.83 516.039 519.922L503.352 507.234L489.957 493.842L464.602 468.484L463.893 467.773L435.199 439.082L434.492 438.377L421.812 425.695H421.811L409.131 413.016Z"
         fill="rgba(255,255,255,0)"
-        hx-get="{{ url_for("dashboard_assessments_page") }}/view/{{ wheel.assessment_id }}/{{ wheel.category_06_order }}"
+        hx-get="{{ url_for("dashboard_assessments_page") }}/review/{{ wheel.assessment_id }}/{{ wheel.category_06_order }}"
         hx-push-url="true"
         hx-target=".bat-main-content"
         hx-select=".bat-main-content"
@@ -119,7 +119,7 @@ data-assessment_id="{{ wheel.assessment_id }}">
         <path class="question-1" d="M348.687 486.002L339.404 451.358C327.421 454.336 315.12 455.845 302.773 455.85C290.429 455.823 278.136 454.292 266.162 451.293L256.865 485.992C271.565 489.686 286.95 491.65 302.796 491.65C318.628 491.65 334 489.689 348.687 486.002Z" fill="{{ wheel.category_07_question_1 }}"/>
         <path d="M266.162 450.734L261.514 468.084L256.865 485.434L256.607 486.396L246.105 525.592L245.846 526.559L236.564 561.199L231.684 579.412L227.062 596.662C251.786 603.106 277.224 606.403 302.773 606.469C328.332 606.466 353.788 603.228 378.535 596.838L373.891 579.506L368.988 561.209L359.707 526.57L359.447 525.602L357.27 517.477L348.688 485.443L344.045 468.121L339.404 450.799C327.421 453.777 315.12 455.286 302.773 455.291C290.429 455.264 278.136 453.733 266.162 450.734Z"
         fill="rgba(255,255,255,0)"
-        hx-get="{{ url_for("dashboard_assessments_page") }}/view/{{ wheel.assessment_id }}/{{ wheel.category_07_order }}"
+        hx-get="{{ url_for("dashboard_assessments_page") }}/review/{{ wheel.assessment_id }}/{{ wheel.category_07_order }}"
         hx-push-url="true"
         hx-target=".bat-main-content"
         hx-select=".bat-main-content"
@@ -133,7 +133,7 @@ data-assessment_id="{{ wheel.assessment_id }}">
         <path class="question-1" d="M252.28 484.824L261.563 450.179C249.696 446.767 238.289 441.923 227.593 435.754C216.917 429.559 207.035 422.086 198.165 413.502L172.765 438.904C183.648 449.452 195.99 458.847 209.713 466.77C223.423 474.685 237.717 480.673 252.28 484.824Z" fill="{{ wheel.category_08_question_1 }}"/>
         <path d="M198.164 412.943L172.766 438.346L172.061 439.051L143.367 467.744L116.598 494.512L111.609 499.5L103.969 507.141L91.3418 519.77C109.531 537.712 129.913 553.287 152.006 566.119C174.142 578.895 197.807 588.819 222.434 595.658L228.68 572.342L230.438 565.781L231.721 560.992L231.979 560.031H231.98L241.262 525.393H241.26L241.52 524.424L252.023 485.229H252.021L252.279 484.266L261.562 449.621C249.696 446.209 238.29 441.364 227.594 435.195C216.918 429 207.034 421.527 198.164 412.943Z"
         fill="rgba(255,255,255,0)"
-        hx-get="{{ url_for("dashboard_assessments_page") }}/view/{{ wheel.assessment_id }}/{{ wheel.category_08_order }}"
+        hx-get="{{ url_for("dashboard_assessments_page") }}/review/{{ wheel.assessment_id }}/{{ wheel.category_08_order }}"
         hx-push-url="true"
         hx-target=".bat-main-content"
         hx-select=".bat-main-content"
@@ -147,7 +147,7 @@ data-assessment_id="{{ wheel.assessment_id }}">
         <path class="question-1" d="M167.941 435.29L193.302 409.928C184.731 401.04 177.274 391.142 171.097 380.451C164.948 369.748 160.127 358.335 156.737 346.466L122.038 355.765C126.19 370.341 132.181 384.648 140.104 398.371C148.02 412.082 157.405 424.414 167.941 435.29Z" fill="{{ wheel.category_09_question_1 }}"/>
         <path d="M156.736 345.908L122.037 355.207L102.725 360.383L81.8809 365.967L80.9141 366.227V366.225L46.2734 375.508L45.3105 375.766L28.0605 380.389L10.8105 385.01C17.5917 409.643 27.4549 433.32 40.1719 455.48C52.9545 477.613 68.4872 498.04 86.3945 516.277L99.082 503.588L103.467 499.205L111.771 490.898L180.621 422.051L193.303 409.369C184.732 400.481 177.275 390.584 171.098 379.893C164.949 369.19 160.126 357.777 156.736 345.908Z"
         fill="rgba(255,255,255,0)"
-        hx-get="{{ url_for("dashboard_assessments_page") }}/view/{{ wheel.assessment_id }}/{{ wheel.category_09_order }}"
+        hx-get="{{ url_for("dashboard_assessments_page") }}/review/{{ wheel.assessment_id }}/{{ wheel.category_09_order }}"
         hx-push-url="true"
         hx-target=".bat-main-content"
         hx-select=".bat-main-content"
@@ -161,7 +161,7 @@ data-assessment_id="{{ wheel.assessment_id }}">
         <path class="question-1" d="M121.025 349.236L155.67 339.953C152.691 327.97 151.182 315.669 151.178 303.322C151.204 290.978 152.735 278.684 155.734 266.711L121.035 257.414C117.342 272.113 115.377 287.499 115.377 303.345C115.377 319.177 117.339 334.549 121.025 349.236Z" fill="{{ wheel.category_10_question_1 }}"/>
         <path d="M9.80664 227.053C3.36292 251.776 0.0664267 277.215 0 302.764C0.00362355 328.323 3.24084 353.778 9.63086 378.525L26.9629 373.881L37.2773 371.117L44.2969 369.236L80.8672 359.438L120.062 348.936L121.025 348.678L155.67 339.395C152.691 327.412 151.182 315.111 151.178 302.764C151.204 290.42 152.735 278.125 155.734 266.152L138.385 261.504L120.072 256.598L80.877 246.096L79.9102 245.836L45.2695 236.555L44.3086 236.297L27.0566 231.674L9.80664 227.053Z"
         fill="rgba(255,255,255,0)"
-        hx-get="{{ url_for("dashboard_assessments_page") }}/view/{{ wheel.assessment_id }}/{{ wheel.category_10_order }}"
+        hx-get="{{ url_for("dashboard_assessments_page") }}/review/{{ wheel.assessment_id }}/{{ wheel.category_10_order }}"
         hx-push-url="true"
         hx-target=".bat-main-content"
         hx-select=".bat-main-content"
@@ -175,7 +175,7 @@ data-assessment_id="{{ wheel.assessment_id }}">
         <path class="question-1" d="M122.527 251.829L157.172 261.112C160.583 249.245 165.427 237.838 171.597 227.142C177.792 216.466 185.265 206.584 193.849 197.714L168.447 172.313C157.898 183.197 148.504 195.539 140.581 209.262C132.665 222.972 126.678 237.266 122.527 251.829Z" fill="{{ wheel.category_11_question_1 }}"/>
         <path d="M87.0215 90.332C69.0795 108.521 53.5039 128.903 40.6719 150.996C27.8955 173.133 17.9724 196.796 11.1328 221.422L28.4648 226.066L45.7988 230.711L46.7617 230.969L81.4004 240.25L122.527 251.27L157.172 260.553C160.583 248.686 165.428 237.28 171.598 226.584C177.793 215.908 185.266 206.026 193.85 197.156L181.148 184.455L138.342 141.648L112.982 116.291L112.277 115.588L99.6484 102.959L87.0215 90.332Z"
         fill="rgba(255,255,255,0)"
-        hx-get="{{ url_for("dashboard_assessments_page") }}/view/{{ wheel.assessment_id }}/{{ wheel.category_11_order }}"
+        hx-get="{{ url_for("dashboard_assessments_page") }}/review/{{ wheel.assessment_id }}/{{ wheel.category_11_order }}"
         hx-push-url="true"
         hx-target=".bat-main-content"
         hx-select=".bat-main-content"
@@ -189,7 +189,7 @@ data-assessment_id="{{ wheel.assessment_id }}">
         <path class="question-1" d="M171.589 169.491L196.951 194.852C205.839 186.281 215.737 178.824 226.428 172.646C237.131 166.497 248.544 161.676 260.413 158.287L251.114 123.588C236.537 127.739 222.231 133.731 208.507 141.654C194.797 149.569 182.465 158.954 171.589 169.491Z" fill="{{ wheel.category_12_question_1 }}"/>
         <path d="M221.309 11.8027C196.676 18.5838 172.998 28.4471 150.838 41.1641C128.705 53.9466 108.278 69.4792 90.041 87.3867L102.73 100.074L115.42 112.764L116.123 113.467L141.48 138.824L171.59 168.932L196.951 194.293C205.839 185.722 215.737 178.266 226.428 172.088C237.131 165.939 248.543 161.118 260.412 157.729L255.764 140.379L250.855 122.066L240.352 82.8711L240.094 81.9043L230.811 47.2637L230.553 46.3027H230.555L225.932 29.0527L221.309 11.8027Z"
         fill="rgba(255,255,255,0)"
-        hx-get="{{ url_for("dashboard_assessments_page") }}/view/{{ wheel.assessment_id }}/{{ wheel.category_12_order }}"
+        hx-get="{{ url_for("dashboard_assessments_page") }}/review/{{ wheel.assessment_id }}/{{ wheel.category_12_order }}"
         hx-push-url="true"
         hx-target=".bat-main-content"
         hx-select=".bat-main-content"

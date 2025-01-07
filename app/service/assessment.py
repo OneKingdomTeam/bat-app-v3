@@ -64,7 +64,7 @@ def get_all_qa(assessment_id: str, current_user: User) -> list[AssessmentQA]:
     if not current_user.can_manage_assessments() and current_user.user_id != assessment.owner_id:
         raise Unauthorized(msg="You cannot access this assessment data.")
 
-    return data.get_assessment_qa(assessment_id=assessment_id)
+    return data.filter_assessment_qa_by_category_order_and_question_id(assessment_id=assessment_id)
 
 
 def prepare_wheel_context(assessment_qa: list[AssessmentQA]) -> dict:
@@ -99,7 +99,6 @@ def prepare_wheel_context(assessment_qa: list[AssessmentQA]) -> dict:
 
 
 def filter_assessment_qa_by_category_order_and_question_id(assessment_qa: list[AssessmentQA], category_order: int, question_order: int) -> AssessmentQA:
-def get_assessment_qa(assessment_qa: list[AssessmentQA], category_order: int, question_order: int) -> AssessmentQA:
 
     for qa in assessment_qa:
         if qa.category_order == category_order and qa.question_order == question_order:
@@ -107,13 +106,18 @@ def get_assessment_qa(assessment_qa: list[AssessmentQA], category_order: int, qu
 
     raise RecordNotFound(msg=f"Unable to find Assessment Q&A with cateogory order: {category_order} and question_order: {question_order}")
 
-def filter_assessment_qa_by_category(assessment_qa: list[AssessmentQA], category_order: int) -> AssessmentQA:
+def filter_assessment_qa_by_category(assessment_qa: list[AssessmentQA], category_order: int) -> list[AssessmentQA]:
+
+    filtered_qas = []
 
     for qa in assessment_qa:
-        if qa.category_order == category_order and qa.question_order == question_order:
-            return qa
+        if qa.category_order == category_order:
+            filtered_qas.append(qa)
 
-    raise RecordNotFound(msg=f"Unable to find Assessment Q&A with cateogory order: {category_order} and question_order: {question_order}")
+    if filtered_qas:
+        return filtered_qas
+    else:
+        raise RecordNotFound(msg=f"Unable to find Assessment Q&A with cateogory order: {category_order}.")
 
 
 def get_neighbouring_questions(assessment_qa: list[AssessmentQA], category_order: int, question_order: int):
@@ -129,13 +133,13 @@ def get_neighbouring_questions(assessment_qa: list[AssessmentQA], category_order
     current_index = orders.index((category_order, question_order))
     if current_index == 0:
         previous_question = None
-        next_question = get_assessment_qa(assessment_qa=assessment_qa, category_order=orders[current_index + 1][0], question_order=orders[current_index + 1][1])
+        next_question = filter_assessment_qa_by_category_order_and_question_id(assessment_qa=assessment_qa, category_order=orders[current_index + 1][0], question_order=orders[current_index + 1][1])
     elif current_index == len(orders) - 1:
-        previous_question = get_assessment_qa(assessment_qa=assessment_qa, category_order=orders[current_index - 1][0], question_order=orders[current_index - 1][1])
+        previous_question = filter_assessment_qa_by_category_order_and_question_id(assessment_qa=assessment_qa, category_order=orders[current_index - 1][0], question_order=orders[current_index - 1][1])
         next_question = None
     else:
-        previous_question = get_assessment_qa(assessment_qa=assessment_qa, category_order=orders[current_index - 1][0], question_order=orders[current_index - 1][1])
-        next_question = get_assessment_qa(assessment_qa=assessment_qa, category_order=orders[current_index + 1][0], question_order=orders[current_index + 1][1])
+        previous_question = filter_assessment_qa_by_category_order_and_question_id(assessment_qa=assessment_qa, category_order=orders[current_index - 1][0], question_order=orders[current_index - 1][1])
+        next_question = filter_assessment_qa_by_category_order_and_question_id(assessment_qa=assessment_qa, category_order=orders[current_index + 1][0], question_order=orders[current_index + 1][1])
 
     return (previous_question, next_question)
 

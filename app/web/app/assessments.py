@@ -83,7 +83,7 @@ def get_answer_question_page(assessment_id: str, category_order: int, question_o
 
     try:
         assessment_qa: list[AssessmentQA] = service.get_all_qa(assessment_id=assessment_id, current_user=current_user)
-        current_question: AssessmentQA = service.get_assessment_qa(assessment_qa=assessment_qa, category_order=category_order, question_order=question_order)
+        current_question: AssessmentQA = service.filter_assessment_qa_by_category_order_and_question_id(assessment_qa=assessment_qa, category_order=category_order, question_order=question_order)
         previous_question, next_question = service.get_neighbouring_questions(assessment_qa=assessment_qa, category_order=category_order, question_order=question_order)
 
         context["assessment_qa"] = assessment_qa
@@ -117,7 +117,7 @@ def post_answer_question_page(answer_data: AssessmentAnswerPost, assessment_id: 
     try:
         service.save_answer(answer_data=answer_data, current_user=current_user)
         assessment_qa: list[AssessmentQA] = service.get_all_qa(assessment_id=assessment_id, current_user=current_user)
-        current_question: AssessmentQA = service.get_assessment_qa(assessment_qa=assessment_qa, category_order=category_order, question_order=question_order)
+        current_question: AssessmentQA = service.filter_assessment_qa_by_category_order_and_question_id(assessment_qa=assessment_qa, category_order=category_order, question_order=question_order)
         previous_question, next_question = service.get_neighbouring_questions(assessment_qa=assessment_qa, category_order=category_order, question_order=question_order)
 
         context["assessment_qa"] = assessment_qa

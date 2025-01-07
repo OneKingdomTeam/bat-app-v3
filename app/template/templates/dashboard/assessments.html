@@ -28,7 +28,7 @@
                             </button>
                             <button
                                 class="button is-success is-light"
-                                hx-get="{{ url_for("dashboard_assessments_page") }}/view/{{ assessment.assessment_id }}"
+                                hx-get="{{ url_for("dashboard_assessments_page") }}/review/{{ assessment.assessment_id }}"
                                 hx-select=".bat-main-content"
                                 hx-target=".bat-main-content"
                                 hx-swap="outerHTML"

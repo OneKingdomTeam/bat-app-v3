@@ -204,7 +204,7 @@ def freeze_questions(assessment_id: str, category_id_map: dict) -> bool:
 
 def prepare_answers(assessment_id: str) -> bool:
 
-    questions: list[AssessmentQA] = get_assessment_qa(assessment_id=assessment_id)
+    questions: list[AssessmentQA] = filter_assessment_qa_by_category_order_and_question_id(assessment_id=assessment_id)
 
     qry = """insert into assessments_answers(answer_id, assessment_id, question_id)
     values(:answer_id, :assessment_id, :question_id)"""
@@ -379,7 +379,7 @@ def delete_assessment(assessment_id: str) -> Assessment:
     finally:
         cursor.close()
 
-def get_assessment_qa(assessment_id: str) -> list[AssessmentQA]:
+def filter_assessment_qa_by_category_order_and_question_id(assessment_id: str) -> list[AssessmentQA]:
 
     qry = """select
         q.question_id,
