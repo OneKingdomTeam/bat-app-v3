@@ -1,0 +1,17 @@
+{# This is the root page of the questions link. Other sublinks are derived from this page #}
+
+{% extends "dashboard/dashboard.html" %}
+{% block body %}
+<section class="bat-main-content is-flex pt-6">
+    <div class="container">
+        {% block body_content %}
+        <h2 class="title is-2 has-text-centered">{{ title }}</h2>
+        {% include "helpers/notification.html" %}
+        <div class="fixed-grid has-1-cols-mobile has-2-cols-tablet has-3-cols-desktop">
+        </div>
+        <div class="content pt-5 is-flex is-justify-content-center">
+        </div>
+        {% endblock %}
+    </div>
+</section>
+{% endblock %}

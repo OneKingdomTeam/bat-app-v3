@@ -1,14 +1,14 @@
-from app.data.init import conn
+from app.data.init import conn, curs
 from app.exception.database import RecordNotFound
 from app.model.report import Report
 
 
 # -------------------------------
-#   Table creation
+#   Table1 creation
 # -------------------------------
 
 
-conn.execute("""
+curs.execute("""
              create table if not exists reports(
                  report_id text primary key,
                  assessment_id text references assessment( assessment_id ),
@@ -21,7 +21,7 @@ conn.execute("""
                  recommendation_title_2 text,
                  recommendation_content_2 text,
                  recommendation_title_3 text,
-                 recommendation_content_3 text,
+                 recommendation_content_3 text
                  )
              """)
 
@@ -161,7 +161,7 @@ def get_all_reports() -> list[Report]:
         if rows:
             return [report_row_to_model(row) for row in rows]
         else:
-            raise RecordNotFound(msg="No reports found.")
+            return []
     finally:
         cursor.close() 
 
