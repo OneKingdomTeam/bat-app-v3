@@ -1,5 +1,5 @@
 from app.exception.service import Unauthorized
-from app.model.assesment import AssessmentNote
+from app.model.assesment import AssessmentNote, AssessmentNoteExtended
 from app.model.user import User
 
 import app.data.note as data
@@ -12,6 +12,13 @@ def get_note(assessment_id: str, category_order: int, current_user: User) -> Ass
 
     return data.get_note(assessment_id=assessment_id, category_order=category_order)
 
+
+def get_assessment_notes(assessment_id: str, current_user: User) -> list[AssessmentNoteExtended]:
+
+    if not current_user.can_manage_notes():
+        raise Unauthorized(msg="You cannot manage notes.")
+
+    return data.get_assessment_notes(assessment_id=assessment_id)
 
 def get_note_by_id(note_id: int, current_user: User) -> AssessmentNote:
 

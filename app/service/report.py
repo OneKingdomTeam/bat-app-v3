@@ -6,7 +6,7 @@ import secrets
 from app.data import report as data
 from app.model.assesment import Assessment
 from app.service import assessment as assessment_service
-from app.model.report import Report, ReportCreate, ReportExtended
+from app.model.report import Report, ReportCreate, ReportExtended, ReportUpdate
 from app.model.user import User
 from app.exception.service import EndpointDataMismatch, Unauthorized
 
@@ -32,15 +32,15 @@ def get_report(report_id: str, current_user: User) -> Report:
     return data.get_report(report_id=report_id)
 
 
-def update_report(report_id: str, report: Report, current_user: User) -> Report:
+def update_report(report_id: str, report_update: ReportUpdate, current_user: User) -> Report:
 
     if not current_user.can_manage_reports():
         raise Unauthorized(msg="You cannot manage reports.")
 
-    if not report_id == report.report_id:
+    if not report_id == report_update.report_id:
         raise EndpointDataMismatch(msg="Provided report object doesn't match endpoint ID.")
 
-    return data.update_report(report=report)
+    return data.update_report(report_update=report_update)
 
 
 def delete_report(report_id: str, current_user: User) -> Report:

@@ -1,10 +1,10 @@
 from fastapi import APIRouter, Depends, Request
-from passlib import context
 
 from app.exception.service import Unauthorized
-from app.model.report import Report, ReportCreate, ReportExtended
+from app.model.report import Report, ReportCreate, ReportExtended, ReportUpdate
 from app.service import report as service
 from app.service import assessment as assessment_service
+from app.service import note as note_service
 
 from app.model.user import User
 from app.model.assesment import Assessment
@@ -19,11 +19,16 @@ router = APIRouter()
 
 
 @router.get("", response_class=HTMLResponse, name="dashboard_reports_page")
-def get_questions(request: Request, filter: str | None  = None, current_user: User = Depends(user_htmx_dep)):
+def get_questions(request: Request, assessment_filter: str | None  = None, current_user: User = Depends(user_htmx_dep)):
 
     reports_extended: list[ReportExtended] = service.get_all_extended(current_user=current_user)
     assessments: list[Assessment] = assessment_service.get_all(current_user=current_user)
-    
+
+
+    if assessment_filter:
+        reports_filtered = list(filter(lambda report: report.assessment_id == assessment_filter, reports_extended))
+        reports_extended = reports_filtered
+
     context = {
             "request": request,
             "title":"Reports",
@@ -95,6 +100,7 @@ def get_report_edit(request: Request, report_id: str, current_user: User = Depen
 
     try:
         report = service.get_report_extended(report_id=report_id, current_user=current_user)
+        assessment_notes = note_service.get_assessment_notes(assessment_id=report.assessment_id, current_user=current_user)
     except:
         # NotImplemented
         raise
@@ -102,6 +108,7 @@ def get_report_edit(request: Request, report_id: str, current_user: User = Depen
     context = {
             "request": request,
             "report": report,
+            "assessment_notes": assessment_notes,
             "title":"Edit report",
             "description":"Edit report and fill in the info.",
             "current_user": current_user,
@@ -116,9 +123,31 @@ def get_report_edit(request: Request, report_id: str, current_user: User = Depen
 
 
 @router.post("/edit/{report_id}", response_class=HTMLResponse)
-def post_report_edit(request: Request, report_id: str, report: Report, current_user: User = Depends(user_htmx_dep)):
+def post_report_edit(request: Request, report_id: str, report_update: ReportUpdate, current_user: User = Depends(user_htmx_dep)):
 
-    return
+    try:
+        service.update_report(report_id=report_id, report_update=report_update, current_user=current_user)
+        report = service.get_report_extended(report_id=report_id, current_user=current_user)
+        assessment_notes = note_service.get_assessment_notes(assessment_id=report.assessment_id, current_user=current_user)
+    except:
+        # NotImplemented
+        raise
+
+    context = {
+            "request": request,
+            "report": report,
+            "assessment_notes": assessment_notes,
+            "title":"Edit report",
+            "description":"Edit report and fill in the info.",
+            "current_user": current_user,
+            }
+
+    response = jinja.TemplateResponse(
+            context=context,
+            name="dashboard/report-edit.html"
+            )
+
+    return response
 
 
 @router.patch("/publish/{report_id}/{public}", response_class=HTMLResponse, name="dashboard_report_publish")
@@ -149,8 +178,26 @@ def patch_report_publish_status(request: Request, report_id: str, public: bool, 
 def delete_report(request: Request, report_id: str, current_user: User = Depends(user_htmx_dep)):
 
     try:
-        report_extended = service.get_report_extended(report_id=report_id, current_user=current_user)
+        report_deleted = service.delete_report(report_id=report_id, current_user=current_user)
     except Unauthorized:
         # NotImplemented
         raise
 
+    reports_extended: list[ReportExtended] = service.get_all_extended(current_user=current_user)
+    assessments: list[Assessment] = assessment_service.get_all(current_user=current_user)
+    
+    context = {
+            "request": request,
+            "title":"Reports",
+            "description":"List of all available reports.",
+            "current_user": current_user,
+            "reports": reports_extended,
+            "assessments": assessments
+            }
+
+    response = jinja.TemplateResponse(
+            context=context,
+            name="dashboard/reports.html"
+            )
+
+    return response

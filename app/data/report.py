@@ -1,6 +1,6 @@
 from app.data.init import conn, curs
 from app.exception.database import RecordNotFound
-from app.model.report import Report
+from app.model.report import Report, ReportUpdate
 
 
 # -------------------------------
@@ -166,15 +166,15 @@ def get_all_reports() -> list[Report]:
         cursor.close() 
 
 
-def update_report(report: Report) -> Report:
+def update_report(report_update: ReportUpdate) -> Report:
 
     qry = """
     update
         reports
     set
-        assessment_id = :assessment_id,
-        key = :key,
+        report_id = :report_id,
         report_name = :report_name,
+        public = :public,
         summary = :summary,
         recommendation_title_1 = :recommendation_title_1,
         recommendation_content_1 = :recommendation_content_1,
@@ -188,9 +188,9 @@ def update_report(report: Report) -> Report:
 
     cursor = conn.cursor()
     try:
-        cursor.execute(qry, report.model_dump())
+        cursor.execute(qry, report_update.model_dump())
         conn.commit()
-        return get_report(report_id=report.report_id)
+        return get_report(report_id=report_update.report_id)
     finally:
         cursor.close()
 

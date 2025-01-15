@@ -35,3 +35,16 @@ class ReportExtended(BaseModel):
 class ReportCreate(BaseModel):
     assessment_id: str
     report_name: str
+
+
+class ReportUpdate(BaseModel):
+    report_id: str
+    report_name: str
+    public: bool
+    summary: str | None
+    recommendation_title_1: str | None
+    recommendation_content_1: str | None
+    recommendation_title_2: str | None
+    recommendation_content_2: str | None
+    recommendation_title_3: str | None
+    recommendation_content_3: str | None

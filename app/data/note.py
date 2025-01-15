@@ -1,6 +1,6 @@
 from app.data.init import conn
 from app.exception.database import RecordNotFound
-from app.model.assesment import AssessmentNote
+from app.model.assesment import AssessmentNote, AssessmentNoteExtended
 
 
 
@@ -37,6 +37,21 @@ def row_to_note_model(row: tuple) -> AssessmentNote:
             note_content=note_content
             )
 
+def row_to_extended_note_model(row: tuple) -> AssessmentNoteExtended:
+
+    note_id, \
+    assessment_id, \
+    category_order, \
+    note_content, \
+    category_name = row
+
+    return AssessmentNoteExtended(
+            note_id=note_id,
+            assessment_id=assessment_id,
+            category_order=category_order,
+            note_content=note_content,
+            category_name=category_name
+            )
 
 
 # -------------------------------
@@ -61,6 +76,39 @@ def create_notes(assessment_id: str, category_order: int) -> bool:
     finally:
         cursor.close()
 
+
+def get_assessment_notes(assessment_id: str) -> list[AssessmentNoteExtended]:
+
+    qry = """
+    select
+        note_id,
+        assessment_id,
+        category_order,
+        note_content,
+        category_name
+    from
+        assessments_notes
+    natural join
+        assessments_questions_categories
+    where
+        assessment_id = :assessment_id
+    """
+
+    params = {
+            "assessment_id": assessment_id,
+            }
+
+    cursor = conn.cursor()
+
+    try:
+        cursor.execute(qry, params)
+        rows = cursor.fetchall()
+        if rows:
+            return [row_to_extended_note_model(row) for row in rows]
+        else:
+            raise RecordNotFound(msg="No note found.")
+    finally:
+        cursor.close()
 
 
 def get_note(assessment_id: str, category_order: int) -> AssessmentNote:
@@ -94,7 +142,6 @@ def get_note(assessment_id: str, category_order: int) -> AssessmentNote:
             raise RecordNotFound(msg="No note found.")
     finally:
         cursor.close()
-        
 
 
 def get_note_by_id(note_id: int) -> AssessmentNote:
@@ -126,6 +173,7 @@ def get_note_by_id(note_id: int) -> AssessmentNote:
             raise RecordNotFound(msg="No note found.")
     finally:
         cursor.close()
+
 
 def update_note(note_id: int, note_content: str) -> AssessmentNote:
 

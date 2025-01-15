@@ -63,3 +63,11 @@ class AssessmentNote(BaseModel):
     assessment_id: str
     category_order: int
     note_content: str | None
+
+
+class AssessmentNoteExtended(BaseModel):
+    note_id: int | None
+    assessment_id: str
+    category_order: int
+    note_content: str | None
+    category_name: str | None

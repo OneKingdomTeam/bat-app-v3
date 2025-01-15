@@ -9,6 +9,14 @@
         {% include "helpers/notification.html" %}
         <div class="columns">
             <div class="column">
+                {% for note in assessment_notes %}  
+                <div class="content">
+                    <h5 class="title is-5">{{ note.category_name }}</h5>
+                    <p>{% if note.note_content %}{{ note.note_content }}{% else %}<i>Note doesn't exist yet.</i>{% endif %}</p>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="column">
                 <form
                     hx-post="{{ request.url }}"
                     hx-select=".bat-main-content"
@@ -21,14 +29,23 @@
                             <input name="report_name" class="input" type="text" value="{{ report.report_name }}">
                         </div>
                     </div>
+                    <div class="field">
+                        <label class="label">Visibility</label>
+                        <p>When report is public you can share it to anyone via the link and password.</p>
+                        <div class="select is-fullwidth">
+                            <select name="public">
+                                <option value="true" {% if report.public %}selected{% endif %}>Published</option>
+                                <option value="false" {% if not report.public %}selected{% endif %}>Unpublished</option>
+                            </select>
+                        </div>
+                    </div>
                     <div class="py-3">
                         <p>Report summary</p>
                         <textarea
                             class="textarea"
                             name="summary"
-                            placeholder="Summary under the heading">
-                            {% if report.summary %}{{ report.summary }}{% endif %}
-                        </textarea>
+                            placeholder="Summary under the heading"
+                            >{% if report.summary %}{{ report.summary }}{% endif %}</textarea>
                     </div>
                     <div class="field">
                         <h5 class="title is-5">1. Recommendation</h5>
@@ -42,9 +59,8 @@
                         <textarea
                             class="textarea"
                             name="recommendation_content_1"
-                            placeholder="Summary under the heading">
-                            {% if report.recommendation_content_1 %}{{ report.recommendation_content_1 }}{% endif %}
-                        </textarea>
+                            placeholder="Content of the first recommendation."
+                            >{% if report.recommendation_content_1 %}{{ report.recommendation_content_1 }}{% endif %}</textarea>
                     </div>
                     <div class="field">
                         <h5 class="title is-5">2. Recommendation</h5>
@@ -58,9 +74,8 @@
                         <textarea
                             class="textarea"
                             name="recommendation_content_2"
-                            placeholder="Summary under the heading">
-                            {% if report.recommendation_content_2 %}{{ report.recommendation_content_2 }}{% endif %}
-                        </textarea>
+                            placeholder="Content of second recommendation."
+                            >{% if report.recommendation_content_2 %}{{ report.recommendation_content_2 }}{% endif %}</textarea>
                     </div>
                     <div class="field">
                         <h5 class="title is-5">3. Recommendation</h5>
@@ -74,17 +89,19 @@
                         <textarea
                             class="textarea"
                             name="recommendation_content_3"
-                            placeholder="Summary under the heading">
-                            {% if report.recommendation_content_3 %}{{ report.recommendation_content_3 }}{% endif %}
-                        </textarea>
+                            placeholder="Content of third recommendation"
+                            >{% if report.recommendation_content_3 %}{{ report.recommendation_content_3 }}{% endif %}</textarea>
                     </div>
                     <div class="content">
                         <button type="submit" class="button is-success is-light px-5">Save</button>
                     </div>
+                    <div class="field is-hidden">
+                        <label class="label">ID</label>
+                        <div class="control">
+                            <input name="report_id" class="input disabled" type="text" value="{{ report.report_id }}" readonly>
+                        </div>
+                    </div>
                 </form>
-            </div>
-            <div class="column">
-                
             </div>
         </div>
         {% endblock %}
