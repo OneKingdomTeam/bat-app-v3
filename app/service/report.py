@@ -43,6 +43,22 @@ def get_public_reports_for_assessment(assessment_id: str, current_user: User) ->
     return reports
 
 
+def get_public_report_for_user(report_id: str, current_user: User) -> Report:
+
+    if current_user.user_id == None:
+        raise Unauthorized(msg="Seems you are not authorized. Try logging in again.")
+
+    report = data.get_public_report_for_user(report_id=report_id)
+    assessment = assessment_data.get_one_for_user(assessment_id=report.assessment_id, user_id=current_user.user_id)
+
+    if current_user.user_id != assessment.owner_id:
+        raise Unauthorized(msg="Looks like the requested report doesn't belong to you.")
+
+    return report
+
+
+
+
 def update_report(report_id: str, report_update: ReportUpdate, current_user: User) -> Report:
 
     if not current_user.can_manage_reports():

@@ -201,6 +201,43 @@ def get_public_reports_for_assessment(assessment_id: str) -> list[Report]:
         cursor.close()
 
 
+def get_public_report_for_user(report_id: str) -> Report:
+
+    qry = """
+    select 
+        report_id,
+        assessment_id,
+        public,
+        key,
+        report_name,
+        summary,
+        recommendation_title_1,
+        recommendation_content_1,
+        recommendation_title_2,
+        recommendation_content_2,
+        recommendation_title_3,
+        recommendation_content_3
+    from
+        reports
+    where
+        report_id = :report_id and
+        public = 1
+    """
+    
+    cursor = conn.cursor()
+    try:
+        cursor.execute(qry, {"report_id":report_id})
+        row = cursor.fetchone()
+        if row:
+            return report_row_to_model(row)
+        else:
+            raise RecordNotFound(msg="Requested report wasn't found.")
+    finally:
+        cursor.close()
+
+
+
+
 def update_report(report_update: ReportUpdate) -> Report:
 
     qry = """

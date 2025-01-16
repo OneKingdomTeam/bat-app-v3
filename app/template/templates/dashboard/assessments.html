@@ -14,7 +14,27 @@
                 <div class="cell">
                     <div class="card p-4 content">
                         <h3 class="title is-3">{{ assessment.assessment_name }}</h3>
-                        <p data-owner_id="{{ assessment.owner_id }}"><b>Owner:</b> {{ assessment.owner_name }}</p>
+                        <table class="card-table">
+                            <tbody>
+                                <tr class="is-clickable owner-row"
+                                    hx-get="{{ url_for("dashboard_assessment_rename", assessment_id=assessment.assessment_id) }}"
+                                    hx-select=".owner-row"
+                                    hx-taget=".owner-row"
+                                    hx-swap="outerHTML"
+                                    >
+                                    <td>Owner:</td>
+                                    <td class="owner-field">{{ assessment.owner_name }} &#128221;</td>
+                                </tr>
+                                <tr>
+                                    <td>Last Editor:</td>
+                                    <td>{{ assessment.last_editor_name }}</td>
+                                </tr>
+                                <tr>
+                                    <td>Last Edited: </td>
+                                    <td>{% if assessment.last_edit %}{{ assessment.last_edit }}{% else %}Never edited{% endif %}</td>
+                                </tr>
+                            </tbody>
+                        </table>
                         <div class="is-flex is-gap-2">
                             <button
                                 class="button is-link is-light"
@@ -26,26 +46,26 @@
                                 >
                                 Edit
                             </button>
-                            <button
-                                class="button is-success is-light"
-                                hx-get="{{ url_for("dashboard_assessments_page") }}/review/{{ assessment.assessment_id }}"
-                                hx-select=".bat-main-content"
-                                hx-target=".bat-main-content"
-                                hx-swap="outerHTML"
-                                hx-push-url="true"
-                                >
-                                Review
-                            </button>
-                            <button
-                                class="button is-danger is-light"
-                                hx-delete="{{ url_for("dashboard_assessments_page") }}/{{ assessment.assessment_id }}"
-                                hx-select=".bat-main-content"
-                                hx-target=".bat-main-content"
-                                hx-swap="outerHTML"
-                                hx-confirm="Delete assessment: {{ assessment.assessment_name }}? All Data will be deleted including answers!"
-                                >
-                                Delete
-                            </button>
+                                <button
+                                    class="button is-success is-light"
+                                    hx-get="{{ url_for("dashboard_assessments_page") }}/review/{{ assessment.assessment_id }}"
+                                    hx-select=".bat-main-content"
+                                    hx-target=".bat-main-content"
+                                    hx-swap="outerHTML"
+                                    hx-push-url="true"
+                                    >
+                                    Review
+                                </button>
+                                    <button
+                                        class="button is-danger is-light"
+                                        hx-delete="{{ url_for("dashboard_assessments_page") }}/{{ assessment.assessment_id }}"
+                                        hx-select=".bat-main-content"
+                                        hx-target=".bat-main-content"
+                                        hx-swap="outerHTML"
+                                        hx-confirm="Delete assessment: {{ assessment.assessment_name }}? All Data will be deleted including answers and reports!"
+                                        >
+                                        Delete
+                                    </button>
                         </div>
                     </div> 
                 </div>
@@ -54,7 +74,7 @@
             </div>
             {% if not assessments %}
             <div class="content has-text-centered">
-               <p>No assessments were created yet. Create one first!</p> 
+                <p>No assessments were created yet. Create one first!</p> 
             </div>
             {% endif %}
         </div>

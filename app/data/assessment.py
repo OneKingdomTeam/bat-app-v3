@@ -1,9 +1,12 @@
 from uuid import uuid4
+from babel.dates import format_datetime
+from datetime import datetime
 from app.data.init import conn, curs
 import app.data.question as question_data
 from app.exception.database import RecordNotFound
-from app.model.assesment import Assessment, AssessmentAnswerPost, AssessmentNew, AssessmentQA
+from app.model.assesment import Assessment, AssessmentAnswerPost, AssessmentChown, AssessmentNew, AssessmentQA
 from app.model.question import Question, QuestionCategory
+from app.model.user import User
 
 
 curs.execute("""create table if not exists assessments(
@@ -390,29 +393,23 @@ def delete_assessment(assessment_id: str) -> Assessment:
 
     assessment = get_one(assessment_id=assessment_id)
 
+    qry_rp = """delete from reports where assessment_id = :assessment_id"""
     qry_qa = """delete from assessments_answers where assessment_id = :assessment_id"""
-    params_qa = {"assessment_id": assessment_id}
-
     qry_an = """delete from assessments_notes where assessment_id = :assessment_id"""
-    params_an = {"assessment_id": assessment_id}
-
     qry_q = """delete from assessments_questions where assessment_id = :assessment_id"""
-    params_q = {"assessment_id": assessment_id}
-
     qry_qc = """delete from assessments_questions_categories where assessment_id = :assessment_id"""
-    params_qc = {"assessment_id": assessment_id}
-
     qry = """delete from assessments where assessment_id = :assessment_id"""
-    params = {"assessment_id": assessment_id}
+
+    params = {"assessment_id":assessment_id}
 
 
     cursor = conn.cursor()
     try:
-        cursor.execute(qry_qa, params_qa)
-        cursor.execute(qry_an, params_an)
-        cursor.execute(qry_q, params_q)
-        cursor.execute(qry_qc, params_qc)
-        cursor.execute(qry_qc, params_qc)
+        cursor.execute(qry_rp, params)
+        cursor.execute(qry_qa, params)
+        cursor.execute(qry_an, params)
+        cursor.execute(qry_q, params)
+        cursor.execute(qry_qc, params)
         cursor.execute(qry, params)
         conn.commit()
         return assessment
@@ -492,5 +489,59 @@ def save_answer(answer_data: AssessmentAnswerPost):
     try:
         cursor.execute(qry, params)
         conn.commit()
+    finally:
+        cursor.close()
+
+def update_last_edit(assessment_id: str, current_user: User) -> bool:
+
+    qry = """
+    update
+        assessments
+    set
+        last_edit = :last_edit,
+        last_editor = :last_editor
+    where
+        assessment_id = :assessment_id
+    """
+
+    now = datetime.now()
+    formatted_date = format_datetime(now, format="MMM d, y, HH:mm", locale="en_US")
+
+    params = {
+            "last_edit":formatted_date,
+            "last_editor":current_user.user_id,
+            "assessment_id":assessment_id
+            }
+
+    cursor = conn.cursor()
+    try:
+        cursor.execute(qry, params)
+        conn.commit()
+        return True
+    finally:
+        cursor.close()
+
+
+def chown(assessment_chown: AssessmentChown) -> bool:
+
+    qry = """
+    update
+        assessments
+    set
+        owner_id = :owner_id
+    where 
+        assessment_id = :assessment_id
+    """
+
+    params = {
+            "owner_id":assessment_chown.new_owner_id,
+            "assessment_id":assessment_chown.assessment_id
+            }
+
+    cursor = conn.cursor()
+    try:
+        cursor.execute(qry, params)
+        conn.commit()
+        return True
     finally:
         cursor.close()

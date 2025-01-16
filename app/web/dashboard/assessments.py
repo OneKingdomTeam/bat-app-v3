@@ -2,7 +2,8 @@ from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse
 
 from app.data.note import get_note
-from app.model.assesment import AssessmentAnswerPost, AssessmentNote, AssessmentPost, AssessmentQA
+from app.exception.service import Unauthorized
+from app.model.assesment import AssessmentAnswerPost, AssessmentChown, AssessmentNote, AssessmentPost, AssessmentQA
 from app.template.init import jinja
 from app.model.user import User
 from app.service.auth import user_htmx_dep
@@ -24,6 +25,34 @@ def get_assessments(request:Request, current_user: User = Depends(user_htmx_dep)
     except:
         # NotImplemented
         raise
+
+
+    context = {
+            "request": request,
+            "title":"Assessments",
+            "description":"List of all available assessments.",
+            "current_user": current_user,
+            "assessments": assessments,
+            }
+
+    response = jinja.TemplateResponse(
+            name="dashboard/assessments.html",
+            context=context
+            )
+
+    return response
+
+
+@router.put("", response_class=HTMLResponse)
+def put_assessments_chown(request:Request, assessment_chown: AssessmentChown, current_user: User = Depends(user_htmx_dep)):
+
+    try:
+        service.chown(assessment_chown=assessment_chown, current_user=current_user)
+        assessments = service.get_all(current_user=current_user)
+    except:
+        # NotImplemented
+        raise
+
 
     context = {
             "request": request,
@@ -361,6 +390,28 @@ def delete_assessment(assessment_id: str, request:Request, current_user: User = 
 
     response = jinja.TemplateResponse(
             name="dashboard/assessments.html",
+            context=context
+            )
+
+    return response
+
+@router.get("/rename/{assessment_id}", response_class=HTMLResponse, name="dashboard_assessment_rename")
+def get_assessment_rename_for(request: Request, assessment_id: str, current_user: User = Depends(user_htmx_dep)):
+
+    try:
+        users = user_service.get_all(current_user=current_user)
+    except Unauthorized as e:
+        raise e
+
+    context = {
+            "request":request,
+            "users":users,
+            "assessment_id":assessment_id
+            }
+
+
+    response = jinja.TemplateResponse(
+            name="dashboard/assessments-change-owner.html",
             context=context
             )
 

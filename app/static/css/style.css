@@ -31,7 +31,7 @@ body, .bat-body{
 }
 
 
-.reports-table tr td:first-child{
+.card-table tr td:first-child{
     font-weight: 600;
 }
 

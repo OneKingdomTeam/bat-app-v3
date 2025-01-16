@@ -1,0 +1,30 @@
+<tr class="owner-row is-fullwidth">
+    <td>
+        <label class="label">Owner</label>
+    </td>
+    <td>
+        <form
+            hx-put="{{ url_for("dashboard_assessments_page") }}"
+            hx-select=".bat-main-content"
+            hx-target=".bat-main-content"
+            hx-swap="outerHTML"
+            hx-trigger="change"
+            hx-ext="json-enc"
+            >
+            <div class="field is-flex is-flex-direction-row is">
+                <div class="select is-fullwidth">
+                    <select name="new_owner_id">
+                        {% for user in users %}
+                        <option value="{{ user.user_id }}">{{ user.username }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="field is-hidden">
+                <div class="control">
+                    <input name="assessment_id" class="input disabled" type="text" value="{{ assessment_id }}" readonly>
+                </div>
+            </div>
+        </form>
+    </td>
+</tr>

@@ -72,3 +72,8 @@ class AssessmentNoteExtended(BaseModel):
     category_order: int
     note_content: str | None
     category_name: str | None
+
+
+class AssessmentChown(BaseModel):
+    assessment_id: str
+    new_owner_id: str

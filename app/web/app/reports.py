@@ -3,6 +3,7 @@
 
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import HTMLResponse, RedirectResponse
+from passlib import context
 
 from app.model.user import User
 from app.service.auth import user_htmx_dep
@@ -41,6 +42,29 @@ def get_reports_for_assessment(request: Request, assessment_id: str, current_use
     response = jinja.TemplateResponse(
             context=context,
             name="app/reports.html"
+            )
+
+    return response
+
+@router.get("/view/{report_id}", response_class=HTMLResponse, name="app_report_view_page")
+def get_report_view(request: Request, report_id: str, current_user: User = Depends(user_htmx_dep)):
+
+    try:
+        report = service.get_public_report_for_user(report_id=report_id, current_user=current_user)
+    except:
+        #NotImplemented
+        raise
+
+
+    context = {
+            "request": request,
+            "title": report.report_name,
+            "report": report,
+            }
+
+    response = jinja.TemplateResponse(
+            context=context,
+            name="app/report-preview.html"
             )
 
     return response

@@ -1,6 +1,6 @@
 from uuid import uuid4
 from app.exception.database import RecordNotFound
-from app.model.assesment import Assessment, AssessmentAnswerPost, AssessmentNew, AssessmentPost, AssessmentQA
+from app.model.assesment import Assessment, AssessmentAnswerPost, AssessmentChown, AssessmentNew, AssessmentPost, AssessmentQA
 from app.model.user import User
 from app.exception.service import Unauthorized
 from app.template.init import jinja
@@ -171,3 +171,13 @@ def save_answer(answer_data: AssessmentAnswerPost, current_user: User):
     
     if current_user.can_manage_assessments() or current_user.user_id == targeted_assessment.owner_id:
         data.save_answer(answer_data=answer_data)
+        data.update_last_edit(assessment_id=answer_data.assessment_id, current_user=current_user)
+
+
+def chown(assessment_chown: AssessmentChown, current_user: User) -> bool:
+
+    if not current_user.can_manage_assessments():
+        raise Unauthorized(msg="You cannot view all assessments.")
+
+    return data.chown(assessment_chown=assessment_chown)
+
