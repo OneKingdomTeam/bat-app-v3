@@ -28,6 +28,8 @@ DEFAULT_EMAIL_ENV = os.getenv("DEFAULT_EMAIL")
 if DEFAULT_EMAIL_ENV is None:
     raise InvalidConstantValue("Access token expire minutes value is None. Exitting")
 
+
+
 SECRET_KEY = str(SECRET_KEY_ENV)
 ALGORITHM = str(ALGORITHM_ENV)
 ACCESS_TOKEN_EXPIRE_MINUTES = int(ACCESS_TOKEN_EXPIRE_MINUTES_ENV)
