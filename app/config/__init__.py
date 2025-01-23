@@ -29,6 +29,18 @@ if DEFAULT_EMAIL_ENV is None:
     raise InvalidConstantValue("Access token expire minutes value is None. Exitting")
 
 
+SMTP_LOGIN = os.getenv("SMTP_LOGIN")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+SMTP_EMAIL = os.getenv("SMTP_EMAIL")
+SMTP_SERVER = os.getenv("SMTP_SERVER")
+SMTP_PORT = os.getenv("SMTP_PORT")
+
+SMTP_ENABLED = False
+if ( SMTP_LOGIN is None or SMTP_PASSWORD is None or SMTP_EMAIL is None
+    or SMTP_SERVER is None or SMTP_PORT is None ):
+    SMTP_ENABLED = True
+
+
 
 SECRET_KEY = str(SECRET_KEY_ENV)
 ALGORITHM = str(ALGORITHM_ENV)
