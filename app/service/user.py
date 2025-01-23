@@ -52,14 +52,18 @@ def create(user: UserCreate, current_user: User) -> User:
 
     new_uuid = str(uuid4())
 
-    new_user = data.create(User(
-            user_id=new_uuid,
-            username=user.username,
-            email=user.email,
-            hash=get_password_hash(user.password),
-            role=user.role
-            ))
-
+    try:
+        new_user = data.create(User(
+                user_id=new_uuid,
+                username=user.username,
+                email=user.email,
+                hash=get_password_hash(user.password),
+                role=user.role
+                ))
+    except Exception as e:
+        print(f"Failed to create user: {e}")
+        raise e
+        
     try:
         notify_user_created(new_user=new_user, current_user=current_user)
     except Exception as e:

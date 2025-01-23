@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Request, Depends, HTTPException, Response
 from fastapi.responses import HTMLResponse
+from sqlite3 import IntegrityError
+
 from app.exception.database import RecordNotFound, UsernameOrEmailNotUnique
 from app.exception.service import EndpointDataMismatch, Unauthorized
 from app.model.user import User, UserCreate, UserUpdate
@@ -171,6 +173,16 @@ async def delete_user(user_id: str, request: Request, current_user: User = Depen
         context.update(prepare_notification(True, "warning", e.msg))
     except Unauthorized as e:
         context.update(prepare_notification(True, "danger", e.msg))
+    except IntegrityError as e:
+        error_message = str(e).lower()
+        if "FOREIGN KEY constraint failed".lower() in error_message:
+            user = service.get(user_id=user_id, current_user=current_user)
+            notifcation = prepare_notification(
+                    show=True,
+                    notification_type="warning",
+                    notification_content=f"User {user.username} has still some resources attached. Try checking the assessments and reassigning them to someone else before deletion."
+                    )
+            context.update(notifcation)
 
     context["users"] = service.get_all(current_user=current_user)
 

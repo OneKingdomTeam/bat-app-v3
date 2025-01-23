@@ -108,3 +108,8 @@ class User(BaseModel):
         if self.role == UserRoleEnum.admin or self.role == UserRoleEnum.coach:
             return True
         return False
+
+    def can_send_emails(self) -> bool:
+        if self.role == UserRoleEnum.admin or self.role == UserRoleEnum.coach:
+            return True
+        return False

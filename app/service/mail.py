@@ -7,19 +7,47 @@ from app.config import SMTP_LOGIN, SMTP_PORT, SMTP_EMAIL, SMTP_SERVER, \
         SMTP_ENABLED, SMTP_PASSWORD
 
 from app.template.init import jinja
+from app.model.user import User
+from app.model.report import Report
+from app.exception.service import Unauthorized
 
 
 def notify_user_created(new_user: User, current_user: User) -> bool:
 
-    return
+    if not current_user.can_send_emails:
+        raise Unauthorized(msg="You cannot send e-mails")
+
+    username = new_user.username
+    email = new_user.email
+
+    subject = f"Hello {username}, welcome to BAT App!"
+
+    context = {
+            "username":username,
+            }
+
+    template = jinja.env.get_template("email/new-user.html")
+    content = template.render(context)
+    
+    try:
+        send_html_email(
+                recipient_email=email,
+                subject=subject,
+                html_message=content
+                )
+    except Exception as e:
+        # NotImplemented
+        raise e
+
+    return False
 
 
 def notify_report_published(report: Report, current_user: User) -> bool:
 
-    return
+    return False
 
 
-def send_html_email(recipient_email, subject, html_message):
+def send_html_email(recipient_email: str, subject: str, html_message: str) -> bool:
     """
     Sends an HTML-encoded email through SMTP using predefined constants.
 
@@ -32,13 +60,16 @@ def send_html_email(recipient_email, subject, html_message):
     - True if the email was sent successfully, False otherwise.
     """
 
+    print("Trying to send email")
+
     if not SMTP_ENABLED:
-        return
+        print("failing here")
+        return False
 
     try:
         # Create the MIMEMultipart message object
         msg = MIMEMultipart()
-        msg['From'] = SMTP_EMAIL
+        msg['From'] = f"BAT App <{SMTP_EMAIL}>"
         msg['To'] = recipient_email
         msg['Subject'] = subject
         msg['Date'] = formatdate(localtime=True)

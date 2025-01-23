@@ -1,46 +1,54 @@
 {% extends "dashboard/dashboard.html" %}
 
 {% block body %}
-<div class="container is-max-tablet">
-    <h2 class="title is-2 has-text-centered">{{ title }}</h2>
-    {% include "helpers/notification.html" %}
-    <form class="main-form" hx-post="{{ url_for("dashboard_user_add_page") }}" hx-ext="json-enc" hx-target="body">
-        <div class="field">
-            <label class="label">E-mail</label>
-            <div class="control">
-                <input name="email" class="input selected-input" type="email" placeholder="john@doe.com">
+<section class="bat-main-content is-flex pt-6">
+    <div class="container is-max-tablet">
+        <h2 class="title is-2 has-text-centered">{{ title }}</h2>
+        {% include "helpers/notification.html" %}
+        <form class="main-form"
+            hx-post="{{ url_for("dashboard_user_add_page") }}"
+            hx-select=".bat-main-content"
+            hx-target=".bat-main-content"
+            hx-swap="outerHTML"
+            hx-ext="json-enc"
+            hx-indicator="#create-user-button">
+            <div class="field">
+                <label class="label">E-mail</label>
+                <div class="control">
+                    <input name="email" class="input selected-input" type="email" placeholder="john@doe.com">
+                </div>
             </div>
-        </div>
-        <div class="field">
-            <label class="label">Username</label>
-            <div class="control">
-                <input name="username" class="input" type="text" placeholder="JohnDoe">
+            <div class="field">
+                <label class="label">Username</label>
+                <div class="control">
+                    <input name="username" class="input" type="text" placeholder="JohnDoe">
+                </div>
             </div>
-        </div>
-        <div class="field">
-            <label class="label">Password</label>
-            <div class="control">
-                <input name="password" class="input" type="password" placeholder="******">
+            <div class="field">
+                <label class="label">Password</label>
+                <div class="control">
+                    <input name="password" class="input" type="password" placeholder="******">
+                </div>
             </div>
-        </div>
-        <div class="field">
-            <label class="label">Role</label>
-            <div class="select is-fullwidth">
-                <select name="role">
-                    {% for role in available_roles %}
-                    <option value="{{ role }}">{{ role }}</option>
-                    {% endfor %}
-                </select>
+            <div class="field">
+                <label class="label">Role</label>
+                <div class="select is-fullwidth">
+                    <select name="role">
+                        {% for role in available_roles %}
+                        <option value="{{ role }}">{{ role }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
             </div>
-        </div>
-        <div class="is-fullwidth pt-4 is-flex is-justify-content-space-around is-flex-direction-row-reverse">
-            <div class="control">
-                <input type="submit" value="Create User" class="button is-success is-light">
+            <div class="is-fullwidth pt-4 is-flex is-justify-content-space-around is-flex-direction-row-reverse">
+                <div class="control">
+                    <input id="create-user-button" type="submit" value="Create User" class="button is-success is-light">
+                </div>
+                <div class="control">
+                    <a class="button is-warning is-light" href="{{ url_for("dashboard_users_page") }}" hx-boost="true">&#11013;&nbsp;Return</a>
+                </div>
             </div>
-            <div class="control">
-                <a class="button is-warning is-light" href="{{ url_for("dashboard_users_page") }}" hx-boost="true">&#11013;&nbsp;Return</a>
-            </div>
-        </div>
-    </form>
-</div>
+        </form>
+    </div>
+</section>
 {% endblock %}

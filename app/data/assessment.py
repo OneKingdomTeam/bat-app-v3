@@ -14,7 +14,7 @@ curs.execute("""create table if not exists assessments(
     assessment_name text,
     owner_id text references users( user_id ),
     last_edit text,
-    last_editor text references users( user_id )
+    last_editor text
     )""")
 
 

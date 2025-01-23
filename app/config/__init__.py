@@ -35,9 +35,10 @@ SMTP_EMAIL = os.getenv("SMTP_EMAIL")
 SMTP_SERVER = os.getenv("SMTP_SERVER")
 SMTP_PORT = os.getenv("SMTP_PORT")
 
-SMTP_ENABLED = False
 if ( SMTP_LOGIN is None or SMTP_PASSWORD is None or SMTP_EMAIL is None
     or SMTP_SERVER is None or SMTP_PORT is None ):
+    SMTP_ENABLED = False
+else:
     SMTP_ENABLED = True
 
 
