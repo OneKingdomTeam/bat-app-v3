@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse
 from sqlite3 import IntegrityError
 
 from app.exception.database import RecordNotFound, UsernameOrEmailNotUnique
-from app.exception.service import EndpointDataMismatch, Unauthorized
+from app.exception.service import EndpointDataMismatch, InvalidFormEntry, Unauthorized
 from app.model.user import User, UserCreate, UserUpdate
 from app.config import SMTP_ENABLED
 from app.template.init import jinja
@@ -80,7 +80,10 @@ async def add_user_post(request: Request,  new_user: UserCreate,  current_user: 
         status_code = 401
     except UsernameOrEmailNotUnique as e:
         context.update(prepare_notification(True, "warning", e.msg))
-        status_code = 403
+        status_code = 422
+    except InvalidFormEntry as e:
+        context.update(prepare_notification(True, "warning", e.msg))
+        status_code = 422
 
     template_response = jinja.TemplateResponse(
             name="dashboard/user-create.html",

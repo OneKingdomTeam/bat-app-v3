@@ -30,3 +30,6 @@ class SMTPCredentialsNotSet(Exception):
     def __init__(self, msg: str):
         self.msg = msg
 
+class InvalidFormEntry(Exception):
+    def __init__(self, msg: str):
+        self.msg = msg

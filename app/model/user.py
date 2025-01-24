@@ -19,7 +19,7 @@ class UserCreate(BaseModel):
     user_id: Optional[str] = Field(None, max_length=36, min_length=36)
     username: str
     email: str
-    password: str = Field(..., min_length=12, max_length=128)
+    password: str
     role: UserRoleEnum
 
 

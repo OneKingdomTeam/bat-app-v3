@@ -81,19 +81,23 @@ def get_by(field: str, value: str|int ) -> User:
 
 def create(user: User) -> User:
     qry = """insert into users(user_id, username, email, hash, role) 
-            values( :user_id, :username, :email, :hash, :role)"""
+            values( :user_id, :username, :email, :hash, :role)
+            returning *"""
+
+    params = model_to_dict(user)
+    params["email"] = params["email"].lower()
+
+    cursor = conn.cursor()
     try:
-        params = model_to_dict(user)
-        params["email"] = params["email"].lower()
-        _ = curs.execute(qry, params)
-        conn.commit()
+        cursor.execute(qry, params)
+        inserted_row = cursor.fetchone()
+        if inserted_row:
+            return row_to_model(inserted_row)
     except IntegrityError as e:
         conn.rollback()
-        if "UNIQUE constraint failed: user.email" in str(e):
-            raise UsernameOrEmailNotUnique(msg="Email needs to be unique. Provided e-mail is already in use. Try different one.")
-        if "UNIQUE constraint failed: user.username" in str(e):
-            raise UsernameOrEmailNotUnique(msg="Username needs to be unique. Provided username is used. Try different one.")
-    return get_one(user.user_id)
+        raise UsernameOrEmailNotUnique(msg="Username or email already exists. Check list of users and try again.")
+    finally:
+        cursor.close()
 
 
 def modify(user_id: str, user_updated: User) -> User:

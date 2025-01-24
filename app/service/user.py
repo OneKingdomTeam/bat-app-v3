@@ -4,7 +4,7 @@ from app.config import  DEFAULT_USER, \
 
 from app.data import user as data
 from app.exception.database import RecordNotFound
-from app.exception.service import EndpointDataMismatch, Unauthorized, SMTPCredentialsNotSet
+from app.exception.service import EndpointDataMismatch, InvalidFormEntry, Unauthorized, SMTPCredentialsNotSet
 from app.service.auth import get_password_hash
 from app.service.mail import notify_user_created
 from app.model.user import User, UserCreate, UserRoleEnum, UserUpdate
@@ -59,6 +59,12 @@ def create(user: UserCreate, current_user: User) -> User:
         raise Unauthorized(msg="You cannot create this user")
 
     new_uuid = str(uuid4())
+
+    if len(user.password) < 12:
+        raise InvalidFormEntry(msg="Password too short. It needs to be at least 12 characters")
+    elif len(user.password) > 128:
+        raise InvalidFormEntry(msg="Password too long. Sorry we support only up to 128 characters.")
+
 
     try:
         new_user = data.create(User(

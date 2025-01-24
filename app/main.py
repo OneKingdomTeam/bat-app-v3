@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from starlette.middleware.base import BaseHTTPMiddleware
 from contextlib import asynccontextmanager
 from fastapi.staticfiles import StaticFiles
@@ -15,7 +15,7 @@ from app.web.dashboard.dashboard import router as dashboard_router
 from app.web.dashboard.users import router as dashboard_users_router
 from app.web.dashboard.questions import router as dashboard_questions_router
 from app.web.dashboard.assessments import router as dashboard_assessments_router
-from app.web.dashboard.reports import router3 as dashboard_reports_router
+from app.web.dashboard.reports import router as dashboard_reports_router
 
 from app.web.app import router as app_root_router
 from app.web.app.assessments import router as app_assessments_router
