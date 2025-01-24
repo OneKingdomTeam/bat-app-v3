@@ -16,6 +16,13 @@ from uuid import uuid4
 
 def add_default_user():
 
+    try:
+        users = data.get_all()
+        print("Users already present in the database")
+        return
+    except RecordNotFound as e:
+        print("No users found. Creating default one.")
+
     new_uuid = str(uuid4())
 
     username = DEFAULT_USER

@@ -55,4 +55,7 @@ fastapi run
 ```
 
 
+## Podman Compose / Docker Compose
+
+There is example `compose.yml` in the repository
 

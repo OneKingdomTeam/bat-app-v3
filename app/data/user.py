@@ -52,8 +52,18 @@ def get_one(user_id: str | None) -> User:
 
 def get_all() -> list[User]:
     qry = "select * from users"
-    curs.execute(qry)
-    return [row_to_model(row) for row in curs.fetchall()]
+
+    cursor = conn.cursor()
+    try:
+        cursor.execute(qry)
+        rows = cursor.fetchall()
+        if rows:
+            return [row_to_model(row) for row in rows]
+        else:
+            raise RecordNotFound(msg="Questions were found.")
+    finally:
+        cursor.close()
+
 
 
 def get_by(field: str, value: str|int ) -> User:

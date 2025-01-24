@@ -1,0 +1,20 @@
+services:
+  bat-app:
+    image: bat-app
+    container_name: bat-app
+    ports:
+      - "8000:8000"
+    environment:
+      - SMTP_LOGIN=
+      - SMTP_PASSWORD=
+      - SMTP_EMAIL=
+      - SMTP_SERVER=
+      - SMTP_PORT=
+      - SECRET_KEY_ENV=
+      - ALGORITHM_ENV=
+      - ACCESS_TOKEN_EXPIRE_MINUTES_ENV=
+      - DEFAULT_USER_ENV=
+      - DEFAULT_EMAIL_ENV=
+      - DEFAULT_PASSWORD_ENV=
+    volumes:
+      - ./database:/bat-app/app/database:Z

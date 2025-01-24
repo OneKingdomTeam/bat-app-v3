@@ -1,8 +1,11 @@
 from fastapi import FastAPI
+from contextlib import asynccontextmanager
 from fastapi.staticfiles import StaticFiles
 from app.exception.web import NonHTMXRequestException, RedirectToLoginException, non_htmx_request_exception_handler, redirect_to_login_exception_handler
 from pathlib import Path
 
+from app.service.user import add_default_user
+from app.service.question import add_default_questions
 
 from app.web.public import router as public_router
 from app.web.dashboard.dashboard import router as dashboard_router
@@ -16,8 +19,18 @@ from app.web.app.assessments import router as app_assessments_router
 from app.web.app.reports import router as app_reports_router
 
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+
+    print("this run")
+    add_default_user()
+    add_default_questions()
+
+    yield
+
+
 # Main app to start
-app = FastAPI()
+app = FastAPI(lifespan=lifespan)
 
 app.add_exception_handler(NonHTMXRequestException, non_htmx_request_exception_handler)
 app.add_exception_handler(RedirectToLoginException, redirect_to_login_exception_handler)

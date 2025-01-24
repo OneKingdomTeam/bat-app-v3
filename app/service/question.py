@@ -2,6 +2,7 @@ from app.data import question as data
 import json
 from pathlib import Path
 
+from app.exception.database import RecordNotFound
 from app.exception.service import EndpointDataMismatch, Unauthorized
 from app.model.question import Question, QuestionCategory, QuestionCategoryRename, QuestionCategoryReorder, QuestionEditContent
 from app.model.user import User
@@ -14,6 +15,15 @@ from app.model.user import User
 
 def add_default_questions():
     """Depends on the presence of the default_quesions.json file in the same direcotry."""
+
+    try:
+        existing_questions = data.get_all()
+        if existing_questions:
+            print("Questions already present in database.")
+            return
+    except RecordNotFound as e:
+        print("No questions found adding default question")
+
 
     path = Path(__file__).resolve().parent
     json_file_path = path / "default_questions.json"
