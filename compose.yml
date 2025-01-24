@@ -10,11 +10,14 @@ services:
       - SMTP_EMAIL=
       - SMTP_SERVER=
       - SMTP_PORT=
-      - SECRET_KEY_ENV=
-      - ALGORITHM_ENV=
-      - ACCESS_TOKEN_EXPIRE_MINUTES_ENV=
-      - DEFAULT_USER_ENV=
-      - DEFAULT_EMAIL_ENV=
-      - DEFAULT_PASSWORD_ENV=
+      # openssl rand -hex 32
+      - SECRET_KEY=
+      - ALGORITHM=HS256                    # keep unless decided otherwise
+      - ACCESS_TOKEN_EXPIRE_MINUTES=30     # good value to use
+      - DEFAULT_USER=
+      - DEFAULT_EMAIL=
+      - DEFAULT_PASSWORD=
+      # Uncomment if you will run instance behind https reverse proxy
+      # - FORCE_HTTPS_PATHS=True
     volumes:
       - ./database:/bat-app/app/database:Z
