@@ -28,6 +28,7 @@ DEFAULT_EMAIL_ENV = os.getenv("DEFAULT_EMAIL")
 if DEFAULT_EMAIL_ENV is None:
     raise InvalidConstantValue("Access token expire minutes value is None. Exitting")
 
+FORCE_HTTPS_PATHS_ENV = os.getenv("FORCE_HTTPS_PATHS")
 
 SMTP_LOGIN = os.getenv("SMTP_LOGIN")
 SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
