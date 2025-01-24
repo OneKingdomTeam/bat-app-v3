@@ -10,8 +10,8 @@ COPY ./app /bat-app/app
 
 # Remove database if there is any
 RUN rm -rf /bat-app/app/db/*
-RUN rm /bat-app/app/.env
-RUN rm /bat-app/app/.env_example
+RUN rm -f /bat-app/app/.env
+RUN rm -f /bat-app/app/.env_example
 
 # Remove dotenv for containerized version
 RUN sed -i 's/load_dotenv()//' /bat-app/app/config/__init__.py
