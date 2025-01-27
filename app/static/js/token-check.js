@@ -3,7 +3,7 @@ function tokenLoginCheck() {
 
     if (accessToken) {
         const headers = new Headers();
-        headers.append("Authorization", `Bearer ${accessToken}`); // Prefixing with Bearer is standard for tokens
+        headers.append("Authorization", accessToken); // Prefixing with Bearer is standard for tokens
 
         fetch(tokenCheckUrl, {
             method: 'GET',
