@@ -9,7 +9,9 @@ curs.execute("""create table if not exists users(
     username text unique,
     email text unique,
     hash text,
-    role text
+    role text,
+    password_reset_token text,
+    reset_token_expires int
     )""")
 
 def row_to_model(row: tuple) -> User:
@@ -71,12 +73,18 @@ def get_by(field: str, value: str|int ) -> User:
     params = {
             "value": value,
         }
-    curs.execute(qry, params)
-    row = curs.fetchone()
-    if row:
-        return row_to_model(row)
-    else:
-        raise RecordNotFound(f"Record for {field}: {value} was not found")
+
+    cursor = conn.cursor()
+    try:
+        cursor.execute(qry, params)
+        row = cursor.fetchone()
+        if row:
+            return row_to_model(row)
+        else:
+            raise RecordNotFound(f"Record for {field}: {value} was not found")
+    finally:
+        cursor.close()
+
 
 
 def create(user: User) -> User:
@@ -121,9 +129,7 @@ def modify(user_id: str, user_updated: User) -> User:
         if "UNIQUE constraint failed: user.username" in str(e):
             raise UsernameOrEmailNotUnique(msg="Username needs to be unique. Provided username is used. Try different one.")
     updated_user = get_one(user_id)
-    return updated_user
-
-
+     
 def delete(user_id: str) -> User:
     deleted_user = get_one(user_id)
 
@@ -134,3 +140,30 @@ def delete(user_id: str) -> User:
     conn.execute(qry, params)
     conn.commit()
     return deleted_user
+
+
+def set_password_reset_token(user_id: str, token: str, token_expires: int) -> bool:
+
+    qry = """
+    insert into
+        users(password_reset_token, reset_token_expires)
+        values(:password_reset_token, :reset_token_expires)
+    where
+        user_id = :user_id
+    """
+
+    params = {
+            "user_id":user_id,
+            "password_reset_token":token,
+            "reset_token_expires":token_expires
+            }
+
+    cursor = conn.cursor()
+    try:
+        cursor.execute(qry, params)
+        conn.commit()
+        return True
+    finally:
+        cursor.close()
+
+

@@ -1,4 +1,6 @@
 from passlib import context
+import secrets
+from datetime import datetime, timedelta, timezone
 from app.config import  DEFAULT_USER, \
         DEFAULT_EMAIL, DEFAULT_PASSWORD
 
@@ -136,4 +138,19 @@ def update(user_id: str, user: UserUpdate, current_user: User) -> User:
 
     modified_user = data.modify(user_id, updated_data)
     return modified_user
+
+
+def create_password_reset_token(email: str) -> str | bool:
+
+    try:
+        user: User = data.get_by(field="email", value=email)
+        now = datetime.now(timezone.utc)
+        expires_at = now + timedelta(minutes=60)
+        reset_token: str = secrets.token_hex(64)
+        token_expires: int = int(expires_at.timestamp())
+    except RecordNotFound as e:
+        # Email not found but for preventing leaking infromation
+        # no handle should be added here. Unless we want to track if someone
+        # is brute forcing the password resset functionality for some reason
+        
 
