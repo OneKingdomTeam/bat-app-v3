@@ -1,11 +1,24 @@
 from fastapi import APIRouter, Depends, HTTPException, Request
 from fastapi.responses import HTMLResponse
+
+from app.config import SMTP_ENABLED
+
 from app.exception.database import RecordNotFound
 from app.exception.service import IncorectCredentials, InvalidBearerToken
+
 from app.model.user import User, UserLogin
+from app.model.emailreset import PasswordResetRequest
+
+
 from app.template.init import jinja
+
+from app.service.user import create_password_reset_token
 from app.service.auth import handle_token_creation, auth_user, get_current_user, \
         handle_token_renewal, user_htmx_dep
+
+from app.web import prepare_notification
+
+
 
 router = APIRouter()
 
@@ -71,6 +84,77 @@ def token_check_get(request: Request):
         redirect_to = request.url_for("dashboard_assessments_page")
 
     return {"redirect_to":f"{redirect_to}"}
+
+
+@router.get("/password-reset", response_class=HTMLResponse, name="password_reset_page")
+def get_password_reset(request: Request):
+
+    context = {
+            "request": request,
+            "title": "Password Reset",
+            "description": "Reset password for your account.",
+            }
+
+    # Disable password reset form when no SMTP is enabled
+    if not SMTP_ENABLED:
+        notification = prepare_notification(
+                show=True,
+                notification_type="warning",
+                notification_content="Mail server not configured, ask your coach to reset password for you."
+        )
+        context.update(notification)
+
+    response = jinja.TemplateResponse(
+            name="public/password-reset.html",
+            context=context,
+            )
+
+    return response
+    
+    
+
+@router.post("/password-reset", response_class=HTMLResponse)
+def post_password_reset(request: Request, email_reset_data: PasswordResetRequest):
+
+    context = {
+            "request": request,
+            "title": "Password Reset",
+            "description": "Reset password for your account.",
+            }
+
+    try:
+        token_created = create_password_reset_token(email=email_reset_data.email)
+        notification = prepare_notification(
+                show=True,
+                notification_type="success",
+                notification_content="If email exists, we sent there reset link.")
+        context.update(notification)
+    except Exception as e:
+        # NotImplemented
+        raise e
+
+
+    response = jinja.TemplateResponse(
+            name="public/password-reset.html",
+            context=context,
+            )
+
+    return response
+
+
+@router.get("/set-password", response_class=HTMLResponse, name="set_password_page")
+def get_set_password(request: Request, reset_token: str):
+
+    context = {
+            "request": request,
+            "title": "Set your password",
+            "description": "Set password for your account.",
+            }
+
+    #NotImplemented
+
+    return
+
 
  
 @router.get("/login", response_class=HTMLResponse, name="login_page")

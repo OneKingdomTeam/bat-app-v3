@@ -148,9 +148,12 @@ def create_password_reset_token(email: str) -> str | bool:
         expires_at = now + timedelta(minutes=60)
         reset_token: str = secrets.token_hex(64)
         token_expires: int = int(expires_at.timestamp())
+        return True
     except RecordNotFound as e:
         # Email not found but for preventing leaking infromation
         # no handle should be added here. Unless we want to track if someone
         # is brute forcing the password resset functionality for some reason
+        return False
+    
         
 
