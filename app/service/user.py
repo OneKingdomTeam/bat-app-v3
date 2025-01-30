@@ -150,7 +150,7 @@ def create_password_reset_token(email: str) -> str | bool:
         token_expires: int = int(expires_at.timestamp())
         if not type(user.user_id) == str:
             raise RecordNotFound(msg="User id is not valid id")
-        token_object: UserPasswordResetToken = data.set_password_reset_token(user_id=user.user_id, token=reset_token, token_expires=token_expires)
+        data.set_password_reset_token(user_id=user.user_id, token=reset_token, token_expires=token_expires)
         return True
     except RecordNotFound as e:
         # Email not found but for preventing leaking infromation

@@ -23,10 +23,13 @@
             <div class="column assessment-wheel-panel is-two-fifths">
                 <h5 class="title is-5">Notes:</h5>
                 <form
+                    id="note-form"
                     hx-put="{{ request.url }}"
                     hx-select=".bat-main-content"
                     hx-target=".bat-main-content"
                     hx-swap="outerHTML"
+                    hx-indicator="#note-save-button"
+                    hx-trigger="change"
                     hx-ext="json-enc">
                     <textarea name="note_content" class="textarea" rows="16">{% if assessment_category_note.note_content %}{{ assessment_category_note.note_content }}{% endif %}</textarea>
                     <div class="is-hidden">
@@ -34,11 +37,34 @@
                         <input type="text" name="assessment_id" value="{{ assessment_category_note.assessment_id }}">
                         <input type="number" name="category_order" value="{{ assessment_category_note.category_order }}">
                     </div>
-                    <button class="button is-link is-light my-3">Save note</button>
                 </form>
+                <div class="content my-3 is-flex is-justify-content-space-around">
+                    {% if previous_category != None %}
+                    <button
+                        class="button is-link is-light"
+                        hx-get="{{ url_for("dashboard_assessment_category_review_page", assessment_id=assessment_id, category_order=previous_category ) }}"
+                        hx-select=".bat-main-content"
+                        hx-target=".bat-main-content"
+                        hx-swap="outerHTML"
+                        hx-push-url="true">
+                        Previous
+                    </button>
+                    {% endif %}
+                    {% if next_category != None %}
+                    <button
+                        class="button is-link is-light"
+                        hx-get="{{ url_for("dashboard_assessment_category_review_page", assessment_id=assessment_id, category_order=next_category ) }}"
+                        hx-select=".bat-main-content"
+                        hx-target=".bat-main-content"
+                        hx-swap="outerHTML"
+                        hx-push-url="true">
+                        Next
+                    </button>
+                    {% endif %} 
+                </div>
             </div>
             <div id="assessment-question-panel" class="column">
-            {% for qa in assessment_category_qa %}
+                {% for qa in assessment_category_qa %}
                 <h6 class="title is-6 mb-2">{{ qa.question_order }}. {{ qa.question }}</h6>
                 <div class="pl-4 pb-4">
                     <div class="list">
@@ -64,7 +90,7 @@
                         </div>
                     </div>
                 </div>
-            {% endfor %}
+                {% endfor %}
             </div>
         </div>
         <div class="columns">

@@ -34,11 +34,13 @@
             </div>
             <div class="column">
                 <form
-                    hx-post="{{ request.url }}"
+                    id="report-form"
+                    hx-post="{{ url_for("dashboard_report_edit_page", report_id=report.report_id ) }}"
                     hx-select=".bat-main-content"
                     hx-target=".bat-main-content"
                     hx-swap="outerHTML"
-                    hx-ext="json-enc">
+                    hx-ext="json-enc"
+                    >
                     <div class="field">
                         <label class="label">Report name</label>
                         <div class="control">
@@ -107,9 +109,6 @@
                             name="recommendation_content_3"
                             placeholder="Content of third recommendation"
                             >{% if report.recommendation_content_3 %}{{ report.recommendation_content_3 }}{% endif %}</textarea>
-                    </div>
-                    <div class="content">
-                        <button type="submit" class="button is-success is-light px-5">Save</button>
                     </div>
                     <div class="field is-hidden">
                         <label class="label">ID</label>

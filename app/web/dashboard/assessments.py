@@ -278,6 +278,13 @@ def get_answer_question_category_review_page(assessment_id: str,
                 category_order=category_order,
                 current_user=current_user)
 
+        previous_category, next_category = service.get_neighbouring_categories_number(category_order=category_order)
+
+        print(f"Previous category: {previous_category}")
+        print(f"Next category: {next_category}")
+
+        context["previous_category"] = previous_category
+        context["next_category"] = next_category
         context["assessment_qa"] = assessment_qa
         context["assessment_category_qa"] = assessment_category_qa
         context["assessment_category_note"] = assessment_category_note

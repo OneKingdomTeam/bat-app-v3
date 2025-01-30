@@ -164,6 +164,23 @@ def get_neighbouring_questions(assessment_qa: list[AssessmentQA], category_order
 
     return (previous_question, next_question)
 
+def get_neighbouring_categories_number(category_order: int):
+
+    previous_category = None
+    next_category = None
+
+    if category_order == 0:
+        next_category = 1
+    elif category_order == 13:
+        previous_category = 12
+    else:
+        previous_category = category_order - 1
+        next_category = category_order + 1
+
+    return previous_category, next_category
+
+
+
     
 def save_answer(answer_data: AssessmentAnswerPost, current_user: User):
 

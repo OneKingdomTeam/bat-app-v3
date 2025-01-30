@@ -7,7 +7,7 @@ from app.config import SMTP_LOGIN, SMTP_PORT, SMTP_EMAIL, SMTP_SERVER, \
         SMTP_ENABLED, SMTP_PASSWORD
 
 from app.template.init import jinja
-from app.model.user import User
+from app.model.user import User, UserPasswordResetToken
 from app.model.report import Report
 from app.exception.service import SMTPCredentialsNotSet, Unauthorized
 
@@ -40,6 +40,18 @@ def notify_user_created(new_user: User, current_user: User) -> bool:
         raise e
 
     return False
+
+
+def send_password_reset(token_object: UserPasswordResetToken) -> bool:
+
+    subject = "Set you new password"
+
+    context = {
+            "token_object":token_object,
+            }
+
+    template = jinja.env.get_template("email/new-user.html")
+    content = template.render(context)
 
 
 def notify_report_published(report: Report, current_user: User) -> bool:

@@ -131,8 +131,7 @@ def post_password_reset(request: Request, email_reset_data: PasswordResetRequest
         context.update(notification)
     except Exception as e:
         # NotImplemented
-        raise e
-
+        pass
 
     response = jinja.TemplateResponse(
             name="public/password-reset.html",
