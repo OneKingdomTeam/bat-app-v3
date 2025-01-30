@@ -48,10 +48,11 @@ app.add_exception_handler(NonHTMXRequestException, non_htmx_request_exception_ha
 app.add_exception_handler(RedirectToLoginException, redirect_to_login_exception_handler)
 
 # Mount static files directories
-static_dir = Path(__file__).resolve().parent
-app.mount("/js", StaticFiles(directory=static_dir / "static" / "js"), name="js")
-app.mount("/css", StaticFiles(directory=static_dir / "static" / "css"), name="css")
-app.mount("/images", StaticFiles(directory=static_dir / "static" / "images"), name="images")
+app_root_path = Path(__file__).resolve().parent
+app.mount("/js", StaticFiles(directory=app_root_path / "static" / "js"), name="js")
+app.mount("/css", StaticFiles(directory=app_root_path / "static" / "css"), name="css")
+app.mount("/images", StaticFiles(directory=app_root_path / "static" / "images"), name="images")
+app.mount("/uploads", StaticFiles(directory=app_root_path / "uploads"), name="uploads")
 
 # Routers
 

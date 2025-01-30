@@ -6,6 +6,7 @@ class Report(BaseModel):
     assessment_id: str
     public: bool
     key: str
+    wheel_filename: str | None
     summary: str | None
     recommendation_title_1: str | None
     recommendation_content_1: str | None
@@ -23,6 +24,7 @@ class ReportExtended(BaseModel):
     assessment_owner: str | None
     public: bool
     key: str
+    wheel_filename: str | None
     summary: str | None
     recommendation_title_1: str | None
     recommendation_content_1: str | None

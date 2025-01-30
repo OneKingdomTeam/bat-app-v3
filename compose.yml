@@ -21,4 +21,4 @@ services:
       # - FORCE_HTTPS_PATHS=True
     volumes:
       - ./database:/bat-app/app/db:Z
-      - ./uploads:/bat-app/app/static/uploads:Z
+      - ./uploads:/bat-app/app/uploads:Z

@@ -15,6 +15,7 @@ curs.execute("""
                  public integer default 0,
                  key text,
                  report_name text,
+                 wheel_filename text,
                  summary text,
                  recommendation_title_1 text,
                  recommendation_content_1 text,
@@ -37,6 +38,7 @@ def report_row_to_model(row: tuple) -> Report:
      public, \
      key, \
      report_name, \
+     wheel_filename, \
      summary, \
      recommendation_title_1, \
      recommendation_content_1, \
@@ -51,6 +53,7 @@ def report_row_to_model(row: tuple) -> Report:
              public=public,
              key=key,
              report_name=report_name,
+             wheel_filename=wheel_filename,
              summary=summary,
              recommendation_title_1=recommendation_title_1,
              recommendation_content_1=recommendation_content_1,
@@ -73,6 +76,7 @@ def create_report(report: Report) -> Report:
             assessment_id,
             key,
             report_name,
+            wheel_filename,
             summary,
             recommendation_title_1,
             recommendation_content_1,
@@ -86,6 +90,7 @@ def create_report(report: Report) -> Report:
             :assessment_id,
             :key,
             :report_name,
+            :wheel_filename,
             :summary,
             :recommendation_title_1,
             :recommendation_content_1,
@@ -113,6 +118,7 @@ def get_report(report_id: str) -> Report:
         public,
         key,
         report_name,
+        wheel_filename,
         summary,
         recommendation_title_1,
         recommendation_content_1,
@@ -144,6 +150,7 @@ def get_all_reports() -> list[Report]:
         public,
         key,
         report_name,
+        wheel_filename,
         summary,
         recommendation_title_1,
         recommendation_content_1,
@@ -175,6 +182,7 @@ def get_public_reports_for_assessment(assessment_id: str) -> list[Report]:
         public,
         key,
         report_name,
+        wheel_filename,
         summary,
         recommendation_title_1,
         recommendation_content_1,
@@ -210,6 +218,7 @@ def get_public_report_for_user(report_id: str) -> Report:
         public,
         key,
         report_name,
+        wheel_filename,
         summary,
         recommendation_title_1,
         recommendation_content_1,

@@ -2,14 +2,18 @@ import uuid
 import secrets
 
 
-
 from app.data import report as data
-from app.model.assesment import Assessment
-from app.service import assessment as assessment_service
 from app.data import assessment as assessment_data
+
+from app.service import assessment as assessment_service
+
 from app.model.report import Report, ReportCreate, ReportExtended, ReportUpdate
 from app.model.user import User
+from app.model.assesment import Assessment, AssessmentQA
+
 from app.exception.service import EndpointDataMismatch, Unauthorized
+
+from app.template.init import jinja
 
 
 # -------------------------------
@@ -83,12 +87,15 @@ def create_report(report_create: ReportCreate, current_user: User) -> Report:
     if not current_user.can_manage_reports():
         raise Unauthorized(msg="You cannot manage reports.")
 
+    wheel_filename = create_wheel_snapshot(assessment_id=report_create.assessment_id, current_user=current_user )
+
     report = Report(
             report_id=str(uuid.uuid4()),
             report_name=report_create.report_name,
             assessment_id=report_create.assessment_id,
             public=False,
             key=secrets.token_urlsafe(16),
+            wheel_filename=wheel_filename,
             summary=None,
             recommendation_title_1=None,
             recommendation_content_1=None,
@@ -141,6 +148,7 @@ def extend_report(report: Report, current_user: User) -> ReportExtended:
             assessment_owner=attached_assessment.owner_name,
             public=report.public,
             key=report.key,
+            wheel_filename=report.wheel_filename,
             summary=report.summary,
             recommendation_title_1=report.recommendation_title_1,
             recommendation_content_1=report.recommendation_content_1,
@@ -149,3 +157,24 @@ def extend_report(report: Report, current_user: User) -> ReportExtended:
             recommendation_title_3=report.recommendation_title_3,
             recommendation_content_3=report.recommendation_content_3,
             )
+
+def create_wheel_snapshot(assessment_id: str, current_user: User) -> str:
+    """Takes in the assessment_id and generates the svg file containing the
+    report wheel snapshot and returns it's name to the calling function."""
+
+    context = {}
+
+    from app.main import app_root_path
+
+    filename = str(uuid.uuid4()) + ".svg"
+
+    assessment_qa: list[AssessmentQA] = assessment_service.get_all_qa(assessment_id=assessment_id, current_user=current_user)
+    context["wheel"] = assessment_service.prepare_wheel_context(assessment_qa)
+
+    template = jinja.env.get_template("wheel/wheel-report.svg")
+    content = template.render(context)
+
+    with open(app_root_path / "uploads" / filename, "w") as file:
+        file.write(content)
+
+    return filename
