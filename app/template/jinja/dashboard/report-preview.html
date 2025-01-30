@@ -7,7 +7,14 @@
         {% block body_content %}
         <div class="content">
             <h2 class="title is-2 has-text-centered">{{ title }}</h2>
-            <p>{% if report.summary %}{{ report.summary }}{% endif %}</p>   
+            <div class="columns py-5">
+                <div class="column">
+                    <img src="{{ url_for("uploads", path=report.wheel_filename) }}" alt="report-wheel">
+                </div>
+                <div class="column">
+                    <p>{% if report.summary %}{{ report.summary }}{% endif %}</p>   
+                </div>
+            </div>
             <h4 class="title is-4">{% if report.recommendation_title_1 %}{{ report.recommendation_title_1 }}{% endif %}</h4>
             <p>{% if report.recommendation_content_1 %}{{ report.recommendation_content_1 }}{% endif %}</p>   
             <h4 class="title is-4">{% if report.recommendation_title_2 %}{{ report.recommendation_title_2 }}{% endif %}</h4>

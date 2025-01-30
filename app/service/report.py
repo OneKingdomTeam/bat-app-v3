@@ -1,4 +1,5 @@
 import uuid
+import os
 import secrets
 
 
@@ -79,7 +80,17 @@ def delete_report(report_id: str, current_user: User) -> Report:
     if not current_user.can_manage_reports():
         raise Unauthorized(msg="You cannot manage reports.")
 
-    return data.delete_report(report_id=report_id)
+    from app.main import app_root_path
+
+    try: 
+        report = data.delete_report(report_id=report_id)
+        if report.wheel_filename:
+            os.remove(app_root_path / "uploads" / report.wheel_filename)
+    except Exception as e:
+        # Not sure what can go wrong here
+        raise e
+
+    return report
 
 
 def create_report(report_create: ReportCreate, current_user: User) -> Report:

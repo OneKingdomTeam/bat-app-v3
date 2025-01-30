@@ -12,8 +12,8 @@
                     <td>{{ report.assessment_owner }}</td>
                 </tr>
                 <tr>
-                    <td>Public: </td>
-                    <td>{{ report.public }}</td>
+                    <td>Visibility: </td>
+                    <td>{% if report.public %}Published{% else %}Unpublished{% endif %}</td>
                 </tr>
                 {#
                 <tr>
