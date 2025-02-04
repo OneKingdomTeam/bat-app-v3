@@ -91,3 +91,8 @@ input.disabled {
 .review-inline-cirlce.no {
     background-color: #cd0000;
 }
+
+/* Quill css */
+#note-quill.ql-container {
+    height: 80%;
+}

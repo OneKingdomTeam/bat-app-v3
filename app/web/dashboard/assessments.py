@@ -286,6 +286,7 @@ def get_answer_question_category_review_page(
         context["assessment_qa"] = assessment_qa
         context["assessment_category_qa"] = assessment_category_qa
         context["assessment_category_note"] = assessment_category_note
+        print(assessment_category_note)
         context["title"] = f"{assessment_qa[0].assessment_name}"
     except:
         # NotImplemented
@@ -314,6 +315,8 @@ def put_answer_question_category_review_page(
             "assessment_id": assessment_id,
             "current_category_order": category_order
             }
+
+    print("new note: ", assessment_note)
 
     try:
         note_service.update_note(assessment_note=assessment_note, current_user=current_user)

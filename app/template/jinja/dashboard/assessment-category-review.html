@@ -1,5 +1,6 @@
 {# This is the root page of the questions link. Other sublinks are derived from this page #}
 
+
 {% extends "dashboard/dashboard.html" %}
 {% block body %}
 <section class="bat-main-content is-flex pt-6">
@@ -22,22 +23,9 @@
         <div class="columns">
             <div class="column assessment-wheel-panel is-two-fifths">
                 <h5 class="title is-5">Notes:</h5>
-                <form
-                    id="note-form"
-                    hx-put="{{ request.url }}"
-                    hx-select=".bat-main-content"
-                    hx-target=".bat-main-content"
-                    hx-swap="outerHTML"
-                    hx-indicator="#note-save-button"
-                    hx-trigger="change"
-                    hx-ext="json-enc">
-                    <textarea name="note_content" class="textarea" rows="16">{% if assessment_category_note.note_content %}{{ assessment_category_note.note_content }}{% endif %}</textarea>
-                    <div class="is-hidden">
-                        <input type="number" name="note_id" value="{{ assessment_category_note.note_id }}">
-                        <input type="text" name="assessment_id" value="{{ assessment_category_note.assessment_id }}">
-                        <input type="number" name="category_order" value="{{ assessment_category_note.category_order }}">
-                    </div>
-                </form>
+                <div id="note-quill">
+                    <!-- Content for the Quill rich text editor --> 
+                </div>
                 <div class="content my-3 is-flex is-justify-content-space-around">
                     {% if previous_category != None %}
                     <button
@@ -111,6 +99,15 @@
         </div>
         {% endblock %}
     </div>
+    <script>
+        var assessment_id = "{{ assessment_category_note.assessment_id }}";
+        var note_id = "{{ assessment_category_note.note_id }}";
+        var category_order = "{{ assessment_category_note.category_order }}";
+        {% if assessment_category_note.note_content %}
+        var note_content = "{{ assessment_category_note.note_content }}";
+        {% endif %}
+    </script>
     <script src="{{ url_for("js", path="wheel-labels.js") }}"></script>
+    <script src="{{ url_for("js", path="quill-init.js") }}"></script>
 </section>
 {% endblock %}

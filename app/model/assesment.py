@@ -63,14 +63,14 @@ class AssessmentNote(BaseModel):
     note_id: int | None
     assessment_id: str
     category_order: int
-    note_content: str | None
+    note_content: dict | None
 
 
 class AssessmentNoteExtended(BaseModel):
     note_id: int | None
     assessment_id: str
     category_order: int
-    note_content: str | None
+    note_content: dict | None
     category_name: str | None
 
 

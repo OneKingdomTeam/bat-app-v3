@@ -1,3 +1,5 @@
+import json
+
 from app.data.init import conn
 from app.exception.database import RecordNotFound
 from app.model.assesment import AssessmentNote, AssessmentNoteExtended
@@ -30,6 +32,12 @@ def row_to_note_model(row: tuple) -> AssessmentNote:
     category_order, \
     note_content = row
 
+    if note_content:
+        note_content = json.loads(note_content)
+    else:
+        note_content = None
+
+
     return AssessmentNote(
             note_id=note_id,
             assessment_id=assessment_id,
@@ -49,7 +57,7 @@ def row_to_extended_note_model(row: tuple) -> AssessmentNoteExtended:
             note_id=note_id,
             assessment_id=assessment_id,
             category_order=category_order,
-            note_content=note_content,
+            note_content=json.loads(note_content),
             category_name=category_name
             )
 
@@ -175,7 +183,7 @@ def get_note_by_id(note_id: int) -> AssessmentNote:
         cursor.close()
 
 
-def update_note(note_id: int, note_content: str) -> AssessmentNote:
+def update_note(note_id: int, note_content: dict) -> AssessmentNote:
 
     qry = """
     update
@@ -186,9 +194,13 @@ def update_note(note_id: int, note_content: str) -> AssessmentNote:
         note_id = :note_id
     """
 
+    note_to_save = None
+    if note_content:
+        note_to_save = json.dumps(note_content)
+
     params = {
             "note_id":note_id,
-            "note_content":note_content
+            "note_content":note_to_save
             }
 
     cursor = conn.cursor()

@@ -103,7 +103,8 @@ def get_current_user(token: str) -> User | None:
 
 async def user_htmx_dep(request: Request) -> User | None:
 
-    is_htmx = request.headers.get("HX-Request") == "true"
+    hx_request_header_content = str(request.headers.get("HX-Request")).lower()
+    is_htmx = hx_request_header_content == "true"
     token = request.headers.get("Authorization")
 
     if not is_htmx:
