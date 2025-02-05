@@ -1,3 +1,18 @@
+@media print {
+    .bat-print-button,
+    .bat-menu,
+    .bat-footer{
+        display: none!important;
+    }
+
+    .bat-content,
+    .bat-main-content,
+    .bat-main-content > .container{
+        padding: 0px!important;
+    }
+
+}
+
 html {
   scroll-behavior: smooth;
 }

@@ -3,9 +3,21 @@
 <section class="bat-main-content">
     <div class="container is-max-tablet py-6">
         {% block body_content %}
+        <div class="bat-print-button is-flex is-justify-content-flex-end">
+            <button class="button is-info is-light" onClick="window.print()">Print</button>
+        </div>
         <div class="content">
             <h2 class="title is-2 has-text-centered">{{ title }}</h2>
-            <p>{% if report.summary %}{{ report.summary }}{% endif %}</p>   
+            <div class="columns py-5">
+                {% if report.wheel_filename %}
+                <div class="column">
+                    <img src="{{ url_for("uploads", path=report.wheel_filename) }}" alt="report-wheel">
+                </div>
+                {% endif %}
+                <div class="column">
+                    <p>{% if report.summary %}{{ report.summary }}{% endif %}</p>   
+                </div>
+            </div>
             <h4 class="title is-4">{% if report.recommendation_title_1 %}{{ report.recommendation_title_1 }}{% endif %}</h4>
             <p>{% if report.recommendation_content_1 %}{{ report.recommendation_content_1 }}{% endif %}</p>   
             <h4 class="title is-4">{% if report.recommendation_title_2 %}{{ report.recommendation_title_2 }}{% endif %}</h4>
