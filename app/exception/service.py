@@ -33,3 +33,7 @@ class SMTPCredentialsNotSet(Exception):
 class InvalidFormEntry(Exception):
     def __init__(self, msg: str):
         self.msg = msg
+
+class SendingEmailFailed(Exception):
+    def __init__(self, msg: str):
+        self.msg = msg

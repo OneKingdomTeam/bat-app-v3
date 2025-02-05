@@ -1,3 +1,4 @@
+from fastapi import Request
 import smtplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -6,10 +7,13 @@ from email.utils import formatdate
 from app.config import SMTP_LOGIN, SMTP_PORT, SMTP_EMAIL, SMTP_SERVER, \
         SMTP_ENABLED, SMTP_PASSWORD
 
+from app.exception.database import RecordNotFound
+import app.service.user as user_service
+
 from app.template.init import jinja
 from app.model.user import User, UserPasswordResetToken
-from app.model.report import Report
-from app.exception.service import SMTPCredentialsNotSet, Unauthorized
+from app.model.report import Report, ReportExtended
+from app.exception.service import SMTPCredentialsNotSet, SendingEmailFailed, Unauthorized
 
 
 def notify_user_created(new_user: User, current_user: User) -> bool:
@@ -54,7 +58,27 @@ def send_password_reset(token_object: UserPasswordResetToken) -> bool:
     content = template.render(context)
 
 
-def notify_report_published(report: Report, current_user: User) -> bool:
+def notify_report_published(report: ReportExtended, request: Request, current_user: User) -> bool:
+
+    if not current_user.can_send_emails:
+        raise Unauthorized(msg="You cannot send e-mails")
+
+    if type(report.assessment_owner) == str:
+        report_owner = user_service.get(report.assessment_owner, current_user=current_user)
+    else:
+        raise RecordNotFound(msg="Report owner seems not to exist. Maybe deleted user?")
+
+    context = {
+            "username":report_owner.username,
+            "report_name":report.report_name,
+            "website_url": request.base_url
+            }
+
+    send_html_email(
+            recipient_email=report_owner.email,
+            subject="New report is now accessible.",
+            html_message=""
+            )
 
     return False
 
@@ -98,4 +122,4 @@ def send_html_email(recipient_email: str, subject: str, html_message: str) -> bo
 
     except Exception as e:
         print(f"Failed to send email: {e}")
-        return False
+        raise SendingEmailFailed(msg=str(e))

@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, Request
 
-from app.exception.service import Unauthorized
+from app.exception.service import SendingEmailFailed, Unauthorized
 from app.model.report import Report, ReportCreate, ReportExtended, ReportUpdate
 from app.service import report as service
 from app.service import assessment as assessment_service
 from app.service import note as note_service
+from app.service import mail as mail_service
 
 from app.model.user import User
 from app.model.assesment import Assessment
@@ -19,7 +20,12 @@ router = APIRouter()
 
 
 @router.get("", response_class=HTMLResponse, name="dashboard_reports_page")
-def get_reports(request: Request, assessment_filter: str | None  = None, current_user: User = Depends(user_htmx_dep)):
+def get_reports(
+        request: Request,
+        assessment_filter: str | None  = None,
+        current_user: User = Depends(user_htmx_dep),
+        extra_notification = None
+        ):
 
     reports_extended: list[ReportExtended] = service.get_all_extended(current_user=current_user)
     assessments: list[Assessment] = assessment_service.get_all(current_user=current_user)
@@ -225,5 +231,22 @@ def get_report_preview(request: Request, report_id: str, current_user: User = De
 
     return response
 
-    
+@router.get("/notify-user/{report_id}",
+            response_class=HTMLResponse,
+            name="dashboard_report_notify_user")
+def get_report_notify_user(
+        request: Request,
+        report_id: str,
+        assessment_filter: str | None  = None,
+        current_user: User = Depends(user_htmx_dep),
+        ):
+
+
+    try:
+        report_extended: ReportExtended = service.get_report_extended(report_id=report_id, current_user=current_user)
+        mail_service.notify_report_published(report=report_extended, request=request, current_user=current_user)
+    except SendingEmailFailed as e:
+        raise e
+
+
 

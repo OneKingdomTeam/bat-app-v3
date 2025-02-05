@@ -6,7 +6,7 @@ from app.config import  DEFAULT_USER, \
 
 from app.data import user as data
 from app.exception.database import RecordNotFound
-from app.exception.service import EndpointDataMismatch, InvalidFormEntry, Unauthorized, SMTPCredentialsNotSet
+from app.exception.service import EndpointDataMismatch, InvalidFormEntry, SendingEmailFailed, Unauthorized, SMTPCredentialsNotSet
 from app.service.auth import get_password_hash
 from app.service.mail import notify_user_created
 from app.model.user import User, UserCreate, UserPasswordResetToken, UserRoleEnum, UserUpdate
@@ -80,10 +80,8 @@ def create(user: UserCreate, current_user: User) -> User:
         print(f"Failed to create user: {e}")
         raise e
         
-    try:
-        notify_user_created(new_user=new_user, current_user=current_user)
-    except Exception as e:
-        print(e)
+    notify_user_created(new_user=new_user, current_user=current_user)
+
 
     return new_user
 
@@ -100,6 +98,14 @@ def get_all(current_user: User) -> list[User]:
 
     users = data.get_all()
     return users
+
+
+def get_by_email(email: str, current_user: User) -> User:
+
+    if current_user.role != UserRoleEnum.admin and current_user.role != UserRoleEnum.coach:
+        raise Unauthorized(msg="You cannot list all users, insufficient rights")
+
+    return data.get_by(field="email", value=email)
 
 
 def delete(user_id: str, current_user: User) -> User:

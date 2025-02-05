@@ -23,8 +23,8 @@
                 #}
             </tbody>
         </table>
-        <div class="content is-flex is-gap-1">
-            <button class="button is-link is-light px-5"
+        <div class="mb-2">
+            <button class="button is-link is-light px-5 mr-2"
                 hx-get="{{ url_for("dashboard_report_edit_page", report_id=report.report_id)  }}"
                 hx-select=".bat-main-content"
                 hx-target=".bat-main-content"
@@ -33,7 +33,7 @@
                 Edit
             </button>
             {% if report.public %}
-            <button id="un-publish-button" class="button is-success is-light px-5"
+            <button id="un-publish-button" class="button is-success is-light px-5 mr-2"
                 hx-patch="{{ url_for("dashboard_report_publish", report_id=report.report_id, public="false")  }}"
                 hx-select="#report-{{ report.report_id }}"
                 hx-target="#report-{{ report.report_id }}"
@@ -41,7 +41,7 @@
                 Unpublish
             </button>
             {% else %}
-            <button id="un-publish-button" class="button is-warning is-light px-5"
+            <button id="un-publish-button" class="button is-warning is-light px-5 mr-2"
                 hx-patch="{{ url_for("dashboard_report_publish", report_id=report.report_id, public="true")  }}"
                 hx-select="#report-{{ report.report_id }}"
                 hx-target="#report-{{ report.report_id }}"
@@ -58,9 +58,24 @@
                 hx-swap="outerHTML">
                 Delete
             </button>
-            <a href="{{ url_for("dashboard_report_preview_page", report_id=report.report_id) }}" target="_blank">
+        </div>
+        <div>
+            <a
+                href="{{ url_for("dashboard_report_preview_page", report_id=report.report_id) }}"
+                target="_blank"
+                class="mr-2"
+            >
                 <button class="button is-light">Preview</button>
             </a>
+            {% if report.public %}
+            <button
+                class="button is-light mr-2"
+                hx-get="{{ url_for("dashboard_report_notify_user", report_id=report.report_id) }}"
+                hx-select=".bat-main-content"
+                hx-target=".bat-main-content"
+                hx-swap="outerHTML"
+                >📧 Notify User</button>
+            {% endif %}
         </div>
     </div>
 </div>

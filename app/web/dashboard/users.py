@@ -3,7 +3,7 @@ from fastapi.responses import HTMLResponse
 from sqlite3 import IntegrityError
 
 from app.exception.database import RecordNotFound, UsernameOrEmailNotUnique
-from app.exception.service import EndpointDataMismatch, InvalidFormEntry, Unauthorized
+from app.exception.service import EndpointDataMismatch, InvalidFormEntry, SendingEmailFailed, Unauthorized
 from app.model.user import User, UserCreate, UserUpdate
 from app.config import SMTP_ENABLED
 from app.template.init import jinja
@@ -75,6 +75,13 @@ async def add_user_post(request: Request,  new_user: UserCreate,  current_user: 
         if not SMTP_ENABLED:
             notification_content += " Mail server not configured. You need to notify user manually."
         context.update(prepare_notification(True, "success", notification_content))
+    except SendingEmailFailed as e:
+        created_user = service.get_by_email(email=new_user.email, current_user=current_user)
+        context.update(prepare_notification(
+            True,
+            "warning",
+            f"User {created_user.username} was created but email wasn't sent. Verify the credentials."
+            ))
     except Unauthorized as e:
         context.update(prepare_notification(True, "danger", e.msg))
         status_code = 401
