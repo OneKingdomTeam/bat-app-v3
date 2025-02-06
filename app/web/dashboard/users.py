@@ -70,7 +70,7 @@ async def add_user_post(request: Request,  new_user: UserCreate,  current_user: 
     status_code: int = 201
 
     try:
-        created_user: User = service.create(new_user, current_user)
+        created_user: User = service.create(user=new_user, request=request, current_user=current_user)
         notification_content = f"User {created_user.username} created!"
         if not SMTP_ENABLED:
             notification_content += " Mail server not configured. You need to notify user manually."

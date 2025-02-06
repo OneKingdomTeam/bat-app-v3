@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 from enum import Enum
 from typing import Optional
 from app.model.assesment import Assessment
@@ -19,7 +19,7 @@ class UserCreate(BaseModel):
     user_id: Optional[str] = Field(None, max_length=36, min_length=36)
     username: str
     email: str
-    password: str
+    password: str | None
     role: UserRoleEnum
 
 
@@ -39,8 +39,16 @@ class UserUpdate(BaseModel):
 
 class UserPasswordResetToken(BaseModel):
     user_id: str = Field(..., max_length=36, min_length=36)
+    username: str
+    email: EmailStr
     password_reset_token: str | None
-    reset_token_expires: str | None
+    reset_token_expires: int | None
+
+class UserSetNewPassword(BaseModel):
+    token: str
+    user_id: str
+    password: str
+    password_confirm: str
 
 
 class User(BaseModel):

@@ -12,7 +12,7 @@ from app.model.emailreset import PasswordResetRequest
 
 from app.template.init import jinja
 
-from app.service.user import create_password_reset_token
+from app.service import user as user_service
 from app.service.auth import handle_token_creation, auth_user, get_current_user, \
         handle_token_renewal, user_htmx_dep
 
@@ -123,7 +123,7 @@ def post_password_reset(request: Request, email_reset_data: PasswordResetRequest
             }
 
     try:
-        token_created = create_password_reset_token(email=email_reset_data.email)
+        user_service.create_password_reset_token(email=email_reset_data.email, request=request)
         notification = prepare_notification(
                 show=True,
                 notification_type="success",
@@ -141,16 +141,28 @@ def post_password_reset(request: Request, email_reset_data: PasswordResetRequest
     return response
 
 
+
 @router.get("/set-password", response_class=HTMLResponse, name="set_password_page")
-def get_set_password(request: Request, reset_token: str):
+def get_set_password(request: Request, reset_token: str | None = None):
 
     context = {
             "request": request,
             "title": "Set your password",
             "description": "Set password for your account.",
+            "reset_token": reset_token,
             }
 
-    #NotImplemented
+    if not reset_token:
+        notification = prepare_notification(True, "warning", "Token missing, invalid or missing try to request password reset again.")
+    else:
+
+        try:
+            user: User = user_service.get_by_token(token=reset_token)
+            context["user"] = user
+        except RecordNotFound:
+            notification = prepare_notification(True, "warning", "Token missing, invalid or missing try to request password reset again.")
+
+    #not implemented
 
     return
 

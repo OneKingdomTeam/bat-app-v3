@@ -1,85 +1,16 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Account Created Successfully</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f0f4f8; /* Light derivative of #001540 */
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-        }
-        .container {
-            margin-top: 40px;
-            margin-bottom: 40px;
-            background-color: #ffffff;
-            padding: 2rem;
-            border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            max-width: 400px;
-            width: 100%;
-            text-align: center;
-        }
-        h1 {
-            color: #001540; /* Primary color */
-            font-size: 24px;
-            margin-bottom: 1rem;
-        }
-        p {
-            color: #333333;
-            font-size: 16px;
-            line-height: 1.5;
-            margin-bottom: 1.5rem;
-        }
-        .button-container {
-            margin-top: 20px;
-        }
-        .button {
-            display: inline-block;
-            padding: 12px 24px;
-            background-color: #001540; /* Primary color */
-            color: #ffffff;
-            font-size: 16px;
-            font-weight: bold;
-            text-decoration: none;
-            border-radius: 5px;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-            transition: background-color 0.3s ease;
-        }
-        .button:hover {
-            background-color: #002766; /* Darker shade for hover effect */
-        }
-        .footer {
-            color: #666666;
-            font-size: 14px;
-            margin-top: 1.5rem;
-        }
-        .highlight {
-            color: #001540; /* Primary color */
-            font-weight: bold;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Hello, {{ username }}!</h1>
-        <p>New report: {{ report_name }} for your assessment was published.</p>
-        <p>You can check it out on the site:</p>
+{% extends "email/index.html" %}
+{% block body %}
+<div class="container">
+    <h1>Hello, {{ username }}!</h1>
+    <p>New report: {{ report_name }} for your assessment was published.</p>
+    <p>You can check it out on the site:</p>
 
-        <div class="button-container">
-            <a href="{{ website_url }}" class="button">Visit site</a>
-        </div>
-
-        <div class="footer">
-            <p>Best regards,<br>The <span class="highlight">OneKingdom</span> Team</p>
-        </div>
+    <div class="button-container">
+        <a href="{{ website_url }}" class="button">Visit site</a>
     </div>
-</body>
-</html>
 
+    <div class="footer">
+        <p>Best regards,<br>The <span class="highlight">OneKingdom</span> Team</p>
+    </div>
+</div>
+{% endblock %}

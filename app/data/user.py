@@ -35,10 +35,12 @@ def row_to_model(row: tuple) -> User:
 
 def token_row_to_model(row: tuple) -> UserPasswordResetToken:
 
-    user_id, password_reset_token, reset_token_expires = row
+    user_id, username, email, password_reset_token, reset_token_expires = row
 
     return UserPasswordResetToken(
             user_id=user_id,
+            username=username,
+            email=email,
             password_reset_token=password_reset_token,
             reset_token_expires=reset_token_expires
             )
@@ -106,6 +108,29 @@ def get_by(field: str, value: str|int ) -> User:
             return row_to_model(row)
         else:
             raise RecordNotFound(f"Record for {field}: {value} was not found")
+    finally:
+        cursor.close()
+
+def get_by_token(token: str) -> User:
+
+    qry = """
+    select
+        *
+    from
+        users
+    where
+        password_reset_token = :token
+    """
+    params = {"token": token}
+
+    cursor = conn.cursor()
+    try:
+        cursor.execute(qry, params)
+        row = cursor.fetchone()
+        if row:
+            return row_to_model(row)
+        else:
+            raise RecordNotFound(msg="User was not found")
     finally:
         cursor.close()
 
@@ -203,6 +228,8 @@ def get_password_reset_token(user_id: str) -> UserPasswordResetToken:
     qry = """
     select
         user_id,
+        username,
+        email,
         password_reset_token,
         reset_token_expires
     from

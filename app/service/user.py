@@ -1,3 +1,4 @@
+from fastapi import Request
 from passlib import context
 import secrets
 from datetime import datetime, timedelta, timezone
@@ -8,7 +9,7 @@ from app.data import user as data
 from app.exception.database import RecordNotFound
 from app.exception.service import EndpointDataMismatch, InvalidFormEntry, SendingEmailFailed, Unauthorized, SMTPCredentialsNotSet
 from app.service.auth import get_password_hash
-from app.service.mail import notify_user_created
+from app.service.mail import notify_user_created, send_password_reset
 from app.model.user import User, UserCreate, UserPasswordResetToken, UserRoleEnum, UserUpdate
 from uuid import uuid4
 
@@ -55,17 +56,20 @@ def add_default_user():
 #   Basic CRUD operations
 # -------------------------------
 
-def create(user: UserCreate, current_user: User) -> User:
+def create(user: UserCreate, request: Request, current_user: User) -> User:
 
     if not current_user.can_create_user(user):
         raise Unauthorized(msg="You cannot create this user")
 
     new_uuid = str(uuid4())
 
-    if len(user.password) < 12:
-        raise InvalidFormEntry(msg="Password too short. It needs to be at least 12 characters")
-    elif len(user.password) > 128:
-        raise InvalidFormEntry(msg="Password too long. Sorry we support only up to 128 characters.")
+    if user.password:
+        if len(user.password) < 12:
+            raise InvalidFormEntry(msg="Password too short. It needs to be at least 12 characters")
+        elif len(user.password) > 128:
+            raise InvalidFormEntry(msg="Password too long. Sorry we support only up to 128 characters.")
+    else:
+        user.password = secrets.token_urlsafe(128)
 
 
     try:
@@ -80,7 +84,7 @@ def create(user: UserCreate, current_user: User) -> User:
         print(f"Failed to create user: {e}")
         raise e
         
-    notify_user_created(new_user=new_user, current_user=current_user)
+    notify_user_created(new_user=new_user, request=request, current_user=current_user)
 
 
     return new_user
@@ -98,6 +102,12 @@ def get_all(current_user: User) -> list[User]:
 
     users = data.get_all()
     return users
+
+
+def get_by_token(token: str) -> User:
+
+    return data.get_by_token(token: str)
+
 
 
 def get_by_email(email: str, current_user: User) -> User:
@@ -154,7 +164,8 @@ def update(user_id: str, user: UserUpdate, current_user: User) -> User:
     return modified_user
 
 
-def create_password_reset_token(email: str) -> str | bool:
+def create_password_reset_token(email: str, request: Request) -> bool:
+
 
     try:
         user: User = data.get_by(field="email", value=email)
@@ -164,10 +175,23 @@ def create_password_reset_token(email: str) -> str | bool:
         token_expires: int = int(expires_at.timestamp())
         if not type(user.user_id) == str:
             raise RecordNotFound(msg="User id is not valid id")
-        data.set_password_reset_token(user_id=user.user_id, token=reset_token, token_expires=token_expires)
-        return True
+        reset_token_object = data.set_password_reset_token(user_id=user.user_id, token=reset_token, token_expires=token_expires)
     except RecordNotFound as e:
         # Email not found but for preventing leaking infromation
         # no handle should be added here. Unless we want to track if someone
         # is brute forcing the password resset functionality for some reason
+        print(f"User with email {email} wasn't found")
         return False
+
+
+    try:
+        send_password_reset(token_object=reset_token_object, request=request)
+        return True
+    except SendingEmailFailed as e:
+        print(f"Failed sending password reset e-mail for: {email}.")
+        return False
+
+
+def set_password_with_token(token: str) -> User:
+
+    return None

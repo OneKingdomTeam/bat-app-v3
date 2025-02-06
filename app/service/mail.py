@@ -16,7 +16,7 @@ from app.model.report import Report, ReportExtended
 from app.exception.service import SMTPCredentialsNotSet, SendingEmailFailed, Unauthorized
 
 
-def notify_user_created(new_user: User, current_user: User) -> bool:
+def notify_user_created(new_user: User, request: Request, current_user: User) -> bool:
 
     if not current_user.can_send_emails:
         raise Unauthorized(msg="You cannot send e-mails")
@@ -28,6 +28,8 @@ def notify_user_created(new_user: User, current_user: User) -> bool:
 
     context = {
             "username":username,
+            "website_url": request.base_url,
+            "url_for": request.url_for
             }
 
     template = jinja.env.get_template("email/new-user.html")
@@ -46,17 +48,30 @@ def notify_user_created(new_user: User, current_user: User) -> bool:
     return False
 
 
-def send_password_reset(token_object: UserPasswordResetToken) -> bool:
+def send_password_reset(token_object: UserPasswordResetToken, request: Request) -> bool:
 
     subject = "Set you new password"
 
     context = {
             "token_object":token_object,
+            "url_for": request.url_for
             }
 
-    template = jinja.env.get_template("email/new-user.html")
+    print("again stuck on template?")
+    template = jinja.env.get_template("email/set-password.html")
+    print("no we got stuck on render:")
     content = template.render(context)
 
+    print("sending mail?")
+    send_html_email(
+            recipient_email=token_object.email,
+            subject=subject,
+            html_message=content
+            )
+
+    return True
+
+    
 
 def notify_report_published(report: ReportExtended, request: Request, current_user: User) -> bool:
 
@@ -86,14 +101,12 @@ def notify_report_published(report: ReportExtended, request: Request, current_us
 
     send_html_email(
             recipient_email=report_owner.email,
-            bcc=None,
             subject="New report is now accessible.",
             html_message=content
             )
 
     send_html_email(
             recipient_email=current_user.email,
-            bcc=None,
             subject="COPY: New report is now accessible.",
             html_message=content
             )
@@ -101,7 +114,7 @@ def notify_report_published(report: ReportExtended, request: Request, current_us
     return False
 
 
-def send_html_email(recipient_email: str, bcc: None | str, subject: str, html_message: str) -> bool:
+def send_html_email(recipient_email: str, subject: str, html_message: str) -> bool:
     """
     Sends an HTML-encoded email through SMTP using predefined constants.
 
@@ -122,8 +135,6 @@ def send_html_email(recipient_email: str, bcc: None | str, subject: str, html_me
         # Create the MIMEMultipart message object
         msg = MIMEMultipart()
         msg['From'] = f"BAT App <{SMTP_EMAIL}>"
-        if bcc:
-            msg["Bcc"] = bcc
         msg['To'] = recipient_email
         msg['Subject'] = subject
         msg['Date'] = formatdate(localtime=True)
