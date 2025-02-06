@@ -44,6 +44,9 @@ def get_reports(
             "assessments": assessments
             }
 
+    if extra_notification:
+        context.update(extra_notification)
+
     response = jinja.TemplateResponse(
             context=context,
             name="dashboard/reports.html"
@@ -245,8 +248,14 @@ def get_report_notify_user(
     try:
         report_extended: ReportExtended = service.get_report_extended(report_id=report_id, current_user=current_user)
         mail_service.notify_report_published(report=report_extended, request=request, current_user=current_user)
+        notification = prepare_notification(True, "success", f"User: {report_extended.assessment_owner} was notified about the report.")
     except SendingEmailFailed as e:
-        raise e
+        notification = prepare_notification(True, "danger", f"There was an error sending the e-mail. Check your mailserver credentials.")
 
 
-
+    return get_reports(
+            request=request,
+            assessment_filter=assessment_filter,
+            current_user=current_user,
+            extra_notification=notification
+            )

@@ -64,9 +64,19 @@ def notify_report_published(report: ReportExtended, request: Request, current_us
         raise Unauthorized(msg="You cannot send e-mails")
 
     if type(report.assessment_owner) == str:
-        report_owner = user_service.get(report.assessment_owner, current_user=current_user)
+        report_owner = user_service.get_by_username(username=report.assessment_owner, current_user=current_user)
     else:
         raise RecordNotFound(msg="Report owner seems not to exist. Maybe deleted user?")
+
+    context = {
+            "username": report_owner.username,
+            "report_name": report.report_name,
+            "website_url": request.base_url
+            }
+
+
+    template = jinja.env.get_template("email/report-published.html")
+    content = template.render(context)
 
     context = {
             "username":report_owner.username,
@@ -76,14 +86,22 @@ def notify_report_published(report: ReportExtended, request: Request, current_us
 
     send_html_email(
             recipient_email=report_owner.email,
+            bcc=None,
             subject="New report is now accessible.",
-            html_message=""
+            html_message=content
+            )
+
+    send_html_email(
+            recipient_email=current_user.email,
+            bcc=None,
+            subject="COPY: New report is now accessible.",
+            html_message=content
             )
 
     return False
 
 
-def send_html_email(recipient_email: str, subject: str, html_message: str) -> bool:
+def send_html_email(recipient_email: str, bcc: None | str, subject: str, html_message: str) -> bool:
     """
     Sends an HTML-encoded email through SMTP using predefined constants.
 
@@ -104,6 +122,8 @@ def send_html_email(recipient_email: str, subject: str, html_message: str) -> bo
         # Create the MIMEMultipart message object
         msg = MIMEMultipart()
         msg['From'] = f"BAT App <{SMTP_EMAIL}>"
+        if bcc:
+            msg["Bcc"] = bcc
         msg['To'] = recipient_email
         msg['Subject'] = subject
         msg['Date'] = formatdate(localtime=True)
@@ -117,7 +137,6 @@ def send_html_email(recipient_email: str, subject: str, html_message: str) -> bo
             server.login(SMTP_EMAIL, SMTP_PASSWORD)  # Log in to the SMTP server
             server.sendmail(SMTP_EMAIL, recipient_email, msg.as_string())  # Send the email
 
-        print("Email sent successfully!")
         return True
 
     except Exception as e:

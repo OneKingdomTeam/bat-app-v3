@@ -108,6 +108,14 @@ def get_by_email(email: str, current_user: User) -> User:
     return data.get_by(field="email", value=email)
 
 
+def get_by_username(username: str, current_user: User) -> User:
+
+    if current_user.role != UserRoleEnum.admin and current_user.role != UserRoleEnum.coach:
+        raise Unauthorized(msg="You cannot list all users, insufficient rights")
+
+    return data.get_by(field="username", value=username)
+
+
 def delete(user_id: str, current_user: User) -> User:
 
     user_for_deletion: User = data.get_one(user_id)

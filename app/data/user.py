@@ -143,16 +143,21 @@ def modify(user_id: str, user_updated: User) -> User:
     params = model_to_dict(user_updated)
     params["email"] = params["email"].lower()
     params["user_id"] = user_id
+
+    cursor = conn.cursor()
     try:
-        _ = curs.execute(qry, params)
+        cursor.execute(qry, params)
         conn.commit()
+        update_user: User = get_one(user_id=user_id)
+        return update_user
     except IntegrityError as e:
         conn.rollback()
         if "UNIQUE constraint failed: user.email" in str(e):
             raise UsernameOrEmailNotUnique(msg="Email needs to be unique. Provided e-mail is already in use. Try different one.")
         if "UNIQUE constraint failed: user.username" in str(e):
             raise UsernameOrEmailNotUnique(msg="Username needs to be unique. Provided username is used. Try different one.")
-    updated_user = get_one(user_id)
+    finally:
+        cursor.close()
      
 def delete(user_id: str) -> User:
     deleted_user = get_one(user_id)
