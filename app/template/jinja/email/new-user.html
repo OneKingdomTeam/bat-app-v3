@@ -3,6 +3,7 @@
     <div class="container">
         <h1>Welcome, {{ username }}!</h1>
         <p>Your account has been successfully created.</p>
+        <p>Your username is: <b>{{ username }}</b></p>
         <p>You can set/reset your password here:</p>
         <div class="button-container">
             <a href="{{ url_for("password_reset_page") }}/" class="button">Password reset</a>
