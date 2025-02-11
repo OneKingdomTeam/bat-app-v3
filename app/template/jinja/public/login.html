@@ -73,19 +73,13 @@
 {% block footer_scripts %}
 {% if cf_turnstile_enabled %}
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+<script src="{{ url_for("js", path="cf-callback.js") }}"></script>
 <script>
-if(typeof(cfCallback) != "function"){
-    window.cfCallback = (token) => {
-        console.log(token)
+setTimeout(()=>{
+    if (turnstile){
+        turnstile.restart();
     }
-}
-window.addEventListener("load", ()=>{
-    setTimeout(()=>{
-        if( window.turnstile ){
-            window.turnstile.reset()
-        }
-    }, 200);
-});
+}, 100);
 </script>
 {% endif %}
 {% if token_manager_start == True %}
