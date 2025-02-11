@@ -4,10 +4,11 @@ from fastapi.responses import HTMLResponse
 from app.service.auth import user_htmx_dep
 from app.service import user as user_service
 from app.template.init import jinja
+from app.web import prepare_notification
 
 from app.model.user import User, UserUpdate
-from app.exception.database import RecordNotFound
-from app.exception.service import Unauthorized
+from app.exception.database import RecordNotFound, UsernameOrEmailNotUnique
+from app.exception.service import EndpointDataMismatch, Unauthorized
 
 
 router = APIRouter()
@@ -48,41 +49,39 @@ def get_profile(request: Request, current_user: User = Depends(user_htmx_dep)):
 @router.put("", response_class=HTMLResponse)
 def put_profile(request: Request, updated_user: UserUpdate, current_user: User = Depends(user_htmx_dep)):
 
-    #NotImplemented
-    return ""
-    if current_user.user_id:
-        user_for_edit = user_service.get(user_id=current_user.user_id, current_user=current_user)
-        context = {
-                "request": request,
-                "successful_update": True,
-                "available_roles": current_user.can_grant_roles(),
-                "user_for_edit": user_for_edit,
-                "title": f"Edit user: {user_for_edit.username}",
-                "description": f"Edit details of the {user_for_edit.username}"
-                }
+    context = {
+            "request": request,
+            "title":f"Edit your profile.",
+            "description":f"Edit details of your profile.",
+            }
 
 
     status_code = 202
-
-    try:
-        edited_user: User = service.update(user_id, updated_user, current_user)
-        context["user_for_edit"] = edited_user
-        context.update(prepare_notification(True, "success", f"User {edited_user.username} updated!"))
-    except RecordNotFound as e:
-        status_code = 404
-        context.update(prepare_notification(True, "warning", e.msg))
-    except Unauthorized as e:
-        status_code = 401
-        context.update(prepare_notification(True, "danger", e.msg))
-    except EndpointDataMismatch as e:
-        status_code = 403
-        context.update(prepare_notification(True, "danger", e.msg))
-    except UsernameOrEmailNotUnique as e:
-        status_code = 403
-        context.update(prepare_notification(True, "danger", e.msg))
+    if current_user.user_id:
+        user_for_edit = user_service.get(user_id=current_user.user_id, current_user=current_user)
+        context.update({
+                "available_roles": current_user.can_grant_roles(),
+                "user_for_edit": user_for_edit,
+                })
+        try:
+            edited_user: User = user_service.update(user_id=current_user.user_id, user=updated_user, current_user=current_user)
+            context["user_for_edit"] = edited_user
+            context.update(prepare_notification(True, "success", f"User {edited_user.username} updated!"))
+        except RecordNotFound as e:
+            status_code = 404
+            context.update(prepare_notification(True, "warning", e.msg))
+        except Unauthorized as e:
+            status_code = 401
+            context.update(prepare_notification(True, "danger", e.msg))
+        except EndpointDataMismatch as e:
+            status_code = 403
+            context.update(prepare_notification(True, "danger", e.msg))
+        except UsernameOrEmailNotUnique as e:
+            status_code = 403
+            context.update(prepare_notification(True, "danger", e.msg))
 
     template_response = jinja.TemplateResponse(
-            name="dashboard/user-edit.html",
+            name="app/profile.html",
             context=context,
             status_code=status_code
             )
