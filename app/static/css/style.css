@@ -118,3 +118,9 @@ input.disabled {
 .bat-main-content .ql-container ul {
     padding-bottom: 1rem
 }
+
+.bat-main-content .edit-report .ql-container p,
+.bat-main-content .edit-report .ql-container ol,
+.bat-main-content .edit-report .ql-container ul {
+    padding-bottom: 0px;
+}
