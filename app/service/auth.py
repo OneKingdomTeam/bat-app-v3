@@ -154,7 +154,7 @@ def cf_verify_response(response: str | None) -> bool:
     __import__('pprint').pprint(r_json)
 
     try:
-        if r_json.success == True:
+        if r_json["success"] == True:
             return True
         else:
             CFTurnstileVerificationFailed(msg="Captcha verification failed. Try again or contact admins if problem persists.")
