@@ -8,6 +8,8 @@
     console.log(cfDiv);
 
     cfWrapper.appendChild(cfDiv);
-    window.turnstile.render(cfDiv);
+    if( window.turnstile ){
+        window.turnstile.render(cfDiv);
+    };
 })();
 </script>
