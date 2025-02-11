@@ -13,7 +13,7 @@ class UserRoleEnum(Enum):
 class UserLogin(BaseModel):
     username: str
     password: str
-    cf_turnstile_token: str | None
+    cf_turnstile_response: str | None
 
 
 class UserCreate(BaseModel):

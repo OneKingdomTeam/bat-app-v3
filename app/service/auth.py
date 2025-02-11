@@ -1,11 +1,14 @@
 from fastapi import HTTPException, Request
 from app.config import ACCESS_TOKEN_EXPIRE_MINUTES, \
-        SECRET_KEY, ALGORITHM
+        SECRET_KEY, ALGORITHM, CF_TURNSTILE_SECRET_KEY
+
+import requests
 
 from jose import ExpiredSignatureError, JWTError, jwt
 from passlib.context import CryptContext
 from datetime import datetime, timedelta, timezone
 
+from app.exception.auth import CFTurnstileVerificationFailed
 from app.exception.database import RecordNotFound
 from app.exception.web import NonHTMXRequestException, RedirectToLoginException
 from app.exception.service import IncorectCredentials, InvalidBearerToken
@@ -123,5 +126,39 @@ async def user_htmx_dep(request: Request) -> User | None:
             raise RedirectToLoginException(detail=e.msg)
         
     raise RedirectToLoginException(detail="Unauthorized, probalby expired session or not loged in.")
+
+
+
+
+# -------------------------------------
+#   Cloudflare turnstile response verification
+# -------------------------------------
+
+def cf_verify_response(response: str | None) -> bool:
+
+    if not response:
+        raise CFTurnstileVerificationFailed(msg="Captcha verification failed. Try again or contact admins if problem persists.")
+
+    cf_siteverify_endpoint = "https://challenges.cloudflare.com/turnstile/v0/siteverify"
+
+    data = {
+            "secret":CF_TURNSTILE_SECRET_KEY,
+            "response":response,
+            }
+    r = requests.post(cf_siteverify_endpoint, data=data)
+    r_json = r.json()
+
+    try:
+        if r_json.success == True:
+            return True
+        else:
+            CFTurnstileVerificationFailed(msg="Captcha verification failed. Try again or contact admins if problem persists.")
+    except Exception as e:
+        print(str(e))
+        raise CFTurnstileVerificationFailed(msg="Captcha verification failed. Try again or contact admins if problem persists.")
+
+    return False
+
+
 
 

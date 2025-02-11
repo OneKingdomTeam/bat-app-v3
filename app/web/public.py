@@ -3,6 +3,7 @@ from fastapi.responses import HTMLResponse
 
 from app.config import CF_TURNSTILE_ENABLED, CF_TURNSTILE_SITE_KEY, SMTP_ENABLED
 
+from app.exception.auth import CFTurnstileVerificationFailed
 from app.exception.database import RecordNotFound
 from app.exception.service import IncorectCredentials, InvalidBearerToken
 
@@ -14,7 +15,7 @@ from app.template.init import jinja
 
 from app.service import user as user_service
 from app.service.auth import handle_token_creation, auth_user, get_current_user, \
-        handle_token_renewal, user_htmx_dep
+        handle_token_renewal, user_htmx_dep, cf_verify_response
 
 from app.web import prepare_notification
 
@@ -240,7 +241,7 @@ def login_page_get(request: Request, expired_session: int = 0):
 @router.post("/login", response_class=HTMLResponse)
 def login_page_post(credentials: UserLogin, request: Request):
 
-    context: dict = {
+    context = {
             "title": "Login",
             "description": "Login to your BAT account.",
             "request": request,
@@ -250,6 +251,10 @@ def login_page_post(credentials: UserLogin, request: Request):
     status_code = 200
 
     try:
+        if CF_TURNSTILE_ENABLED:
+            cf_verification_passed = cf_verify_response(response=credentials.cf_turnstile_response)
+            print(f"Cf verification passed: {cf_verification_passed}")
+
         token = handle_token_creation(username=credentials.username, password=credentials.password)
         context["notification"] = 1
         context["notification_type"] = "success"
@@ -272,6 +277,9 @@ def login_page_post(credentials: UserLogin, request: Request):
         context["notification"] = 1
         context["notification_type"] = "danger"
         context["notification_content"] = "Invalid credentials."
+        status_code = 401
+    except CFTurnstileVerificationFailed as e:
+        context.update(prepare_notification(True, "danger", e.msg))
         status_code = 401
     except:
         context["notification"] = 1

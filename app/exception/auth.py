@@ -13,3 +13,8 @@ class IntegrityErrorException(Exception):
 
     def __init__(self, msg: str):
         self.msg = msg
+
+class CFTurnstileVerificationFailed(Exception):
+
+    def __init__(self, msg: str):
+        self.msg = msg
