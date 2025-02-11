@@ -67,6 +67,13 @@
             </div>       
         </div>
     </div>
+    <script>
+    setTimeout(()=>{
+        if (turnstile){
+            turnstile.reset();
+        }
+    }, 100);
+    </script>
 </section>
 {% endblock %}
 
@@ -74,13 +81,6 @@
 {% if cf_turnstile_enabled %}
 <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 <script src="{{ url_for("js", path="cf-callback.js") }}"></script>
-<script>
-setTimeout(()=>{
-    if (turnstile){
-        turnstile.reset();
-    }
-}, 100);
-</script>
 {% endif %}
 {% if token_manager_start == True %}
 {% include "helpers/token-manager-start.html" %}
