@@ -79,6 +79,13 @@ if(typeof(cfCallback) != "function"){
         console.log(token)
     }
 }
+window.addEventListener("load", ()=>{
+    setTimeout(()=>{
+        if( window.turnstile ){
+            window.turnstile.reset()
+        }
+    }, 200);
+});
 </script>
 {% endif %}
 {% if token_manager_start == True %}
