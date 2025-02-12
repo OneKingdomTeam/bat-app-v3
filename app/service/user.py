@@ -30,7 +30,7 @@ def add_default_user():
     new_uuid = str(uuid4())
 
     username = DEFAULT_USER
-    email = DEFAULT_EMAIL
+    email = DEFAULT_EMAIL.lower()
     password = DEFAULT_PASSWORD
     hash: str = ""
 
@@ -77,7 +77,7 @@ def create(user: UserCreate, request: Request, current_user: User) -> User:
         new_user = data.create(User(
                 user_id=new_uuid,
                 username=user.username,
-                email=user.email,
+                email=user.email.lower(),
                 hash=get_password_hash(user.password),
                 role=user.role
                 ))
@@ -139,14 +139,17 @@ def get_by_email(email: str, current_user: User) -> User:
 
     return data.get_by(field="email", value=email)
 
+
 def username_from_email(email: str) -> str:
 
-    allowed_chars = r"^[a-zA-Z0-9@._-]+$"  # Corrected regex: Anchors and no double negation
 
-    if not re.fullmatch(allowed_chars, email):  # Use re.fullmatch for exact matching
+    email = email.lower()
+    allowed_chars = r"^[a-zA-Z0-9@._-]+$"
+
+    if not re.fullmatch(allowed_chars, email):
         raise IncorectCredentials(msg="Invalid characters found in email address.")
 
-    if not email: # Check if the input is empty
+    if not email:
         raise IncorectCredentials(msg="Email address is empty.")
 
     return data.username_from_mail(email=email)
