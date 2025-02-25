@@ -3,7 +3,15 @@
 <div class="content px-6">
     <h4 id="question-category-name" class="subtitle is-4 has-text-centered py-6">{{ question_for_editting.category_name }}</h4>
     {% include "helpers/notification.html" %}
-    <form class="main-form" hx-put="{{ request.url }}" hx-select="#question-editor" hx-target="#question-editor" hx-replace="outerHTML" hx-ext="json-enc">
+    <form
+        id="question-edit-form"
+        class="main-form"
+        hx-put="{{ request.url }}"
+        hx-select="#question-editor"
+        hx-target="#question-editor"
+        hx-replace="outerHTML"
+        hx-ext="json-enc"
+        >
         <div class="field">
             <label class="label">Question</label>
             <div class="control">
@@ -40,7 +48,7 @@
         </div>
         <div class="is-fullwidth pt-4 is-flex is-justify-content-space-around is-flex-direction-row-reverse">
             <div class="control">
-                <input type="submit" value="Save changes" class="button is-success">
+                <input form="question-edit-form" type="submit" value="Save changes" class="button is-success">
             </div>
             <div class="control">
                 <div class="button is-warning is-light is-clickable"
