@@ -1,5 +1,6 @@
 import os
-from fastapi import APIRouter, Depends, HTTPException, Request
+from typing import Annotated
+from fastapi import APIRouter, Depends, Form, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from time import sleep
 from random import randrange
@@ -226,7 +227,9 @@ def post_set_password(request: Request, set_new_password: UserSetNewPassword):
 
 
 @router.get("/token-renew", name="token_renew_endpoint")
-def post_token_refresh(request: Request, current_user: User = Depends(user_htmx_dep)):
+async def post_token_refresh(
+    request: Request, current_user: User = Depends(user_htmx_dep)
+):
 
     new_token = handle_token_renewal(current_user=current_user)
 
@@ -234,7 +237,7 @@ def post_token_refresh(request: Request, current_user: User = Depends(user_htmx_
 
 
 @router.get("/login", response_class=HTMLResponse, name="login_page")
-def login_page_get(request: Request, expired_session: int = 0):
+async def login_page_get(request: Request, expired_session: int = 0):
 
     context: dict = {
         "request": request,
@@ -262,7 +265,12 @@ def login_page_get(request: Request, expired_session: int = 0):
 
 
 @router.post("/login", response_class=HTMLResponse)
-def login_page_post(credentials: UserLogin, request: Request):
+async def login_page_post(
+    request: Request,
+    username: Annotated[str, Form()],
+    password: Annotated[str, Form()],
+    cf_token: Annotated[str | None, Form()] = None,
+):
 
     context = {
         "title": "Login",
@@ -285,23 +293,18 @@ def login_page_post(credentials: UserLogin, request: Request):
 
     try:
         if CF_TURNSTILE_ENABLED:
-            cf_verify_response(response=credentials.cf_turnstile_response)
+            cf_verify_response(response=cf_token)
 
         # handle email logins
-        if "@" in credentials.username:
-            username = user_service.username_from_email(credentials.username)
-            credentials.username = username
+        if "@" in username:
+            username = user_service.username_from_email(username)
 
-        token = handle_token_creation(
-            username=credentials.username, password=credentials.password
-        )
+        token = handle_token_creation(username=username, password=password)
         context["notification"] = 1
         context["notification_type"] = "success"
         context["notification_content"] = "Success! Redirecting."
 
-        current_user = auth_user(
-            username=credentials.username, password=credentials.password
-        )
+        current_user = auth_user(username=username, password=password)
         user_role = current_user.role.value
         context["token_manager_start"] = True
         if user_role == "user":
@@ -328,8 +331,8 @@ def login_page_post(credentials: UserLogin, request: Request):
         status_code = 401
         raise
 
-    if credentials.username:
-        context["username"] = credentials.username
+    if username:
+        context["username"] = username
         context["focus_input_name"] = "password"
 
     response = jinja.TemplateResponse(

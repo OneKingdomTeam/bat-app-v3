@@ -18,12 +18,8 @@
                 {% include "helpers/notification.html" %}
                 <form id="bat-login-form"
                     class="form"
-                    hx-post="{{ url_for("login_page") }}"
-                    hx-select=".bat-main-content"
-                    hx-target=".bat-main-content"
-                    hx-swap="outerHTML"
-                    hx-ext="json-enc"
-                    hx-indicator="#login-button"
+                    method="post"
+                    action="{{ url_for("login_page") }}"
                     >
                     <div class="field">
                         <label class="label">Username / Email</label>
