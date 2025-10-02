@@ -59,3 +59,16 @@ fastapi run
 
 There is example `compose.yml` in the repository
 
+Compose file is preapred to use the bat-app:latest version of the container.
+
+## Building the container
+
+Repository contains the containerfile that instructs podman how to build the container.
+
+For that you can simply run: 
+
+```bash
+podman build -f containerfile -t bat-app:<version> .
+```
+
+

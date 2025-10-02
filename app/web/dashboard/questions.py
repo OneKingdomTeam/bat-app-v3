@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, Request, Response
 from app.template.init import jinja
 from fastapi.responses import HTMLResponse
+from app.model.notification import Notification
 from app.model.question import (
     Question,
     QuestionCategory,
@@ -10,8 +11,7 @@ from app.model.question import (
 )
 from app.model.user import User
 from app.service import question as service
-from app.service.auth import user_htmx_dep
-from app.web import prepare_notification
+from app.service.authentication import user_htmx_dep
 
 
 router = APIRouter()
@@ -218,7 +218,9 @@ def put_question_category_page(
                 "question_for_editting": question_for_editting,
             }
         )
-        context.update(prepare_notification(True, "success", "Question updated"))
+        context["notification"] = Notification(
+            style="success", content="Question updated"
+        )
     except:
         # NotImplemented
         raise

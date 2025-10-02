@@ -28,26 +28,20 @@
                 </div>
                 <div class="content my-3 is-flex is-justify-content-space-around">
                     {% if previous_category != None %}
-                    <button
+                    <a
                         class="button is-link is-light"
-                        hx-get="{{ url_for("dashboard_assessment_category_review_page", assessment_id=assessment_id, category_order=previous_category ) }}"
-                        hx-select=".bat-main-content"
-                        hx-target=".bat-main-content"
-                        hx-swap="outerHTML"
-                        hx-push-url="true">
+                        href="{{ url_for("dashboard_assessment_category_review_page", assessment_id=assessment_id, category_order=previous_category ) }}"
+                        >
                         Previous
-                    </button>
+                    </a>
                     {% endif %}
                     {% if next_category != None %}
-                    <button
+                    <a
                         class="button is-link is-light"
-                        hx-get="{{ url_for("dashboard_assessment_category_review_page", assessment_id=assessment_id, category_order=next_category ) }}"
-                        hx-select=".bat-main-content"
-                        hx-target=".bat-main-content"
-                        hx-swap="outerHTML"
-                        hx-push-url="true">
+                        href="{{ url_for("dashboard_assessment_category_review_page", assessment_id=assessment_id, category_order=next_category ) }}"
+                        >
                         Next
-                    </button>
+                    </a>
                     {% endif %} 
                 </div>
             </div>
