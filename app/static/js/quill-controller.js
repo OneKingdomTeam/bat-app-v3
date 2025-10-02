@@ -20,7 +20,6 @@ class QuillNotesManager {
         fetch(url, {
             "method": "PUT",
             "headers": {
-                "Authorization": window.localStorage.getItem("access_token"),
                 "HX-Request":"true",
                 "Content-Type":"application/json"
             },
