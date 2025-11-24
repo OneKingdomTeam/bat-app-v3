@@ -6,9 +6,6 @@ class JwtManager {
         this.intervalId = null;
     }
 
-    /**
-     * Initialize manager: fetch expiry if missing, start monitoring.
-     */
     async init() {
         let expiry = this.getStoredExpiry();
         if (!expiry) {
@@ -22,16 +19,13 @@ class JwtManager {
         this.checkRenewalNow();
     }
 
-    /**
-     * Start background monitoring every minute.
-     */
     startMonitoring() {
         if (this.intervalId) clearInterval(this.intervalId);
 
         this.intervalId = setInterval(async () => {
             const expiry = this.getStoredExpiry();
             if (!expiry) {
-                // Missing info → fetch again
+                // Missing info → attempt re-fetch
                 await this.fetchTokenInfo();
                 return;
             }
@@ -48,44 +42,60 @@ class JwtManager {
      * @param {boolean} renew 
      * @returns {number|null} expiry timestamp (seconds)
      */
-    async fetchTokenInfo() {
+    async fetchTokenInfo(renew = false) {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 5000); // 5s timeout
+
         try {
-            const url = tokenCheckUrl
+            const url = tokenCheckUrl + (renew ? "?renew=1" : "");
             const resp = await fetch(url, {
                 method: "GET",
+                signal: controller.signal,
             });
-            if (!resp.ok) throw new Error("Failed token check");
+            clearTimeout(timeout);
 
-            const data = await resp.json();
-            if (data.exp) {
+            if (!resp.ok) {
+                console.warn("Token check failed with status:", resp.status);
+                return null;
+            }
+
+            let data = null;
+            try {
+                data = await resp.json();
+            } catch (jsonErr) {
+                console.warn("Invalid or empty token response JSON");
+                return null;
+            }
+
+            if (data && typeof data.exp === "number") {
                 this.storeExpiry(data.exp);
                 this.checkRenewalNow(); // immediate re-check
                 return data.exp;
+            } else {
+                console.warn("Token response missing 'exp'");
             }
         } catch (err) {
-            console.error("Error fetching token info:", err);
+            if (err.name === "AbortError") {
+                console.warn("Token fetch request timed out");
+            } else {
+                console.error("Error fetching token info:", err);
+            }
+        } finally {
+            clearTimeout(timeout);
         }
+
         return null;
     }
 
-    /**
-     * Store expiry timestamp in localStorage.
-     */
     storeExpiry(expiry) {
         localStorage.setItem(this.expiryKey, expiry.toString());
     }
 
-    /**
-     * Get expiry timestamp from localStorage.
-     */
     getStoredExpiry() {
         const val = localStorage.getItem(this.expiryKey);
         return val ? parseInt(val, 10) : null;
     }
 
-    /**
-     * Run immediate renewal check after fresh token info fetch.
-     */
     async checkRenewalNow() {
         const expiry = this.getStoredExpiry();
         if (!expiry) return;
@@ -95,3 +105,4 @@ class JwtManager {
         }
     }
 }
+
