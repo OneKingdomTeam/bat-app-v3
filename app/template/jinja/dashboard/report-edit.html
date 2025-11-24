@@ -47,8 +47,8 @@
                     hx-post="{{ url_for("dashboard_report_edit_page", report_id=report.report_id ) }}"
                     hx-select=".bat-main-content"
                     hx-target=".bat-main-content"
-                    hx-trigger="change"
-                    hx-swap="outerHTML"
+                    hx-trigger="keyup delay:0.5s"
+                    hx-swap="none"
                     hx-ext="json-enc"
                     >
                     <div class="field">
