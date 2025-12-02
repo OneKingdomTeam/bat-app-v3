@@ -374,9 +374,10 @@ podman-compose up
 docker-compose up
 ```
 
-Volumes mounted for persistence:
-- Database files (`app/db/`)
-- User uploads (`app/uploads/`)
+Volume mounted for persistence:
+- Single volume mount: `./data:/bat-app/app/data:Z`
+  - Database files stored in `app/data/db/`
+  - User uploads stored in `app/data/uploads/`
 
 ---
 
@@ -552,7 +553,7 @@ BAT App v3 is optimized for Railway deployment with:
 
 **Files:**
 - `Procfile` - Defines start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-- Automatic directory creation for `app/db` and `app/uploads` on startup
+- Automatic directory creation for `app/data/`, `app/data/db/` and `app/data/uploads/` on startup
 
 **Required Environment Variables:**
 - `SECRET_KEY` (generate with `openssl rand -hex 32`)
