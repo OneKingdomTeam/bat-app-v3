@@ -1,5 +1,18 @@
 venv/
 __pycache__
-app/db/*
+
+# Database files - SQLite with WAL mode
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite3
+*.sqlite-shm
+*.sqlite-wal
+
+# Data directory contents (mounted volume)
+app/data/db/
+app/data/uploads/
+
+# Legacy paths (no longer used but kept for safety)
 app/uploads/*
-*.db*
