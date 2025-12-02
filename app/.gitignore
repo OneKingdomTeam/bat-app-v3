@@ -1,9 +1,1 @@
 .env
-
-# Database files in data directory (mounted volume)
-data/db/*.db
-data/db/*.db-shm
-data/db/*.db-wal
-
-# Uploads in data directory (mounted volume)
-data/uploads/*

@@ -10,9 +10,10 @@ __pycache__
 *.sqlite-shm
 *.sqlite-wal
 
-# Data directory contents (mounted volume)
-app/data/db/
-app/data/uploads/
+# Persistent data directory (mounted volume) - all persistent files
+persistent/
 
 # Legacy paths (no longer used but kept for safety)
 app/uploads/*
+app/data/db/
+app/data/uploads/

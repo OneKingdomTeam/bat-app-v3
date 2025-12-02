@@ -10,7 +10,7 @@ from app.exception.web import (
 )
 from pathlib import Path
 
-from app.config import FORCE_HTTPS_PATHS_ENV, APP_ROOT, DATA_ROOT, DB_DIR, UPLOADS_DIR
+from app.config import FORCE_HTTPS_PATHS_ENV, APP_ROOT, PERSISTENT_ROOT, DB_DIR, UPLOADS_DIR
 
 from app.service.user import add_default_user
 from app.service.question import add_default_questions
@@ -33,8 +33,8 @@ from app.web.app.profile import router as app_profile_router
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Ensure required directories exist before app starts
-    # Single volume structure: /app/data/ contains all persistent data
-    DATA_ROOT.mkdir(parents=True, exist_ok=True)
+    # Single volume structure: /persistent/ contains all persistent data
+    PERSISTENT_ROOT.mkdir(parents=True, exist_ok=True)
     DB_DIR.mkdir(parents=True, exist_ok=True)
     UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
 

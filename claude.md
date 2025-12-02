@@ -375,9 +375,9 @@ docker-compose up
 ```
 
 Volume mounted for persistence:
-- Single volume mount: `./data:/bat-app/app/data:Z`
-  - Database files stored in `app/data/db/`
-  - User uploads stored in `app/data/uploads/`
+- Single volume mount: `./persistent:/bat-app/persistent:Z`
+  - Database files stored in `persistent/db/`
+  - User uploads stored in `persistent/uploads/`
 
 ---
 
@@ -553,7 +553,7 @@ BAT App v3 is optimized for Railway deployment with:
 
 **Files:**
 - `Procfile` - Defines start command: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-- Automatic directory creation for `app/data/`, `app/data/db/` and `app/data/uploads/` on startup
+- Automatic directory creation for `persistent/`, `persistent/db/` and `persistent/uploads/` on startup
 
 **Required Environment Variables:**
 - `SECRET_KEY` (generate with `openssl rand -hex 32`)
@@ -571,18 +571,18 @@ Railway uses ephemeral storage - a volume is REQUIRED for production.
 
 | Mount Path | Purpose | Size |
 |------------|---------|------|
-| `/app/app/data` | ALL persistent data (database + uploads) | 2GB+ |
+| `/bat-app/persistent` | ALL persistent data (database + uploads) | 2GB+ |
 
 **Internal Structure:**
-- `/app/app/data/db/` - SQLite database + WAL files
-- `/app/app/data/uploads/` - User uploads, report SVGs
+- `/bat-app/persistent/db/` - SQLite database + WAL files
+- `/bat-app/persistent/uploads/` - User uploads, report SVGs
 
 Without a volume, all data is lost on each deployment. The application automatically creates the internal directory structure.
 
 **Deployment Process:**
 1. Connect GitHub repository to Railway
 2. Configure environment variables
-3. Add persistent volume at `/app/app/data`
+3. Add persistent volume at `/bat-app/persistent`
 4. Deploy automatically on git push
 
 See README.md for detailed Railway deployment instructions including troubleshooting guide.

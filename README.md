@@ -99,11 +99,11 @@ Without a persistent volume:
 
 **Railway's free tier allows ONE volume per service.** BAT App v3 is optimized to use a single volume for all persistent data:
 
-**Data Volume (All Persistent Storage)**
-- **Mount Path:** `/app/app/data`
+**Persistent Data Volume (All Storage)**
+- **Mount Path:** `/bat-app/persistent`
 - **Purpose:** Contains ALL persistent data in subdirectories:
-  - `data/db/` - SQLite database and WAL files
-  - `data/uploads/` - User-uploaded files and report visualizations (SVG wheels)
+  - `persistent/db/` - SQLite database and WAL files
+  - `persistent/uploads/` - User-uploaded files and report visualizations (SVG wheels)
 - **Recommended Size:** Start with 2GB (expandable as needed)
 - **Critical:** Without this volume, ALL data is lost on redeploy
 
@@ -111,9 +111,9 @@ Without a persistent volume:
 
 1. **Open your Railway project** and select your service
 2. **Go to Settings tab** → scroll to "Volumes" section
-3. **Add the Data Volume:**
+3. **Add the Persistent Data Volume:**
    - Click **"+ Add Volume"**
-   - **Mount Path:** `/app/app/data`
+   - **Mount Path:** `/bat-app/persistent`
    - Click **"Add"**
 4. **Redeploy** your application for the volume to take effect
 
@@ -124,7 +124,7 @@ Without a persistent volume:
 The application automatically creates this structure inside your volume:
 
 ```
-/app/app/data/
+/bat-app/persistent/
 ├── db/
 │   ├── database.db
 │   ├── database.db-wal
@@ -147,9 +147,9 @@ After adding the volume and redeploying:
 
 | Mount Path | Contents | Size | Railway Tier |
 |------------|----------|------|--------------|
-| `/app/app/data` | Database + Uploads | 2GB+ | Free ✅ |
+| `/bat-app/persistent` | Database + Uploads | 2GB+ | Free ✅ |
 
-**Note:** The application creates the internal directory structure (`data/db/` and `data/uploads/`) automatically on first run.
+**Note:** The application creates the internal directory structure (`persistent/db/` and `persistent/uploads/`) automatically on first run.
 
 ### Updating Your Deployment
 
@@ -164,9 +164,9 @@ git push origin main
 ### Troubleshooting Railway Deployment
 
 #### Issue: "RuntimeError: Directory does not exist"
-**Symptom:** App crashes on startup with `RuntimeError: Directory '/app/app/uploads' does not exist`
+**Symptom:** App crashes on startup with directory-related errors
 
-**Solution:** This is fixed in version 3.0.9+. The app now automatically creates required directories. If you're on an older version:
+**Solution:** This is fixed in version 3.0.11+. The app now automatically creates required directories in `/bat-app/persistent/`. If you're on an older version:
 ```bash
 git pull origin main
 # Redeploy on Railway
@@ -293,6 +293,21 @@ podman-compose up
 # Using Docker
 docker-compose up
 ```
+
+### Volume Mount Configuration
+
+The `compose.yml` includes a single persistent volume mount:
+
+```yaml
+volumes:
+  - ./persistent:/bat-app/persistent:Z
+```
+
+This mounts the local `./persistent` directory to `/bat-app/persistent` in the container, which contains:
+- `persistent/db/` - SQLite database files
+- `persistent/uploads/` - User uploaded files
+
+The `:Z` flag is for SELinux systems (Fedora, RHEL, etc.). Remove it if not using SELinux.
 
 Make sure to configure environment variables in the `compose.yml` file before running.
 

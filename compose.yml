@@ -21,4 +21,4 @@ services:
       # Uncomment if you will run instance behind https reverse proxy
       # - FORCE_HTTPS_PATHS=True
     volumes:
-      - ./data:/bat-app/app/data:Z
+      - ./persistent:/bat-app/persistent:Z
