@@ -1,0 +1,157 @@
+{% include "helpers/notification.html" %}
+
+<!-- Logo Upload Section -->
+<div class="field mb-5">
+    <label class="label">Logo</label>
+    <p class="has-text-grey-light mb-3">Recommended: 300x66 pixels (landscape orientation). Max size: 512 KB. Formats: PNG, JPG, WebP, SVG.</p>
+    <div class="control">
+        <div class="columns is-vcentered">
+            <div class="column is-narrow">
+                <figure class="image" style="max-width: 300px;">
+                    <img src="{{ url_for('images', path=branding.logo_filename) }}" alt="Current Logo">
+                </figure>
+            </div>
+            <div class="column">
+                <form
+                    hx-post="{{ url_for('dashboard_settings_branding') }}/logo"
+                    hx-encoding="multipart/form-data"
+                    hx-target="#branding-section"
+                    hx-swap="innerHTML">
+                    <div class="field has-addons">
+                        <div class="control is-expanded">
+                            <div class="file has-name is-fullwidth">
+                                <label class="file-label">
+                                    <input class="file-input" type="file" name="logo_file" accept=".png,.jpg,.jpeg,.webp,.svg" required>
+                                    <span class="file-cta">
+                                        <span class="file-icon">
+                                            <i class="fas fa-upload"></i>
+                                        </span>
+                                        <span class="file-label">
+                                            Choose logo…
+                                        </span>
+                                    </span>
+                                    <span class="file-name" id="logo-file-name">
+                                        No file selected
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="control">
+                            <button type="submit" class="button is-info is-light">Upload</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<hr>
+
+<!-- Favicon Upload Section -->
+<div class="field mb-5">
+    <label class="label">Favicon</label>
+    <p class="has-text-grey-light mb-3">Recommended: 128x128 pixels. Max size: 128 KB. Formats: PNG, JPG, WebP, ICO.</p>
+    <div class="control">
+        <div class="columns is-vcentered">
+            <div class="column is-narrow">
+                <figure class="image is-64x64">
+                    <img src="{{ url_for('images', path=branding.favicon_filename) }}" alt="Current Favicon">
+                </figure>
+            </div>
+            <div class="column">
+                <form
+                    hx-post="{{ url_for('dashboard_settings_branding') }}/favicon"
+                    hx-encoding="multipart/form-data"
+                    hx-target="#branding-section"
+                    hx-swap="innerHTML">
+                    <div class="field has-addons">
+                        <div class="control is-expanded">
+                            <div class="file has-name is-fullwidth">
+                                <label class="file-label">
+                                    <input class="file-input" type="file" name="favicon_file" accept=".png,.jpg,.jpeg,.webp,.ico" required>
+                                    <span class="file-cta">
+                                        <span class="file-icon">
+                                            <i class="fas fa-upload"></i>
+                                        </span>
+                                        <span class="file-label">
+                                            Choose favicon…
+                                        </span>
+                                    </span>
+                                    <span class="file-name" id="favicon-file-name">
+                                        No file selected
+                                    </span>
+                                </label>
+                            </div>
+                        </div>
+                        <div class="control">
+                            <button type="submit" class="button is-info is-light">Upload</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<hr>
+
+<!-- Text Settings Form -->
+<form
+    class="main-form"
+    hx-post="{{ url_for('dashboard_settings_branding') }}"
+    hx-target="#branding-section"
+    hx-swap="innerHTML">
+
+    <div class="field">
+        <label class="label">Feedback Form URL</label>
+        <p class="has-text-grey-light">URL to your feedback form (Google Forms, Typeform, etc.)</p>
+        <div class="control">
+            <input class="input" type="url" name="feedback_url" value="{{ branding.feedback_url }}" required>
+        </div>
+    </div>
+
+    <div class="field">
+        <label class="label">Feedback Button Text</label>
+        <p class="has-text-grey-light">Text displayed on the feedback button in the dashboard footer</p>
+        <div class="control">
+            <input class="input" type="text" name="feedback_button_text" value="{{ branding.feedback_button_text }}" required>
+        </div>
+    </div>
+
+    <div class="field">
+        <label class="label">Organization Name</label>
+        <p class="has-text-grey-light">Your organization name (shown in footer)</p>
+        <div class="control">
+            <input class="input" type="text" name="organization_name" value="{{ branding.organization_name }}" required>
+        </div>
+    </div>
+
+    <div class="field">
+        <label class="label">Organization URL</label>
+        <p class="has-text-grey-light">Your organization website URL</p>
+        <div class="control">
+            <input class="input" type="url" name="organization_url" value="{{ branding.organization_url }}" required>
+        </div>
+    </div>
+
+    <div class="field pt-4">
+        <div class="control">
+            <button type="submit" class="button is-primary is-light">Save Branding Settings</button>
+        </div>
+    </div>
+
+</form>
+
+<script>
+    // File input display handlers
+    document.querySelector('input[name="logo_file"]')?.addEventListener('change', function(e) {
+        const fileName = e.target.files[0]?.name || 'No file selected';
+        document.getElementById('logo-file-name').textContent = fileName;
+    });
+
+    document.querySelector('input[name="favicon_file"]')?.addEventListener('change', function(e) {
+        const fileName = e.target.files[0]?.name || 'No file selected';
+        document.getElementById('favicon-file-name').textContent = fileName;
+    });
+</script>

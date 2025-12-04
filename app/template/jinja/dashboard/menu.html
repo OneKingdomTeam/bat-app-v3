@@ -17,6 +17,11 @@
         <a href="{{ url_for("dashboard_users_page") }}" class="navbar-item {% if request.url == url_for("dashboard_users_page") %} has-text-weight-bold {% endif %}">
             Users
         </a>
+        {% if current_user.role.value == "admin" %}
+        <a href="{{ url_for("dashboard_settings_page") }}" class="navbar-item {% if request.url == url_for("dashboard_settings_page") %} has-text-weight-bold {% endif %}">
+            Settings
+        </a>
+        {% endif %}
         <a href="{{ url_for("logout_page") }}" class="ml-4 navbar-item {% if request.url == url_for("logout_page") %} has-text-weight-bold {% endif %}">
             Log out
         </a>

@@ -1,0 +1,34 @@
+{% extends "dashboard/dashboard.html" %}
+
+{% block body %}
+<section class="bat-main-content is-flex pt-6">
+    <div class="container">
+        {% block body_content %}
+        <h2 class="title is-2 has-text-centered">Settings</h2>
+
+        <div class="box">
+            <h3 class="title is-4">Branding</h3>
+            <p class="subtitle is-6">Customize the look and feel of your BAT instance</p>
+
+            <div
+                id="branding-section"
+                hx-get="{{ url_for('dashboard_settings_branding') }}"
+                hx-trigger="load"
+                hx-swap="innerHTML">
+                <progress class="progress is-small is-info" max="100">Loading...</progress>
+            </div>
+        </div>
+
+        <!-- Future settings sections can be added here -->
+        <!-- Example:
+        <div class="box">
+            <h3 class="title is-4">Email Configuration</h3>
+            <p class="subtitle is-6">Configure SMTP settings</p>
+            ...
+        </div>
+        -->
+
+        {% endblock %}
+    </div>
+</section>
+{% endblock %}

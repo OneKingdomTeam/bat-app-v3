@@ -1,3 +1,4 @@
+{% set branding = get_branding() %}
 <!DOCTYPE html>
 <html lang="en">
     <head>
@@ -6,7 +7,7 @@
         <title>{% block title %}Page Title{% endblock %} | BAT Tool</title>
         <meta name="description" content="{% block description %}Description{% endblock %}">
         <meta name="htmx-config" content='{"requestClass":"is-loading"}'>
-        <link rel="icon" href="{{ url_for("images", path="bat-favicon.webp") }}">
+        <link rel="icon" href="{{ url_for("images", path=branding.favicon_filename) }}">
         <link href="{{ url_for("css", path="bulma-no-dark-mode.min.css") }}" rel="stylesheet">
         <link href="{{ url_for("css", path="style.css") }}" rel="stylesheet">
         <link href="{{ url_for("css", path="quill.snow.css") }}" rel="stylesheet">
@@ -27,7 +28,7 @@
                         <nav class="navbar has-background-text-95" role="navigation" aria-label="main navigation">
                             <div class="navbar-brand p-3">
                                 <a href="{{ url_for("homepage") }}">
-                                    <img class="navbar-logo" src="{{ url_for("images", path="bat-logo-300x66.png") }}" alt="OneKingdom Bat Tool Logo">
+                                    <img class="navbar-logo" src="{{ url_for("images", path=branding.logo_filename) }}" alt="BAT Tool Logo">
                                 </a>
                                 <a role="button" class="navbar-burger" aria-label="menu" aria-expanded="false"
                                     onclick="document.querySelector('#mobile-menu').classList.toggle('is-active')">

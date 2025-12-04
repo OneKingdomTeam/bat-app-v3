@@ -1,12 +1,16 @@
+{% set branding = get_branding() %}
 <section class="footer has-background-text-95 p-3">
     <div class="container">
-        <div class="columns">
+        <div class="columns is-vcentered">
             <div class="column">
                 <a href="{{ url_for("homepage") }}">
-                    <img class="footer-logo" src="{{ url_for("images", path="bat-logo-300x66.png") }}" alt="OneKingdom Bat Tool Logo">
+                    <img class="footer-logo" src="{{ url_for("images", path=branding.logo_filename) }}" alt="BAT Tool Logo">
                 </a>
             </div>
-            <div class="column">
+            <div class="column has-text-right">
+                <p class="is-size-7 has-text-grey">
+                    Developed by <a href="{{ branding.organization_url }}" target="_blank" rel="noopener noreferrer">{{ branding.organization_name }}</a>
+                </p>
             </div>
         </div>
     </div>

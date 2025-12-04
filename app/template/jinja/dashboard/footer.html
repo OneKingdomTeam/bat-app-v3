@@ -1,16 +1,17 @@
+{% set branding = get_branding() %}
 <section class="footer has-background-text-95 p-3">
     <div class="container">
         <div class="columns">
             <div class="column">
                 <a href="{{ url_for("homepage") }}">
-                    <img class="footer-logo" src="{{ url_for("images", path="bat-logo-300x66.png") }}" alt="OneKingdom Bat Tool Logo">
+                    <img class="footer-logo" src="{{ url_for("images", path=branding.logo_filename) }}" alt="BAT Tool Logo">
                 </a>
             </div>
             <div class="column is-flex is-justify-content-center is-align-items-center">
-                <a class="button is-link is-outlined px-5" href="https://forms.monday.com/forms/ec025da1e8378bc7535f1522af9647e6?r=use1" target="_blank">Give us Feedback</a>
+                <a class="button is-link is-outlined px-5" href="{{ branding.feedback_url }}" target="_blank" rel="noopener noreferrer">{{ branding.feedback_button_text }}</a>
             </div>
             <div class="column is-flex is-justify-content-center is-align-items-center">
-                <p>Developed by <a href="https://onekingdom.team/" target="_blank" >OneKingdom Team</a></p>
+                <p>Developed by <a href="{{ branding.organization_url }}" target="_blank" rel="noopener noreferrer">{{ branding.organization_name }}</a></p>
             </div>
         </div>
     </div>

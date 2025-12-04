@@ -14,6 +14,7 @@ from app.config import FORCE_HTTPS_PATHS_ENV, APP_ROOT, PERSISTENT_ROOT, DB_DIR,
 
 from app.service.user import add_default_user
 from app.service.question import add_default_questions
+from app.service.setting import add_default_settings
 
 from app.api.auth import router as auth_api_router
 
@@ -23,6 +24,7 @@ from app.web.dashboard.users import router as dashboard_users_router
 from app.web.dashboard.questions import router as dashboard_questions_router
 from app.web.dashboard.assessments import router as dashboard_assessments_router
 from app.web.dashboard.reports import router as dashboard_reports_router
+from app.web.dashboard.settings import router as dashboard_settings_router
 
 from app.web.app import router as app_root_router
 from app.web.app.assessments import router as app_assessments_router
@@ -40,6 +42,7 @@ async def lifespan(app: FastAPI):
 
     add_default_user()
     add_default_questions()
+    add_default_settings()
 
     yield
 
@@ -80,6 +83,7 @@ app.include_router(dashboard_users_router, prefix="/dashboard/users")
 app.include_router(dashboard_questions_router, prefix="/dashboard/questions")
 app.include_router(dashboard_assessments_router, prefix="/dashboard/assessments")
 app.include_router(dashboard_reports_router, prefix="/dashboard/reports")
+app.include_router(dashboard_settings_router, prefix="/dashboard/settings")
 
 # App routers
 app.include_router(app_root_router, prefix="/app")
