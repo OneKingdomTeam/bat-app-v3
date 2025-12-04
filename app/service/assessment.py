@@ -13,6 +13,7 @@ from app.exception.service import Unauthorized
 from app.template.init import jinja
 
 import app.data.assessment as data
+import app.data.user as user_data
 from app.service import report as report_service
 
 
@@ -38,13 +39,20 @@ def get_assessment(assessment_id: str, current_user: User) -> Assessment:
 
     assessment = data.get_one(assessment_id=assessment_id)
 
-    if (
-        not current_user.can_manage_assessments()
-        and assessment.owner_id != current_user.user_id
-    ):
-        raise Unauthorized(msg="You cannot access this assessment.")
+    # Admins/coaches can access all assessments
+    if current_user.can_manage_assessments():
+        return assessment
 
-    return assessment
+    # Check if user is owner OR collaborator
+    if assessment.owner_id == current_user.user_id:
+        return assessment
+
+    if data.is_collaborator(
+        assessment_id=assessment_id, user_id=current_user.user_id
+    ):
+        return assessment
+
+    raise Unauthorized(msg="You cannot access this assessment.")
 
 
 def delete_assessment(assessment_id: str, current_user: User) -> Assessment:
@@ -80,6 +88,9 @@ def get_all_for_user(current_user: User) -> list[Assessment]:
         if reports:
             assessment.has_reports = True
 
+        # Set is_shared flag to indicate if user is collaborator (not owner)
+        assessment.is_shared = assessment.owner_id != current_user.user_id
+
     return assessments
 
 
@@ -102,15 +113,21 @@ def get_all_qa(assessment_id: str, current_user: User) -> list[AssessmentQA]:
 
     assessment = data.get_one(assessment_id=assessment_id)
 
-    if (
-        not current_user.can_manage_assessments()
-        and current_user.user_id != assessment.owner_id
-    ):
-        raise Unauthorized(msg="You cannot access this assessment data.")
+    # Admins/coaches can access all
+    if current_user.can_manage_assessments():
+        return data.filter_assessment_qa_by_category_order_and_question_id(
+            assessment_id=assessment_id
+        )
 
-    return data.filter_assessment_qa_by_category_order_and_question_id(
-        assessment_id=assessment_id
-    )
+    # Check if user is owner OR collaborator
+    if current_user.user_id == assessment.owner_id or data.is_collaborator(
+        assessment_id=assessment_id, user_id=current_user.user_id
+    ):
+        return data.filter_assessment_qa_by_category_order_and_question_id(
+            assessment_id=assessment_id
+        )
+
+    raise Unauthorized(msg="You cannot access this assessment data.")
 
 
 def prepare_wheel_context(assessment_qa: list[AssessmentQA]) -> dict:
@@ -237,14 +254,25 @@ def save_answer(answer_data: AssessmentAnswerPost, current_user: User):
         assessment_id=answer_data.assessment_id, current_user=current_user
     )
 
-    if (
-        current_user.can_manage_assessments()
-        or current_user.user_id == targeted_assessment.owner_id
+    # Admins/coaches can edit all
+    if current_user.can_manage_assessments():
+        data.save_answer(answer_data=answer_data)
+        data.update_last_edit(
+            assessment_id=answer_data.assessment_id, current_user=current_user
+        )
+        return
+
+    # Check if user is owner OR collaborator
+    if current_user.user_id == targeted_assessment.owner_id or data.is_collaborator(
+        assessment_id=answer_data.assessment_id, user_id=current_user.user_id
     ):
         data.save_answer(answer_data=answer_data)
         data.update_last_edit(
             assessment_id=answer_data.assessment_id, current_user=current_user
         )
+        return
+
+    raise Unauthorized(msg="You cannot edit this assessment.")
 
 
 def chown(assessment_chown: AssessmentChown, current_user: User) -> bool:
@@ -263,3 +291,75 @@ def rename(assessment_id: str, new_name: str, current_user: User) -> bool:
     assessment = get_assessment(assessment_id=assessment_id, current_user=current_user)
     assessment.assessment_name = new_name
     return data.rename(assessment=assessment)
+
+
+def grant_collaborator_access(
+    assessment_id: str, user_id: str, current_user: User
+) -> bool:
+    """Grant a user access to an assessment (admin/coach only)"""
+
+    if not current_user.can_manage_assessments():
+        raise Unauthorized(msg="Only admins and coaches can manage collaborators.")
+
+    # Verify assessment exists
+    assessment = data.get_one(assessment_id=assessment_id)
+
+    # Verify target user exists
+    target_user = user_data.get_one(user_id=user_id)
+
+    # Don't allow adding owner as collaborator
+    if assessment.owner_id == user_id:
+        raise ValueError("Cannot add owner as collaborator.")
+
+    return data.grant_access(
+        assessment_id=assessment_id, user_id=user_id, granted_by_user=current_user
+    )
+
+
+def revoke_collaborator_access(
+    assessment_id: str, user_id: str, current_user: User
+) -> bool:
+    """Revoke a user's access to an assessment (admin/coach only)"""
+
+    if not current_user.can_manage_assessments():
+        raise Unauthorized(msg="Only admins and coaches can manage collaborators.")
+
+    return data.revoke_access(assessment_id=assessment_id, user_id=user_id)
+
+
+def get_assessment_collaborators(assessment_id: str, current_user: User) -> list[dict]:
+    """Get all collaborators for an assessment (admin/coach only)"""
+
+    if not current_user.can_manage_assessments():
+        raise Unauthorized(msg="Only admins and coaches can view collaborators.")
+
+    # Verify assessment exists
+    assessment = data.get_one(assessment_id=assessment_id)
+
+    return data.get_collaborators(assessment_id=assessment_id)
+
+
+def get_available_collaborators(assessment_id: str, current_user: User) -> list[User]:
+    """Get users who can be added as collaborators (excludes current collaborators and owner)"""
+
+    if not current_user.can_manage_assessments():
+        raise Unauthorized(msg="Only admins and coaches can manage collaborators.")
+
+    # Get assessment
+    assessment = data.get_one(assessment_id=assessment_id)
+
+    # Get all users
+    all_users = user_data.get_all()
+
+    # Get current collaborators (returns list of dicts)
+    current_collaborators = data.get_collaborators(assessment_id=assessment_id)
+    collaborator_ids = {c["user_id"] for c in current_collaborators}
+
+    # Filter out owner and existing collaborators
+    available = [
+        u
+        for u in all_users
+        if u.user_id != assessment.owner_id and u.user_id not in collaborator_ids
+    ]
+
+    return available

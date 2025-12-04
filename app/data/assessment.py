@@ -61,6 +61,30 @@ curs.execute(
 )
 
 
+curs.execute(
+    """CREATE TABLE IF NOT EXISTS assessment_collaborators (
+    collaborator_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    assessment_id TEXT NOT NULL REFERENCES assessments(assessment_id) ON DELETE CASCADE,
+    user_id TEXT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    granted_at TEXT,
+    granted_by TEXT REFERENCES users(user_id),
+    UNIQUE(assessment_id, user_id)
+    )"""
+)
+
+
+curs.execute(
+    """CREATE INDEX IF NOT EXISTS idx_assessment_collaborators_assessment
+    ON assessment_collaborators(assessment_id)"""
+)
+
+
+curs.execute(
+    """CREATE INDEX IF NOT EXISTS idx_assessment_collaborators_user
+    ON assessment_collaborators(user_id)"""
+)
+
+
 # -------------------------------
 #   Central Functions
 # -------------------------------
@@ -317,7 +341,7 @@ def get_one(assessment_id: str) -> Assessment:
 def get_all_for_user(user_id: str) -> list[Assessment]:
 
     qry = """
-    SELECT
+    SELECT DISTINCT
         a.assessment_id,
         a.assessment_name,
         a.owner_id,
@@ -331,8 +355,12 @@ def get_all_for_user(user_id: str) -> list[Assessment]:
         users u1 ON a.owner_id = u1.user_id
     LEFT JOIN
         users u2 ON a.last_editor = u2.user_id
+    LEFT JOIN
+        assessment_collaborators ac ON a.assessment_id = ac.assessment_id
     WHERE
-        owner_id = :user_id
+        a.owner_id = :user_id OR ac.user_id = :user_id
+    ORDER BY
+        a.assessment_name ASC
     """
 
     cursor = conn.cursor()
@@ -345,9 +373,6 @@ def get_all_for_user(user_id: str) -> list[Assessment]:
             return []
     finally:
         cursor.close()
-    qry = """
-    seelct
-    """
 
 
 def get_one_for_user(assessment_id: str, user_id: str) -> Assessment:
@@ -367,9 +392,11 @@ def get_one_for_user(assessment_id: str, user_id: str) -> Assessment:
         users u1 ON a.owner_id = u1.user_id
     LEFT JOIN
         users u2 ON a.last_editor = u2.user_id
-    WHERE 
-        a.assessment_id = :assessment_id and
-        a.owner_id = :user_id
+    LEFT JOIN
+        assessment_collaborators ac ON a.assessment_id = ac.assessment_id
+    WHERE
+        a.assessment_id = :assessment_id AND
+        (a.owner_id = :user_id OR ac.user_id = :user_id)
     """
 
     params = {"assessment_id": assessment_id, "user_id": user_id}
@@ -603,5 +630,167 @@ def rename(assessment: Assessment) -> bool:
             return True
         else:
             return False
+    finally:
+        cursor.close()
+
+
+# -------------------------------
+#   Collaborator Functions
+# -------------------------------
+
+
+def grant_access(assessment_id: str, user_id: str, granted_by_user: User) -> bool:
+    """Grant a user access to an assessment as a collaborator"""
+
+    now = datetime.now()
+    formatted_date = format_datetime(now, format="MMM d, y, HH:mm", locale="en_US")
+
+    qry = """
+    INSERT INTO assessment_collaborators(assessment_id, user_id, granted_at, granted_by)
+    VALUES(:assessment_id, :user_id, :granted_at, :granted_by)
+    """
+
+    params = {
+        "assessment_id": assessment_id,
+        "user_id": user_id,
+        "granted_at": formatted_date,
+        "granted_by": granted_by_user.user_id,
+    }
+
+    cursor = conn.cursor()
+    try:
+        cursor.execute(qry, params)
+        conn.commit()
+        return True
+    except Exception as e:
+        # Handle duplicate entry (UNIQUE constraint violation)
+        if "UNIQUE constraint failed" in str(e):
+            return False
+        raise
+    finally:
+        cursor.close()
+
+
+def revoke_access(assessment_id: str, user_id: str) -> bool:
+    """Revoke a user's access to an assessment"""
+
+    qry = """
+    DELETE FROM assessment_collaborators
+    WHERE assessment_id = :assessment_id AND user_id = :user_id
+    """
+
+    params = {"assessment_id": assessment_id, "user_id": user_id}
+
+    cursor = conn.cursor()
+    try:
+        cursor.execute(qry, params)
+        conn.commit()
+        return cursor.rowcount > 0
+    finally:
+        cursor.close()
+
+
+def get_collaborators(assessment_id: str) -> list[dict]:
+    """Get all collaborators for an assessment"""
+
+    qry = """
+    SELECT
+        u.user_id,
+        u.username,
+        u.email,
+        u.hash,
+        u.role,
+        ac.granted_at,
+        ac.granted_by,
+        u2.username as granted_by_name
+    FROM
+        assessment_collaborators ac
+    JOIN
+        users u ON ac.user_id = u.user_id
+    LEFT JOIN
+        users u2 ON ac.granted_by = u2.user_id
+    WHERE
+        ac.assessment_id = :assessment_id
+    ORDER BY
+        ac.granted_at DESC
+    """
+
+    params = {"assessment_id": assessment_id}
+
+    cursor = conn.cursor()
+    try:
+        cursor.execute(qry, params)
+        rows = cursor.fetchall()
+        if rows:
+            collaborators = []
+            for row in rows:
+                user_id, username, email, hash_val, role, granted_at, granted_by, granted_by_name = row
+                collaborators.append({
+                    "user_id": user_id,
+                    "username": username,
+                    "email": email,
+                    "role": role,
+                    "granted_at": granted_at,
+                    "granted_by": granted_by,
+                    "granted_by_name": granted_by_name,
+                })
+            return collaborators
+        else:
+            return []
+    finally:
+        cursor.close()
+
+
+def is_collaborator(assessment_id: str, user_id: str) -> bool:
+    """Check if a user is a collaborator on an assessment"""
+
+    qry = """
+    SELECT 1
+    FROM assessment_collaborators
+    WHERE assessment_id = :assessment_id AND user_id = :user_id
+    """
+
+    params = {"assessment_id": assessment_id, "user_id": user_id}
+
+    cursor = conn.cursor()
+    try:
+        cursor.execute(qry, params)
+        row = cursor.fetchone()
+        return row is not None
+    finally:
+        cursor.close()
+
+
+def get_collaborator_info(assessment_id: str, user_id: str) -> dict | None:
+    """Get grant details for a specific collaborator"""
+
+    qry = """
+    SELECT
+        ac.granted_at,
+        ac.granted_by,
+        u.username as granted_by_name
+    FROM
+        assessment_collaborators ac
+    LEFT JOIN
+        users u ON ac.granted_by = u.user_id
+    WHERE
+        ac.assessment_id = :assessment_id AND ac.user_id = :user_id
+    """
+
+    params = {"assessment_id": assessment_id, "user_id": user_id}
+
+    cursor = conn.cursor()
+    try:
+        cursor.execute(qry, params)
+        row = cursor.fetchone()
+        if row:
+            granted_at, granted_by, granted_by_name = row
+            return {
+                "granted_at": granted_at,
+                "granted_by": granted_by,
+                "granted_by_name": granted_by_name,
+            }
+        else:
+            return None
     finally:
         cursor.close()

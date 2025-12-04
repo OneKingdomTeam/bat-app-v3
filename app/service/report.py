@@ -43,7 +43,10 @@ def get_public_reports_for_assessment(assessment_id: str, current_user: User) ->
     reports = data.get_public_reports_for_assessment(assessment_id=assessment_id)
     assessment = assessment_data.get_one(assessment_id=assessment_id)
 
-    if current_user.user_id != assessment.owner_id:
+    # Check if user is owner OR collaborator
+    if current_user.user_id != assessment.owner_id and not assessment_data.is_collaborator(
+        assessment_id=assessment_id, user_id=current_user.user_id
+    ):
         raise Unauthorized(msg="This assessment doesn't belong to you. You can not view it's content")
 
     return reports
@@ -55,11 +58,12 @@ def get_public_report_for_user(report_id: str, current_user: User) -> Report:
         raise Unauthorized(msg="Seems you are not authorized. Try logging in again.")
 
     report = data.get_public_report_for_user(report_id=report_id)
+
+    # This will raise an exception if user doesn't have access (not owner and not collaborator)
+    # get_one_for_user already checks for owner OR collaborator access
     assessment = assessment_data.get_one_for_user(assessment_id=report.assessment_id, user_id=current_user.user_id)
 
-    if current_user.user_id != assessment.owner_id:
-        raise Unauthorized(msg="Looks like the requested report doesn't belong to you.")
-
+    # If get_one_for_user succeeded, user has access (either as owner or collaborator)
     return report
 
 

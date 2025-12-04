@@ -8,6 +8,7 @@ from app.exception.service import EndpointDataMismatch, Unauthorized
 from app.model.assesment import (
     AssessmentAnswerPost,
     AssessmentChown,
+    AssessmentCollaboratorPost,
     AssessmentNote,
     AssessmentPost,
     AssessmentQA,
@@ -597,3 +598,137 @@ def put_assessment_rename_for(
         raise e
 
     return get_assessments(request=request, current_user=current_user)
+
+
+@router.get(
+    "/collaborators/{assessment_id}",
+    response_class=HTMLResponse,
+    name="dashboard_assessment_collaborators",
+)
+def get_assessment_collaborators_page(
+    request: Request, assessment_id: str, current_user: User = Depends(user_htmx_dep)
+):
+    """Display collaborator management interface"""
+
+    try:
+        assessment = service.get_assessment(
+            assessment_id=assessment_id, current_user=current_user
+        )
+        collaborators = service.get_assessment_collaborators(
+            assessment_id=assessment_id, current_user=current_user
+        )
+        available_users = service.get_available_collaborators(
+            assessment_id=assessment_id, current_user=current_user
+        )
+    except:
+        raise
+
+    context = {
+        "request": request,
+        "title": f"Manage Collaborators - {assessment.assessment_name}",
+        "assessment": assessment,
+        "collaborators": collaborators,
+        "available_users": available_users,
+        "current_user": current_user,
+    }
+
+    return jinja.TemplateResponse(
+        name="dashboard/assessment-collaborators.html", context=context
+    )
+
+
+@router.post("/collaborators/{assessment_id}", response_class=HTMLResponse)
+def post_grant_collaborator_access(
+    request: Request,
+    assessment_id: str,
+    collaborator_post: AssessmentCollaboratorPost,
+    current_user: User = Depends(user_htmx_dep),
+):
+    """Grant a user access to an assessment"""
+
+    if assessment_id != collaborator_post.assessment_id:
+        raise EndpointDataMismatch(msg="Assessment ID mismatch")
+
+    try:
+        service.grant_collaborator_access(
+            assessment_id=assessment_id,
+            user_id=collaborator_post.user_id,
+            current_user=current_user,
+        )
+
+        # Reload data
+        assessment = service.get_assessment(
+            assessment_id=assessment_id, current_user=current_user
+        )
+        collaborators = service.get_assessment_collaborators(
+            assessment_id=assessment_id, current_user=current_user
+        )
+        available_users = service.get_available_collaborators(
+            assessment_id=assessment_id, current_user=current_user
+        )
+
+    except:
+        raise
+
+    context = {
+        "request": request,
+        "title": f"Manage Collaborators - {assessment.assessment_name}",
+        "assessment": assessment,
+        "collaborators": collaborators,
+        "available_users": available_users,
+        "current_user": current_user,
+        "notification": Notification(
+            style="success", content="Collaborator added successfully!"
+        ),
+    }
+
+    return jinja.TemplateResponse(
+        name="dashboard/assessment-collaborators.html", context=context
+    )
+
+
+@router.delete(
+    "/collaborators/{assessment_id}/{user_id}", response_class=HTMLResponse
+)
+def delete_revoke_collaborator_access(
+    request: Request,
+    assessment_id: str,
+    user_id: str,
+    current_user: User = Depends(user_htmx_dep),
+):
+    """Revoke a user's access to an assessment"""
+
+    try:
+        service.revoke_collaborator_access(
+            assessment_id=assessment_id, user_id=user_id, current_user=current_user
+        )
+
+        # Reload data
+        assessment = service.get_assessment(
+            assessment_id=assessment_id, current_user=current_user
+        )
+        collaborators = service.get_assessment_collaborators(
+            assessment_id=assessment_id, current_user=current_user
+        )
+        available_users = service.get_available_collaborators(
+            assessment_id=assessment_id, current_user=current_user
+        )
+
+    except:
+        raise
+
+    context = {
+        "request": request,
+        "title": f"Manage Collaborators - {assessment.assessment_name}",
+        "assessment": assessment,
+        "collaborators": collaborators,
+        "available_users": available_users,
+        "current_user": current_user,
+        "notification": Notification(
+            style="success", content="Collaborator removed successfully!"
+        ),
+    }
+
+    return jinja.TemplateResponse(
+        name="dashboard/assessment-collaborators.html", context=context
+    )

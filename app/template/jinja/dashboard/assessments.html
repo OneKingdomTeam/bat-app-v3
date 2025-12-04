@@ -12,65 +12,76 @@
                 {% if assessments %}
                 {% for assessment in assessments %}
                 <div class="cell">
-                    <div class="card p-4 content">
-                        <div>
-                            <div
-                                class="assessment-name-row is-flex is-flex-direction-row is-justify-content-center is-align-items-center mb-4 is-clickable" 
-                                hx-get="{{ url_for("dashboard_assessment_rename", assessment_id=assessment.assessment_id) }}"
-                                hx-target=".assessment-name-row"
+                    <div class="card p-4">
+                        {# Header Section #}
+                        <div
+                            class="assessment-name-row is-flex is-flex-direction-row is-justify-content-center is-align-items-center mb-4 is-clickable"
+                            hx-get="{{ url_for("dashboard_assessment_rename", assessment_id=assessment.assessment_id) }}"
+                            hx-target=".assessment-name-row"
+                            hx-swap="outerHTML"
+                            >
+                            <h3 class="title is-4 mb-0 has-text-centered">{{ assessment.assessment_name }}&nbsp;</h3>
+                            <span class="is-size-6">✏️</span>
+                        </div>
+
+                        {# Info Section #}
+                        <div class="mb-4">
+                            <div class="is-flex is-justify-content-space-between mb-2 is-clickable owner-row"
+                                hx-get="{{ url_for("dashboard_assessment_chown", assessment_id=assessment.assessment_id) }}"
+                                hx-select=".owner-row"
+                                hx-taget=".owner-row"
                                 hx-swap="outerHTML"
                                 >
-                                <h3 class="title is-3 mb-0">{{ assessment.assessment_name }}&nbsp;</h3>
-                                <span class="title is-5">&#128221;</span>
+                                <span class="has-text-grey">Owner</span>
+                                <span class="has-text-weight-medium owner-field">{{ assessment.owner_name }} ✏️</span>
+                            </div>
+                            <div class="is-flex is-justify-content-space-between mb-2">
+                                <span class="has-text-grey">Last Editor</span>
+                                <span class="has-text-weight-medium">{% if assessment.last_edit and not assessment.last_editor_name %}<i>Deleted user</i>{% else %}{{ assessment.last_editor_name }}{% endif %}</span>
+                            </div>
+                            <div class="is-flex is-justify-content-space-between">
+                                <span class="has-text-grey">Last Edited</span>
+                                <span class="has-text-weight-medium">{% if assessment.last_edit %}{{ assessment.last_edit }}{% else %}<i>Never</i>{% endif %}</span>
                             </div>
                         </div>
-                        <table class="card-table">
-                            <tbody>
-                                <tr class="is-clickable owner-row"
-                                    hx-get="{{ url_for("dashboard_assessment_chown", assessment_id=assessment.assessment_id) }}"
-                                    hx-select=".owner-row"
-                                    hx-taget=".owner-row"
-                                    hx-swap="outerHTML"
-                                    >
-                                    <td>Owner:</td>
-                                    <td class="owner-field">{{ assessment.owner_name }} &#128221;</td>
-                                </tr>
-                                <tr>
-                                    <td>Last Editor:</td>
-                                    <td>{% if assessment.last_edit and not assessment.last_editor_name %}
-                                        <i>Deleted user</i>
-                                        {% else %}
-                                        {{ assessment.last_editor_name }}
-                                        {% endif %}
-                                    </td>
-                                </tr>
-                                <tr>
-                                    <td>Last Edited: </td>
-                                    <td>{% if assessment.last_edit %}{{ assessment.last_edit }}{% else %}Never edited{% endif %}</td>
-                                </tr>
-                            </tbody>
-                        </table>
-                        <div class="is-flex is-gap-2">
-                            <a href="{{ url_for("dashboard_assessments_page") }}/edit/{{ assessment.assessment_id }}" class="button is-link is-light px-6">
-                                Edit
-                            </a>
-                            <a
-                                    class="button is-success is-light"
+
+                        {# Primary Actions - Side by Side #}
+                        <div class="columns is-mobile is-variable is-1 mb-2">
+                            <div class="column">
+                                <a href="{{ url_for("dashboard_assessments_page") }}/edit/{{ assessment.assessment_id }}" class="button is-link is-light is-fullwidth">
+                                    Edit
+                                </a>
+                            </div>
+                            <div class="column">
+                                <a
+                                    class="button is-success is-light is-fullwidth"
                                     href="{{ url_for("dashboard_assessments_page") }}/review/{{ assessment.assessment_id }}">
                                     Review
                                 </a>
-                                    <button
-                                        class="button is-danger is-light"
-                                        hx-delete="{{ url_for("dashboard_assessments_page") }}/{{ assessment.assessment_id }}"
-                                        hx-select=".bat-main-content"
-                                        hx-target=".bat-main-content"
-                                        hx-swap="outerHTML"
-                                        hx-confirm="Delete assessment: {{ assessment.assessment_name }}? All Data will be deleted including answers and reports!"
-                                        >
-                                        Delete
-                                    </button>
+                            </div>
                         </div>
-                    </div> 
+
+                        {# Secondary Actions - Smaller with Gap #}
+                        <div class="is-flex is-justify-content-center is-gap-3">
+                            <a
+                                class="button is-small is-info is-light"
+                                href="{{ url_for('dashboard_assessment_collaborators', assessment_id=assessment.assessment_id) }}"
+                                title="Manage collaborators">
+                                Collaborators
+                            </a>
+                            <button
+                                class="button is-small is-danger is-light"
+                                hx-delete="{{ url_for("dashboard_assessments_page") }}/{{ assessment.assessment_id }}"
+                                hx-select=".bat-main-content"
+                                hx-target=".bat-main-content"
+                                hx-swap="outerHTML"
+                                hx-confirm="Delete assessment: {{ assessment.assessment_name }}? All Data will be deleted including answers and reports!"
+                                title="Delete assessment"
+                                >
+                                Delete
+                            </button>
+                        </div>
+                    </div>
                 </div>
                 {% endfor %}
                 {% endif %}

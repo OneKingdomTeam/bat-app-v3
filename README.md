@@ -1,314 +1,221 @@
 # BAT App v3
 
-Main improvement is to set it free from Wordpress to allow for more flexibility while developing.
+A flexible, modern assessment application built with FastAPI, freed from WordPress for easier development and deployment.
 
-The functions by themselves are pretty much the same as they were but further development should be much much easier.
+## Quick Start
 
-## Deployment Options
-
-- **[Railway.app Deployment](#railway-deployment)** - One-click cloud deployment (recommended for production)
+Choose your deployment method:
+- **[Railway.app](#railway-deployment)** - One-click cloud deployment (recommended)
 - **[Local Development](#local-development)** - Run locally with FastAPI
-- **[Container Deployment](#container-deployment)** - Docker/Podman compose
+- **[Container](#container-deployment)** - Docker/Podman compose
 
 ---
 
 ## Railway Deployment
 
-Deploy BAT App v3 to Railway.app in minutes.
+### Setup
 
-### Prerequisites
+1. **Create Project**
+   - Go to [Railway.app](https://railway.app) and login
+   - Click "New Project" → "Deploy from GitHub repo"
+   - Select your `bat-app-v3` repository
 
-- Railway.app account ([sign up here](https://railway.app))
-- GitHub account with repository access
+2. **Configure Environment Variables**
 
-### Step 1: Create New Project on Railway
+   Required:
+   ```bash
+   SECRET_KEY=<generate-with-openssl-rand-hex-32>
+   ALGORITHM=HS256
+   ACCESS_TOKEN_EXPIRE_MINUTES=30
+   DEFAULT_USER=admin
+   DEFAULT_EMAIL=admin@example.com
+   DEFAULT_PASSWORD=<your-secure-password>
+   FORCE_HTTPS_PATHS=True
+   ```
 
-1. Go to [Railway.app](https://railway.app) and log in
-2. Click **"New Project"**
-3. Select **"Deploy from GitHub repo"**
-4. Choose your `bat-app-v3` repository
-5. Railway will automatically detect the `Procfile` and Python configuration
+   Optional (email notifications):
+   ```bash
+   SMTP_LOGIN=your-smtp-username
+   SMTP_PASSWORD=your-smtp-password
+   SMTP_EMAIL=noreply@yourdomain.com
+   SMTP_SERVER=smtp.gmail.com
+   SMTP_PORT=587
+   ```
 
-### Step 2: Configure Environment Variables
+   Optional (Cloudflare Turnstile CAPTCHA):
+   ```bash
+   CF_TURNSTILE_SITE_KEY=your-site-key
+   CF_TURNSTILE_SECRET_KEY=your-secret-key
+   ```
 
-In Railway's project settings, add these environment variables:
+3. **Generate SECRET_KEY**
+   ```bash
+   openssl rand -hex 32
+   ```
 
-**Required Variables:**
-```bash
-SECRET_KEY=<generate-with-openssl-rand-hex-32>
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=30
-DEFAULT_USER=admin
-DEFAULT_EMAIL=admin@example.com
-DEFAULT_PASSWORD=<your-secure-password>
-FORCE_HTTPS_PATHS=True
-```
+4. **Deploy** - Railway will automatically install dependencies and start the app
 
-**Optional Variables (for email notifications):**
-```bash
-SMTP_LOGIN=your-smtp-username
-SMTP_PASSWORD=your-smtp-password
-SMTP_EMAIL=noreply@yourdomain.com
-SMTP_SERVER=smtp.gmail.com
-SMTP_PORT=587
-```
+### Persistent Storage (CRITICAL)
 
-**Optional Variables (for Cloudflare Turnstile CAPTCHA):**
-```bash
-CF_TURNSTILE_SITE_KEY=your-site-key
-CF_TURNSTILE_SECRET_KEY=your-secret-key
-```
+Railway uses ephemeral storage by default. You **MUST** configure a volume to prevent data loss.
 
-### Step 3: Generate SECRET_KEY
+**Add Volume:**
+1. Open Railway project → Settings → Volumes
+2. Click "+ Add Volume"
+3. Mount Path: `/bat-app/persistent`
+4. Redeploy
 
-Generate a secure secret key on your local machine:
+This single volume contains:
+- `persistent/db/` - SQLite database
+- `persistent/uploads/` - User files and reports
 
-```bash
-openssl rand -hex 32
-```
+**Without this volume, all data is lost on each deployment.**
 
-Copy the output and paste it as the `SECRET_KEY` value in Railway.
+### Troubleshooting
 
-### Step 4: Deploy
+- **Data lost after redeploy:** Add persistent volume (see above)
+- **Can't log in:** Check `DEFAULT_USER`/`DEFAULT_PASSWORD` in environment variables
+- **App crashes:** Check Railway logs for errors
+- **SMTP not working:** Verify all SMTP variables are set; use Gmail App Password
 
-1. Click **"Deploy"** in Railway
-2. Railway will:
-   - Install dependencies from `requirements.txt`
-   - Use the `Procfile` to start the application with uvicorn
-   - Automatically run database initialization (create default user and questions)
-3. Once deployed, Railway will provide a public URL (e.g., `https://your-app.railway.app`)
+---
 
-### Step 5: Access Your Application
+## Branding Customization
 
-1. Visit your Railway-provided URL
-2. Log in with the credentials you set in `DEFAULT_USER` and `DEFAULT_PASSWORD`
-3. Change the default password immediately after first login
+BAT App supports database-driven branding customization - perfect for white-labeling your deployment.
 
-### Persistent Storage on Railway (CRITICAL)
+### What You Can Customize
 
-**⚠️ IMPORTANT:** Railway uses ephemeral storage by default, meaning all data is lost on each deployment. You **MUST** configure a volume for production use.
+- Logo (navbar/footer)
+- Favicon (browser icon)
+- Feedback form URL and button text
+- Company name and website URL
 
-#### Why a Volume Is Required
+### How to Customize
 
-Without a persistent volume:
-- ❌ Database is recreated on every deployment (all assessments, users, reports lost)
-- ❌ Uploaded files disappear after redeployment
-- ❌ Default admin user reset on each deployment
+1. **Access Settings**
+   - Log in as admin
+   - Navigate to Dashboard → Settings
 
-#### Single Volume Configuration
+2. **Upload Images**
+   - **Logo:** 300x66px recommended (PNG, JPG, WebP, SVG)
+   - **Favicon:** 32x32 or 64x64px (PNG, WebP, ICO)
 
-**Railway's free tier allows ONE volume per service.** BAT App v3 is optimized to use a single volume for all persistent data:
+3. **Configure Text**
+   - Set feedback form URL (Google Forms, Typeform, etc.)
+   - Customize feedback button text
+   - Add your company name and website
 
-**Persistent Data Volume (All Storage)**
-- **Mount Path:** `/bat-app/persistent`
-- **Purpose:** Contains ALL persistent data in subdirectories:
-  - `persistent/db/` - SQLite database and WAL files
-  - `persistent/uploads/` - User-uploaded files and report visualizations (SVG wheels)
-- **Recommended Size:** Start with 2GB (expandable as needed)
-- **Critical:** Without this volume, ALL data is lost on redeploy
+4. **Save** - Changes apply immediately
 
-#### How to Add Volume in Railway
+### Key Features
 
-1. **Open your Railway project** and select your service
-2. **Go to Settings tab** → scroll to "Volumes" section
-3. **Add the Persistent Data Volume:**
-   - Click **"+ Add Volume"**
-   - **Mount Path:** `/bat-app/persistent`
-   - Click **"Add"**
-4. **Redeploy** your application for the volume to take effect
+- Container-friendly (no file mounting needed)
+- Database-stored (persists across restarts)
+- Web-based UI (easy configuration)
+- Admin-only access
+- Immediate effect
 
-**That's it!** One volume contains everything.
-
-#### Directory Structure
-
-The application automatically creates this structure inside your volume:
-
-```
-/bat-app/persistent/
-├── db/
-│   ├── database.db
-│   ├── database.db-wal
-│   └── database.db-shm
-└── uploads/
-    ├── report-wheel-uuid1.svg
-    ├── report-wheel-uuid2.svg
-    └── ...
-```
-
-#### Verification
-
-After adding the volume and redeploying:
-1. Log in to your application
-2. Create a test assessment and generate a report
-3. Trigger a redeploy (push a small change to GitHub)
-4. Log in again - your test data should still be there ✅
-
-#### Volume Summary
-
-| Mount Path | Contents | Size | Railway Tier |
-|------------|----------|------|--------------|
-| `/bat-app/persistent` | Database + Uploads | 2GB+ | Free ✅ |
-
-**Note:** The application creates the internal directory structure (`persistent/db/` and `persistent/uploads/`) automatically on first run.
-
-### Updating Your Deployment
-
-Railway automatically redeploys when you push to your connected GitHub branch:
-
-```bash
-git add .
-git commit -m "Update application"
-git push origin main
-```
-
-### Troubleshooting Railway Deployment
-
-#### Issue: "RuntimeError: Directory does not exist"
-**Symptom:** App crashes on startup with directory-related errors
-
-**Solution:** This is fixed in version 3.0.11+. The app now automatically creates required directories in `/bat-app/persistent/`. If you're on an older version:
-```bash
-git pull origin main
-# Redeploy on Railway
-```
-
-#### Issue: Data lost after redeployment
-**Symptom:** All assessments, users, and uploads disappear after pushing new code
-
-**Solution:** You haven't configured persistent volumes. See [Persistent Storage](#persistent-storage-on-railway-critical) section above.
-
-#### Issue: Can't log in after deployment
-**Symptom:** Login fails or redirects to login page repeatedly
-
-**Possible causes:**
-1. **Wrong credentials:** Check your Railway environment variables for `DEFAULT_USER` and `DEFAULT_PASSWORD`
-2. **SECRET_KEY not set:** Verify `SECRET_KEY` is configured in Railway environment variables
-3. **HTTPS redirect issue:** If behind a reverse proxy, ensure `FORCE_HTTPS_PATHS=True` is set
-
-#### Issue: Application crashes immediately
-**Check Railway logs** for specific errors:
-1. Go to your Railway project
-2. Click on your service
-3. Go to "Deployments" tab
-4. Click on the latest deployment
-5. Check logs for error messages
-
-Common errors:
-- **"Secret Key value is None"** → Set `SECRET_KEY` in environment variables
-- **"ModuleNotFoundError"** → Dependency missing, check `requirements.txt`
-- **"Address already in use"** → Railway assigns `$PORT` dynamically, ensure Procfile uses it
-
-#### Issue: SMTP emails not sending
-**Solution:** Verify all SMTP environment variables are set:
-```
-SMTP_LOGIN=your-email@example.com
-SMTP_PASSWORD=your-app-password
-SMTP_EMAIL=noreply@yourdomain.com
-SMTP_SERVER=smtp.gmail.com
-SMTP_PORT=587
-```
-
-For Gmail, use an [App Password](https://support.google.com/accounts/answer/185833), not your regular password.
+All settings are stored in the database and managed through the admin Settings page. No environment variables or file editing required.
 
 ---
 
 ## Local Development
 
-### Setup Instructions
+### Setup
 
-For local setup there are 2 things needed to do + one optional:
+1. **Generate SECRET_KEY**
+   ```bash
+   openssl rand -hex 32
+   ```
+   Add to `.env` file
 
-1) Set encryption key
-2) Add default user and questions
-3) Optional: Set SMTP settings for the app
+2. **Initialize Database**
+   ```bash
+   export PYTHONPATH="$(pwd)"
+   python -i app/main.py
+   ```
 
-### 1) Set encryption key
+   Then in Python:
+   ```python
+   from app.service.user import add_default_user
+   from app.service.question import add_default_questions
+   add_default_user()
+   add_default_questions()
+   ```
 
-We are using 32 character long hex string. Easiest way to generate it is through OpenSSL
+3. **Run Application**
+   ```bash
+   cd app
+   fastapi run
+   ```
 
-```bash
-openssl rand -hex 32
-```
-Then store the value in the .env file
+### Environment Variables
 
-### 2) Set credentials for default user and add questions
-
-These values are also stored in the .env file. So either edit that or copy the example into the `.env`
-
-Make sure you are in the repository root directory. Not in the `app` folder but one above it.
-
-```bash
-export PYTHONPATH="$( pwd )"
-```
-
-Now run python in interactive mode and add default user.
-
-```bash
-python -i app/main.py
-```
-
-Now just import add default user and question function and execute.
-
-```python
-from app.service.user import add_default_user
-from app.service.question import add_default_questions
-add_default_user()
-add_default_questions()
-```
-## Run the app
-
-With that out of the way the app can be runned. Navigate to the app folder and run it:
-
-```bash
-fastapi run
-```
-
+Copy `.env.example` to `.env` and configure:
+- `SECRET_KEY` (required)
+- `DEFAULT_USER`, `DEFAULT_PASSWORD` (required)
+- SMTP settings (optional)
+- Cloudflare Turnstile keys (optional)
 
 ---
 
 ## Container Deployment
 
-### Podman Compose / Docker Compose
-
-There is example `compose.yml` in the repository.
-
-Compose file is prepared to use the bat-app:latest version of the container.
-
-### Building the Container
-
-Repository contains the containerfile that instructs podman how to build the container.
-
-For that you can simply run:
+### Quick Start
 
 ```bash
-podman build -f containerfile -t bat-app:<version> .
-```
+# Build
+podman build -f containerfile -t bat-app:latest .
 
-### Running with Compose
-
-```bash
-# Using Podman
+# Run with compose
 podman-compose up
-
-# Using Docker
+# or
 docker-compose up
 ```
 
-### Volume Mount Configuration
+### Volume Configuration
 
-The `compose.yml` includes a single persistent volume mount:
+The `compose.yml` includes a persistent volume mount:
 
 ```yaml
 volumes:
   - ./persistent:/bat-app/persistent:Z
 ```
 
-This mounts the local `./persistent` directory to `/bat-app/persistent` in the container, which contains:
-- `persistent/db/` - SQLite database files
-- `persistent/uploads/` - User uploaded files
+Contains:
+- `persistent/db/` - SQLite database
+- `persistent/uploads/` - User files
 
-The `:Z` flag is for SELinux systems (Fedora, RHEL, etc.). Remove it if not using SELinux.
+The `:Z` flag is for SELinux systems (remove if not using SELinux).
 
-Make sure to configure environment variables in the `compose.yml` file before running.
+Configure environment variables in `compose.yml` before running.
 
+---
 
+## Architecture
+
+- **Framework:** FastAPI
+- **Database:** SQLite (WAL mode)
+- **Templates:** Jinja2
+- **Authentication:** JWT tokens
+- **File Storage:** Local filesystem
+- **Branding:** Database-backed settings
+
+## Features
+
+- Multi-user support with role-based access (admin, coach, user)
+- Assessment creation and management
+- Report generation with visualizations
+- Branding customization (logos, favicons, links)
+- Email notifications (optional)
+- CAPTCHA support (optional)
+- Containerized deployment ready
+
+## Support
+
+Default admin credentials (change after first login):
+- Username: `admin`
+- Password: `password123456` (or value set in `DEFAULT_PASSWORD`)
+
+For issues, check application logs and ensure all required environment variables are configured.

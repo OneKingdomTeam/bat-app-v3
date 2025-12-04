@@ -279,6 +279,7 @@ def get_report_preview(
         "request": request,
         "title": report.report_name,
         "report": report,
+        "current_user": current_user5,
     }
 
     response = jinja.TemplateResponse(

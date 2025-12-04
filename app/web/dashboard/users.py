@@ -52,6 +52,7 @@ async def add_user(request: Request, current_user: User = Depends(user_htmx_dep)
         "request": request,
         "title": "Add User",
         "description": "BAT App dashboard interface",
+        "current_user": current_user,
         "available_roles": current_user.can_grant_roles(),
     }
 
@@ -71,6 +72,7 @@ async def add_user_post(
         "request": request,
         "title": "Add User",
         "description": "BAT App dashboard interface",
+        "current_user": current_user,
         "available_roles": current_user.can_grant_roles(),
     }
 

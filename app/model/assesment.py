@@ -10,6 +10,8 @@ class Assessment(BaseModel):
     last_editor_name: str | None
     last_edit: str | None
     has_reports: bool | None
+    collaborators: list | None = None
+    is_shared: bool | None = None
 
 
 class AssessmentPost(BaseModel):
@@ -77,3 +79,26 @@ class AssessmentNoteExtended(BaseModel):
 class AssessmentChown(BaseModel):
     assessment_id: str
     new_owner_id: str
+
+
+class AssessmentCollaborator(BaseModel):
+    """Represents a collaborator on an assessment"""
+    collaborator_id: int | None
+    assessment_id: str
+    user_id: str
+    username: str | None
+    granted_at: str | None
+    granted_by: str | None
+    granted_by_name: str | None
+
+
+class AssessmentCollaboratorPost(BaseModel):
+    """Request model for granting access"""
+    assessment_id: str
+    user_id: str
+
+
+class AssessmentCollaboratorDelete(BaseModel):
+    """Request model for revoking access"""
+    assessment_id: str
+    user_id: str

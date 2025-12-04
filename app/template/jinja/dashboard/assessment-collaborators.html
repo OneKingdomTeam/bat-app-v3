@@ -1,0 +1,100 @@
+{% extends "dashboard/dashboard.html" %}
+
+{% block body %}
+<section class="bat-main-content is-flex pt-6">
+    <div class="container is-max-desktop">
+        {% block body_content %}
+        <h2 class="title is-2 has-text-centered">{{ title }}</h2>
+        {% include "helpers/notification.html" %}
+
+        <div class="mb-4">
+            <a href="{{ url_for('dashboard_assessments_page') }}" class="button is-light">
+                ← Back to Assessments
+            </a>
+        </div>
+
+        <div class="box mb-5">
+            <h3 class="title is-4">{{ assessment.assessment_name }}</h3>
+            <p><strong>Owner:</strong> {{ assessment.owner_name }}</p>
+        </div>
+
+        <div class="box mb-5">
+            <h3 class="title is-4">Current Collaborators</h3>
+            {% if collaborators %}
+            <div class="table-container">
+                <table class="table is-fullwidth is-striped">
+                    <thead>
+                        <tr>
+                            <th>Username</th>
+                            <th>Email</th>
+                            <th>Granted On</th>
+                            <th>Granted By</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for collab in collaborators %}
+                        <tr>
+                            <td>{{ collab.username }}</td>
+                            <td><a href="mailto:{{ collab.email }}">{{ collab.email }}</a></td>
+                            <td>{{ collab.granted_at }}</td>
+                            <td>{{ collab.granted_by_name }}</td>
+                            <td>
+                                <button
+                                    class="button is-danger is-small"
+                                    hx-delete="{{ url_for('dashboard_assessment_collaborators', assessment_id=assessment.assessment_id) }}/{{ collab.user_id }}"
+                                    hx-select=".bat-main-content"
+                                    hx-target=".bat-main-content"
+                                    hx-swap="outerHTML"
+                                    hx-confirm="Remove {{ collab.username }} from this assessment?"
+                                >
+                                    Remove
+                                </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="has-text-grey">No collaborators added yet.</p>
+            {% endif %}
+        </div>
+
+        <div class="box">
+            <h3 class="title is-4">Add Collaborator</h3>
+            {% if available_users %}
+            <form
+                hx-post="{{ url_for('dashboard_assessment_collaborators', assessment_id=assessment.assessment_id) }}"
+                hx-select=".bat-main-content"
+                hx-target=".bat-main-content"
+                hx-swap="outerHTML"
+                hx-ext="json-enc"
+            >
+                <div class="field has-addons">
+                    <div class="control is-expanded">
+                        <div class="select is-fullwidth">
+                            <select name="user_id" required>
+                                <option value="">Select a user...</option>
+                                {% for user in available_users %}
+                                <option value="{{ user.user_id }}">{{ user.username }} ({{ user.email }})</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="control">
+                        <button type="submit" class="button is-link">
+                            Add Collaborator
+                        </button>
+                    </div>
+                </div>
+                <input type="hidden" name="assessment_id" value="{{ assessment.assessment_id }}">
+            </form>
+            {% else %}
+            <p class="has-text-grey">All users are already collaborators or the owner.</p>
+            {% endif %}
+        </div>
+        {% endblock %}
+    </div>
+</section>
+{% endblock %}
