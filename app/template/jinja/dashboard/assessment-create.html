@@ -16,14 +16,26 @@
             </div>
         </div>
         <div class="field">
+            <label class="label">Coach</label>
+            <div class="select is-fullwidth">
+                <select name="coach_id" required>
+                    {% for coach in coaches %}
+                    <option value="{{ coach.user_id }}">{{ coach.username }} ({{ coach.role.value }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <p class="help">Select the coach who will guide this assessment</p>
+        </div>
+        <div class="field">
             <label class="label">Owner</label>
             <div class="select is-fullwidth">
-                <select name="owner_id">
+                <select name="owner_id" required>
                     {% for user in users %}
                     <option value="{{ user.user_id }}">{{ user.username }}</option>
                     {% endfor %}
                 </select>
             </div>
+            <p class="help">Select the user who will fill out the assessment</p>
         </div>
         <div class="is-fullwidth pt-4 is-flex is-justify-content-space-around is-flex-direction-row-reverse">
             <div class="control">

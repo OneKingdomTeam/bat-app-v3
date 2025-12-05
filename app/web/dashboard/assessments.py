@@ -7,6 +7,7 @@ from app.data.note import get_note
 from app.exception.service import EndpointDataMismatch, Unauthorized
 from app.model.assesment import (
     AssessmentAnswerPost,
+    AssessmentChangeCoach,
     AssessmentChown,
     AssessmentCollaboratorPost,
     AssessmentNote,
@@ -51,14 +52,30 @@ def get_assessments(request: Request, current_user: User = Depends(user_htmx_dep
 
 
 @router.put("", response_class=HTMLResponse)
-def put_assessments_chown(
+async def put_assessments_update(
     request: Request,
-    assessment_chown: AssessmentChown,
     current_user: User = Depends(user_htmx_dep),
 ):
+    """Handle both owner change and coach change"""
+
+    # Get the raw body and parse it
+    body = await request.json()
 
     try:
-        service.chown(assessment_chown=assessment_chown, current_user=current_user)
+        # Check if this is a coach change or owner change
+        if "new_coach_id" in body:
+            # Handle coach change
+            assessment_change_coach = AssessmentChangeCoach(**body)
+            service.change_coach(
+                assessment_id=assessment_change_coach.assessment_id,
+                new_coach_id=assessment_change_coach.new_coach_id,
+                current_user=current_user,
+            )
+        elif "new_owner_id" in body:
+            # Handle owner change
+            assessment_chown = AssessmentChown(**body)
+            service.chown(assessment_chown=assessment_chown, current_user=current_user)
+
         assessments = service.get_all(current_user=current_user)
     except:
         # NotImplemented
@@ -87,6 +104,9 @@ def get_assessment_create(
 ):
 
     try:
+        coaches: list[User] = service.get_available_coaches_for_assessment(
+            current_user=current_user
+        )
         users: list[User] = user_service.get_all(current_user=current_user)
     except:
         # NotImplemented
@@ -96,6 +116,7 @@ def get_assessment_create(
         "request": request,
         "title": "Create Assessment",
         "description": "Create new assessment.",
+        "coaches": coaches,
         "users": users,
         "current_user": current_user,
     }
@@ -125,12 +146,16 @@ def post_assessment_create(
         service.create_assessment(
             assessment_post=assessment_new, current_user=current_user
         )
+        coaches: list[User] = service.get_available_coaches_for_assessment(
+            current_user=current_user
+        )
         users: list[User] = user_service.get_all(current_user=current_user)
         context["notification"] = Notification(
             style="success",
             content=f"Assessment {assessment_new.assessment_name} successfully created.",
         )
-        context["users"] = user_service.get_all(current_user=current_user)
+        context["coaches"] = coaches
+        context["users"] = users
     except:
         # NotImplemented
         raise
@@ -598,6 +623,39 @@ def put_assessment_rename_for(
         raise e
 
     return get_assessments(request=request, current_user=current_user)
+
+
+@router.get(
+    "/change-coach/{assessment_id}",
+    response_class=HTMLResponse,
+    name="dashboard_assessment_change_coach",
+)
+def get_assessment_change_coach(
+    request: Request, assessment_id: str, current_user: User = Depends(user_htmx_dep)
+):
+
+    try:
+        coaches = service.get_available_coaches_for_assessment(
+            current_user=current_user
+        )
+        assessment = service.get_assessment(
+            assessment_id=assessment_id, current_user=current_user
+        )
+    except Unauthorized as e:
+        raise e
+
+    context = {
+        "request": request,
+        "coaches": coaches,
+        "assessment_id": assessment_id,
+        "assessment": assessment,
+    }
+
+    response = jinja.TemplateResponse(
+        name="dashboard/assessments-change-coach.html", context=context
+    )
+
+    return response
 
 
 @router.get(

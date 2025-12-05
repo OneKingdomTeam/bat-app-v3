@@ -12,11 +12,15 @@ class Assessment(BaseModel):
     has_reports: bool | None
     collaborators: list | None = None
     is_shared: bool | None = None
+    coach_id: str | None = None
+    coach_name: str | None = None
+    last_notification_sent: str | None = None
 
 
 class AssessmentPost(BaseModel):
     assessment_name: str
     owner_id: str
+    coach_id: str
 
 
 class AssessmentAnswerPost(BaseModel):
@@ -31,6 +35,7 @@ class AssessmentNew(BaseModel):
     assessment_id: str
     assessment_name: str
     owner_id: str
+    coach_id: str
 
 
 class AssessmentQA(BaseModel):
@@ -81,6 +86,11 @@ class AssessmentChown(BaseModel):
     new_owner_id: str
 
 
+class AssessmentChangeCoach(BaseModel):
+    assessment_id: str
+    new_coach_id: str
+
+
 class AssessmentCollaborator(BaseModel):
     """Represents a collaborator on an assessment"""
     collaborator_id: int | None
@@ -102,3 +112,8 @@ class AssessmentCollaboratorDelete(BaseModel):
     """Request model for revoking access"""
     assessment_id: str
     user_id: str
+
+
+class AssessmentNotifyCoach(BaseModel):
+    """Request model for notifying coach"""
+    assessment_id: str

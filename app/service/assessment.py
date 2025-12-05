@@ -24,10 +24,21 @@ def create_assessment(
     if not current_user.can_manage_assessments():
         raise Unauthorized(msg="You cannot manage assessments.")
 
+    # Validate that coach_id references a user with admin or coach role
+    from app.model.user import UserRoleEnum
+    from app.exception.service import InvalidCoachAssignment
+
+    coach_user = user_data.get_one(user_id=assessment_post.coach_id)
+    if coach_user.role not in [UserRoleEnum.admin, UserRoleEnum.coach]:
+        raise InvalidCoachAssignment(
+            msg="Selected coach must have admin or coach role."
+        )
+
     assessment_new: AssessmentNew = AssessmentNew(
         assessment_id=str(uuid4()),
         assessment_name=assessment_post.assessment_name,
         owner_id=assessment_post.owner_id,
+        coach_id=assessment_post.coach_id,
     )
     created_assessment: Assessment = data.create_assessment(
         assessment_new=assessment_new
@@ -283,6 +294,25 @@ def chown(assessment_chown: AssessmentChown, current_user: User) -> bool:
     return data.chown(assessment_chown=assessment_chown)
 
 
+def change_coach(assessment_id: str, new_coach_id: str, current_user: User) -> bool:
+    """Change the coach assigned to an assessment"""
+
+    if not current_user.can_manage_assessments():
+        raise Unauthorized(msg="You cannot manage assessments.")
+
+    # Validate that new_coach_id references a user with admin or coach role
+    from app.model.user import UserRoleEnum
+    from app.exception.service import InvalidCoachAssignment
+
+    coach_user = user_data.get_one(user_id=new_coach_id)
+    if coach_user.role not in [UserRoleEnum.admin, UserRoleEnum.coach]:
+        raise InvalidCoachAssignment(
+            msg="Selected coach must have admin or coach role."
+        )
+
+    return data.change_coach(assessment_id=assessment_id, new_coach_id=new_coach_id)
+
+
 def rename(assessment_id: str, new_name: str, current_user: User) -> bool:
 
     if not current_user.can_manage_assessments():
@@ -363,3 +393,77 @@ def get_available_collaborators(assessment_id: str, current_user: User) -> list[
     ]
 
     return available
+
+
+def get_available_coaches_for_assessment(current_user: User) -> list[User]:
+    """Get all users with admin or coach role for coach assignment"""
+
+    if not current_user.can_manage_assessments():
+        raise Unauthorized(msg="Only admins and coaches can create assessments.")
+
+    from app.model.user import UserRoleEnum
+
+    # Get all users
+    all_users = user_data.get_all()
+
+    # Filter to only admin and coach roles
+    coaches = [
+        u
+        for u in all_users
+        if u.role in [UserRoleEnum.admin, UserRoleEnum.coach]
+    ]
+
+    return coaches
+
+
+def notify_coach(assessment_id: str, current_user: User, request) -> dict:
+    """Send notification email to the assigned coach"""
+
+    from app.exception.service import RateLimitExceeded, SMTPCredentialsNotSet, SendingEmailFailed
+    from app.config import SMTP_ENABLED
+    import app.service.mail as mail_service
+
+    # Check if SMTP is enabled
+    if not SMTP_ENABLED:
+        raise SMTPCredentialsNotSet(
+            msg="Email notifications are not configured. Please contact your coach directly."
+        )
+
+    # Get assessment and verify user has access
+    try:
+        assessment = data.get_one_for_user(
+            assessment_id=assessment_id, user_id=current_user.user_id
+        )
+    except RecordNotFound:
+        raise Unauthorized(msg="You don't have access to this assessment.")
+
+    # Check if coach is assigned
+    if not assessment.coach_id:
+        raise Unauthorized(
+            msg="No coach assigned to this assessment. Please contact an administrator."
+        )
+
+    # Check rate limit
+    if not data.can_send_notification(assessment_id=assessment_id):
+        raise RateLimitExceeded(
+            msg="You can only send one notification every 30 minutes. If you need urgent assistance, please contact your coach directly."
+        )
+
+    # Get coach user object
+    coach = user_data.get_one(user_id=assessment.coach_id)
+
+    # Send notification email
+    try:
+        mail_service.notify_coach_assessment_complete(
+            assessment=assessment, user=current_user, coach=coach, request=request
+        )
+    except Exception as e:
+        raise SendingEmailFailed(msg="Failed to send notification email.")
+
+    # Update notification timestamp
+    data.update_notification_timestamp(assessment_id=assessment_id)
+
+    return {
+        "success": True,
+        "message": "Notification sent successfully to your coach!"
+    }
