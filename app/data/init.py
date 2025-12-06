@@ -1,5 +1,3 @@
-import os
-from pathlib import Path
 from sqlite3 import connect, Connection, Cursor
 from app.config import DB_PATH, DB_DIR
 
@@ -7,6 +5,7 @@ from app.config import DB_PATH, DB_DIR
 conn: Connection
 curs: Cursor
 db_initialized: bool = False
+
 
 def get_db(name: str | None = None):
     global conn, curs, db_initialized
@@ -36,7 +35,7 @@ def get_db(name: str | None = None):
 
     return conn, curs
 
+
 # Initialize if not already done
 if not db_initialized:
     conn, curs = get_db()
-

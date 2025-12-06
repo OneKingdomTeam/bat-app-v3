@@ -22,6 +22,9 @@
                     method="post"
                     action="{{ url_for("login_page") }}"
                     >
+                    {% if next_url %}
+                    <input type="hidden" name="next" value="{{ next_url }}">
+                    {% endif %}
                     <div class="field">
                         <label class="label">Username / Email</label>
                         <div class="control">

@@ -6,6 +6,7 @@
 
 {% block header_scripts %}
 <script src="{{ url_for("js", path="jwt-manager.js") }}" defer></script>
+<script src="{{ url_for("js", path="share-assessment.js") }}" defer></script>
 <script>
     var tokenCheckUrl = "{{ url_for("auth_token_check_endpoint") }}";
 </script>
