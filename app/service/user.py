@@ -1,5 +1,4 @@
 from fastapi import Request
-from passlib import context
 import secrets
 import re
 from datetime import datetime, timedelta, timezone

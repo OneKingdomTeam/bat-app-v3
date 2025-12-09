@@ -26,7 +26,9 @@ from app.service.authentication import (
     handle_token_renewal,
     user_htmx_dep,
     cf_verify_response,
+    validate_redirect_url,
 )
+import app.service.assessment as assessment_service
 
 
 router = APIRouter()
@@ -227,15 +229,19 @@ async def post_token_refresh(
 @router.get("/login", response_class=HTMLResponse, name="login_page")
 async def login_page_get(
     request: Request,
+    next: str | None = None,
     notification: Notification | None = None,
     expired_session: int = 0,
     status_code: int | None = None,
 ):
+    # Validate 'next' parameter to prevent open redirects
+    validated_next = validate_redirect_url(next, request) if next else None
 
     context: dict = {
         "request": request,
         "title": "Login",
         "description": "Login to your BAT account.",
+        "next_url": validated_next,
     }
 
     if CF_TURNSTILE_ENABLED:
@@ -264,6 +270,7 @@ async def login_page_post(
     request: Request,
     username: Annotated[str, Form()],
     password: Annotated[str, Form()],
+    next: Annotated[str | None, Form()] = None,
     cf_token: Annotated[str | None, Form(alias="cf-turnstile-response")] = None,
     notification: str | None = None,
 ):
@@ -302,6 +309,27 @@ async def login_page_post(
         response = None
 
         if token and current_user and user_role:
+            # Handle 'next' parameter if present and valid
+            if next:
+                validated_next = validate_redirect_url(next, request)
+                if validated_next:
+                    response = RedirectResponse(status_code=303, url=validated_next)
+                    # Set token cookie
+                    if os.getenv("FORCE_HTTPS_PATHS_ENV"):
+                        response.set_cookie(
+                            key="access_token",
+                            value=token,
+                            httponly=True,
+                            secure=True,
+                            samesite="strict",
+                        )
+                    else:
+                        response.set_cookie(
+                            key="access_token", value=token, httponly=True, samesite="strict"
+                        )
+                    return response
+
+            # Default role-based redirect (if no 'next' parameter)
             if user_role == "user":
                 response = RedirectResponse(
                     status_code=303, url=request.url_for("app_assessments_page")
@@ -345,5 +373,82 @@ async def login_page_post(
         status_code = 401
 
     return await login_page_get(
-        notification=notification, request=request, status_code=status_code
+        notification=notification, request=request, status_code=status_code, next=next
     )
+
+
+@router.get("/share/assessment/{assessment_id}", response_class=HTMLResponse, name="share_assessment")
+async def share_assessment_get(
+    request: Request,
+    assessment_id: str,
+):
+    """
+    Universal sharing endpoint for assessments.
+    Handles authentication and role-based routing automatically.
+
+    Flow:
+    1. Check if user is authenticated
+    2. If not → redirect to login with 'next' parameter
+    3. If authenticated → validate access to assessment
+    4. Route to appropriate page based on user role:
+       - Coaches/admins → /dashboard/assessments/edit/{id}
+       - Regular users → /app/assessments/edit/{id}
+    """
+
+    # Step 1: Check if user is authenticated
+    access_token = request.cookies.get("access_token")
+
+    if not access_token:
+        # User not authenticated - redirect to login with return URL
+        login_url = request.url_for("login_page")
+        share_url = request.url_for("share_assessment", assessment_id=assessment_id)
+        redirect_target = f"{login_url}?next={share_url}"
+        return RedirectResponse(status_code=303, url=redirect_target)
+
+    # Step 2: Extract user from token
+    try:
+        token_stripped = access_token.split("Bearer ")[1]
+        current_user = get_current_user(token=token_stripped)
+    except (IndexError, InvalidBearerToken, RecordNotFound):
+        # Invalid/expired token - redirect to login
+        login_url = request.url_for("login_page")
+        share_url = request.url_for("share_assessment", assessment_id=assessment_id)
+        redirect_target = f"{login_url}?next={share_url}&expired_session=1"
+        return RedirectResponse(status_code=303, url=redirect_target)
+
+    # Step 3: Validate assessment exists and user has access
+    try:
+        assessment = assessment_service.get_assessment(
+            assessment_id=assessment_id,
+            current_user=current_user
+        )
+    except RecordNotFound:
+        # Assessment doesn't exist - redirect to home
+        if current_user.can_manage_assessments():
+            target_url = request.url_for("dashboard_assessments_page")
+        else:
+            target_url = request.url_for("app_assessments_page")
+        return RedirectResponse(status_code=303, url=target_url)
+    except Exception:
+        # User doesn't have access or other error - redirect to home
+        if current_user.can_manage_assessments():
+            target_url = request.url_for("dashboard_assessments_page")
+        else:
+            target_url = request.url_for("app_assessments_page")
+        return RedirectResponse(status_code=303, url=target_url)
+
+    # Step 4: Redirect to role-appropriate assessment page
+    if current_user.can_manage_assessments():
+        # Coaches/admins go to dashboard edit page
+        target_url = request.url_for(
+            "dashboard_assessment_edit_page",
+            assessment_id=assessment_id
+        )
+    else:
+        # Regular users go to app edit page
+        target_url = request.url_for(
+            "app_assessment_edit_page",
+            assessment_id=assessment_id
+        )
+
+    return RedirectResponse(status_code=303, url=target_url)
