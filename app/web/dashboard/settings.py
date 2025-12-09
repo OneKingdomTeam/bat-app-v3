@@ -1,9 +1,7 @@
-from fastapi import APIRouter, Request, UploadFile, File, Form
-from fastapi.responses import HTMLResponse, Response
+from fastapi import APIRouter, Request, UploadFile, File, Form, Depends
+from fastapi.responses import HTMLResponse
 from pathlib import Path
-from typing import Optional
 
-from app.exception.database import RecordNotFound
 from app.model.user import User
 from app.model.notification import Notification
 from app.model.setting import BrandingSettings
