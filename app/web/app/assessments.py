@@ -41,6 +41,8 @@ def get_assessments(request:Request, current_user: User = Depends(user_htmx_dep)
 @router.get("/edit/{assessment_id}", response_class=HTMLResponse, name="app_assessment_edit_page")
 def get_assessment_edit(assessment_id: str, request:Request, current_user: User = Depends(user_htmx_dep)):
 
+    from app.config import SMTP_ENABLED
+
     context = {
             "request": request,
             "title":"Assessment Details",
@@ -50,9 +52,12 @@ def get_assessment_edit(assessment_id: str, request:Request, current_user: User 
 
     try:
         assessment_qa: list[AssessmentQA] = service.get_all_qa(assessment_id=assessment_id, current_user=current_user)
+        assessment = service.get_assessment(assessment_id=assessment_id, current_user=current_user)
         context["title"] = f"{assessment_qa[0].assessment_name}"
         context["assessment_qa"] = assessment_qa
+        context["assessment"] = assessment
         context["wheel"] = service.prepare_wheel_context(assessment_qa=assessment_qa)
+        context["SMTP_ENABLED"] = SMTP_ENABLED
     except:
         # NotImplemented
         raise
@@ -155,5 +160,119 @@ def get_assessment(assessment_id: str, request:Request, current_user: User = Dep
             )
 
     return response
+
+
+@router.post("/notify/{assessment_id}", response_class=HTMLResponse, name="app_assessment_notify_coach")
+def post_notify_coach(
+    assessment_id: str, request: Request, current_user: User = Depends(user_htmx_dep)
+):
+    """Send notification to coach about assessment completion"""
+
+    from app.model.notification import Notification
+    from app.exception.service import (
+        SMTPCredentialsNotSet,
+        SendingEmailFailed,
+        RateLimitExceeded,
+        Unauthorized,
+    )
+
+    try:
+        result = service.notify_coach(
+            assessment_id=assessment_id, current_user=current_user, request=request
+        )
+
+        # Reload the assessment edit page with success notification
+        from app.config import SMTP_ENABLED
+
+        context = {
+            "request": request,
+            "title": "Assessment Details",
+            "description": "Assessment detail",
+            "current_user": current_user,
+            "notification": Notification(style="success", content=result["message"]),
+        }
+
+        assessment_qa: list[AssessmentQA] = service.get_all_qa(
+            assessment_id=assessment_id, current_user=current_user
+        )
+        assessment = service.get_assessment(
+            assessment_id=assessment_id, current_user=current_user
+        )
+        context["title"] = f"{assessment_qa[0].assessment_name}"
+        context["assessment_qa"] = assessment_qa
+        context["assessment"] = assessment
+        context["wheel"] = service.prepare_wheel_context(assessment_qa=assessment_qa)
+        context["SMTP_ENABLED"] = SMTP_ENABLED
+
+        return jinja.TemplateResponse(name="app/assessment-edit.html", context=context)
+
+    except SMTPCredentialsNotSet as e:
+        context = {
+            "request": request,
+            "current_user": current_user,
+            "notification": Notification(style="warning", content=e.msg),
+        }
+        # Reload page with warning
+        from app.config import SMTP_ENABLED
+
+        assessment_qa: list[AssessmentQA] = service.get_all_qa(
+            assessment_id=assessment_id, current_user=current_user
+        )
+        assessment = service.get_assessment(
+            assessment_id=assessment_id, current_user=current_user
+        )
+        context["title"] = f"{assessment_qa[0].assessment_name}"
+        context["assessment_qa"] = assessment_qa
+        context["assessment"] = assessment
+        context["wheel"] = service.prepare_wheel_context(assessment_qa=assessment_qa)
+        context["SMTP_ENABLED"] = SMTP_ENABLED
+
+        return jinja.TemplateResponse(name="app/assessment-edit.html", context=context)
+
+    except RateLimitExceeded as e:
+        context = {
+            "request": request,
+            "current_user": current_user,
+            "notification": Notification(style="info", content=e.msg),
+        }
+        # Reload page with info message
+        from app.config import SMTP_ENABLED
+
+        assessment_qa: list[AssessmentQA] = service.get_all_qa(
+            assessment_id=assessment_id, current_user=current_user
+        )
+        assessment = service.get_assessment(
+            assessment_id=assessment_id, current_user=current_user
+        )
+        context["title"] = f"{assessment_qa[0].assessment_name}"
+        context["assessment_qa"] = assessment_qa
+        context["assessment"] = assessment
+        context["wheel"] = service.prepare_wheel_context(assessment_qa=assessment_qa)
+        context["SMTP_ENABLED"] = SMTP_ENABLED
+
+        return jinja.TemplateResponse(name="app/assessment-edit.html", context=context)
+
+    except (SendingEmailFailed, Unauthorized) as e:
+        context = {
+            "request": request,
+            "current_user": current_user,
+            "notification": Notification(style="danger", content=e.msg),
+        }
+        # Reload page with error
+        from app.config import SMTP_ENABLED
+
+        assessment_qa: list[AssessmentQA] = service.get_all_qa(
+            assessment_id=assessment_id, current_user=current_user
+        )
+        assessment = service.get_assessment(
+            assessment_id=assessment_id, current_user=current_user
+        )
+        context["title"] = f"{assessment_qa[0].assessment_name}"
+        context["assessment_qa"] = assessment_qa
+        context["assessment"] = assessment
+        context["wheel"] = service.prepare_wheel_context(assessment_qa=assessment_qa)
+        context["SMTP_ENABLED"] = SMTP_ENABLED
+
+        return jinja.TemplateResponse(name="app/assessment-edit.html", context=context)
 
 

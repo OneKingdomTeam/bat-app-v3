@@ -35,6 +35,15 @@
                                 <span class="has-text-grey">Owner</span>
                                 <span class="has-text-weight-medium owner-field">{{ assessment.owner_name }} ✏️</span>
                             </div>
+                            <div class="is-flex is-justify-content-space-between mb-2 is-clickable coach-row"
+                                hx-get="{{ url_for("dashboard_assessment_change_coach", assessment_id=assessment.assessment_id) }}"
+                                hx-select=".coach-row"
+                                hx-target=".coach-row"
+                                hx-swap="outerHTML"
+                                >
+                                <span class="has-text-grey">Coach</span>
+                                <span class="has-text-weight-medium coach-field">{% if assessment.coach_name %}{{ assessment.coach_name }}{% else %}<i>None</i>{% endif %} ✏️</span>
+                            </div>
                             <div class="is-flex is-justify-content-space-between mb-2">
                                 <span class="has-text-grey">Last Editor</span>
                                 <span class="has-text-weight-medium">{% if assessment.last_edit and not assessment.last_editor_name %}<i>Deleted user</i>{% else %}{{ assessment.last_editor_name }}{% endif %}</span>

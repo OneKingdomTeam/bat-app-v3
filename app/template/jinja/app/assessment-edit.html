@@ -5,6 +5,7 @@
     <div class="container">
         {% block body_content %}
         <h2 class="title is-2 has-text-centered">{{ title }}</h2>
+        {% include "helpers/notification.html" %}
         <div class="columns">
             <div class="column assessment-wheel-panel is-two-fifths">
                 {% include "wheel/wheel-app.svg" %}
@@ -34,8 +35,20 @@
                             hx-target=".bat-main-content"
                             hx-select=".bat-main-content"
                             hx-swap="outerHTML"
-                            >Let’s do it!</button>
+                            >Let's do it!</button>
                     </div>
+                    {% if SMTP_ENABLED and assessment.coach_id %}
+                    <div class="block pt-5 has-text-centered">
+                        <button class="button is-warning pl-6 pr-6 mt-4"
+                            hx-post="{{ url_for('app_assessments_page') }}/notify/{{ assessment.assessment_id }}"
+                            hx-target=".bat-main-content"
+                            hx-select=".bat-main-content"
+                            hx-swap="outerHTML">
+                            Notify Coach
+                        </button>
+                        <p class="help mt-2">Let your coach know you've completed the assessment</p>
+                    </div>
+                    {% endif %}
                 </div> 
                 {% endblock %}
             </div>

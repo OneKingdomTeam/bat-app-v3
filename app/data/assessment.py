@@ -7,6 +7,7 @@ from app.exception.database import RecordNotFound
 from app.model.assesment import (
     Assessment,
     AssessmentAnswerPost,
+    AssessmentChangeCoach,
     AssessmentChown,
     AssessmentNew,
     AssessmentQA,
@@ -21,7 +22,9 @@ curs.execute(
     assessment_name text,
     owner_id text references users( user_id ),
     last_edit text,
-    last_editor text
+    last_editor text,
+    coach_id text references users( user_id ),
+    last_notification_sent text
     )"""
 )
 
@@ -100,6 +103,9 @@ def assessment_row_to_model(row: tuple) -> Assessment:
         last_editor,
         last_editor_name,
         last_edit,
+        coach_id,
+        coach_name,
+        last_notification_sent,
     ) = row
 
     return Assessment(
@@ -111,6 +117,9 @@ def assessment_row_to_model(row: tuple) -> Assessment:
         last_editor_name=last_editor_name,
         last_edit=last_edit,
         has_reports=None,
+        coach_id=coach_id,
+        coach_name=coach_name,
+        last_notification_sent=last_notification_sent,
     )
 
 
@@ -167,13 +176,14 @@ def assessment_question_row_to_model(row: tuple) -> AssessmentQA:
 def create_assessment(assessment_new: AssessmentNew) -> Assessment:
 
     # Create new assessment entry
-    qry = """insert into assessments(assessment_id, assessment_name, owner_id)
-    values(:assessment_id, :assessment_name, :owner_id)"""
+    qry = """insert into assessments(assessment_id, assessment_name, owner_id, coach_id)
+    values(:assessment_id, :assessment_name, :owner_id, :coach_id)"""
 
     params = {
         "assessment_id": assessment_new.assessment_id,
         "assessment_name": assessment_new.assessment_name,
         "owner_id": assessment_new.owner_id,
+        "coach_id": assessment_new.coach_id,
     }
 
     cursor = conn.cursor()
@@ -313,14 +323,19 @@ def get_one(assessment_id: str) -> Assessment:
         u1.username as owner_name,
         a.last_editor,
         u2.username as last_editor_name,
-        a.last_edit
+        a.last_edit,
+        a.coach_id,
+        u3.username as coach_name,
+        a.last_notification_sent
     FROM
         assessments a
     LEFT JOIN
         users u1 ON a.owner_id = u1.user_id
     LEFT JOIN
         users u2 ON a.last_editor = u2.user_id
-    WHERE 
+    LEFT JOIN
+        users u3 ON a.coach_id = u3.user_id
+    WHERE
         a.assessment_id = :assessment_id
     """
 
@@ -348,13 +363,18 @@ def get_all_for_user(user_id: str) -> list[Assessment]:
         u1.username as owner_name,
         a.last_editor,
         u2.username as last_editor_name,
-        a.last_edit
+        a.last_edit,
+        a.coach_id,
+        u3.username as coach_name,
+        a.last_notification_sent
     FROM
         assessments a
     LEFT JOIN
         users u1 ON a.owner_id = u1.user_id
     LEFT JOIN
         users u2 ON a.last_editor = u2.user_id
+    LEFT JOIN
+        users u3 ON a.coach_id = u3.user_id
     LEFT JOIN
         assessment_collaborators ac ON a.assessment_id = ac.assessment_id
     WHERE
@@ -385,13 +405,18 @@ def get_one_for_user(assessment_id: str, user_id: str) -> Assessment:
         u1.username as owner_name,
         a.last_editor,
         u2.username as last_editor_name,
-        a.last_edit
+        a.last_edit,
+        a.coach_id,
+        u3.username as coach_name,
+        a.last_notification_sent
     FROM
         assessments a
     LEFT JOIN
         users u1 ON a.owner_id = u1.user_id
     LEFT JOIN
         users u2 ON a.last_editor = u2.user_id
+    LEFT JOIN
+        users u3 ON a.coach_id = u3.user_id
     LEFT JOIN
         assessment_collaborators ac ON a.assessment_id = ac.assessment_id
     WHERE
@@ -423,13 +448,18 @@ def get_all() -> list[Assessment]:
         u1.username as owner_name,
         a.last_editor,
         u2.username as last_editor_name,
-        a.last_edit
+        a.last_edit,
+        a.coach_id,
+        u3.username as coach_name,
+        a.last_notification_sent
     FROM
         assessments a
     LEFT JOIN
         users u1 ON a.owner_id = u1.user_id
     LEFT JOIN
         users u2 ON a.last_editor = u2.user_id
+    LEFT JOIN
+        users u3 ON a.coach_id = u3.user_id
     """
 
     cursor = conn.cursor()
@@ -589,13 +619,39 @@ def chown(assessment_chown: AssessmentChown) -> bool:
         assessments
     set
         owner_id = :owner_id
-    where 
+    where
         assessment_id = :assessment_id
     """
 
     params = {
         "owner_id": assessment_chown.new_owner_id,
         "assessment_id": assessment_chown.assessment_id,
+    }
+
+    cursor = conn.cursor()
+    try:
+        cursor.execute(qry, params)
+        conn.commit()
+        return True
+    finally:
+        cursor.close()
+
+
+def change_coach(assessment_id: str, new_coach_id: str) -> bool:
+    """Change the coach assigned to an assessment"""
+
+    qry = """
+    UPDATE
+        assessments
+    SET
+        coach_id = :coach_id
+    WHERE
+        assessment_id = :assessment_id
+    """
+
+    params = {
+        "coach_id": new_coach_id,
+        "assessment_id": assessment_id,
     }
 
     cursor = conn.cursor()
@@ -792,5 +848,72 @@ def get_collaborator_info(assessment_id: str, user_id: str) -> dict | None:
             }
         else:
             return None
+    finally:
+        cursor.close()
+
+
+# -------------------------------
+#   Coach Notification Functions
+# -------------------------------
+
+
+def can_send_notification(assessment_id: str) -> bool:
+    """Check if notification can be sent (rate limiting check)"""
+
+    qry = """
+    SELECT last_notification_sent
+    FROM assessments
+    WHERE assessment_id = :assessment_id
+    """
+
+    params = {"assessment_id": assessment_id}
+
+    cursor = conn.cursor()
+    try:
+        cursor.execute(qry, params)
+        row = cursor.fetchone()
+        if row and row[0]:
+            # Parse the last notification sent timestamp
+            last_sent_str = row[0]
+            try:
+                from datetime import datetime, timedelta
+                # Parse format: "MMM d, y, HH:mm"
+                last_sent = datetime.strptime(last_sent_str, "%b %d, %Y, %H:%M")
+                now = datetime.now()
+                time_diff = now - last_sent
+                # Check if 30 minutes (1800 seconds) have passed
+                return time_diff.total_seconds() >= 1800
+            except:
+                # If parsing fails, allow notification
+                return True
+        else:
+            # No notification sent yet
+            return True
+    finally:
+        cursor.close()
+
+
+def update_notification_timestamp(assessment_id: str) -> bool:
+    """Update last_notification_sent to current timestamp"""
+
+    now = datetime.now()
+    formatted_date = format_datetime(now, format="MMM d, y, HH:mm", locale="en_US")
+
+    qry = """
+    UPDATE assessments
+    SET last_notification_sent = :last_notification_sent
+    WHERE assessment_id = :assessment_id
+    """
+
+    params = {
+        "last_notification_sent": formatted_date,
+        "assessment_id": assessment_id,
+    }
+
+    cursor = conn.cursor()
+    try:
+        cursor.execute(qry, params)
+        conn.commit()
+        return True
     finally:
         cursor.close()

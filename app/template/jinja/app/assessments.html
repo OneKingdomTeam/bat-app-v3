@@ -23,9 +23,13 @@
 
                         {# Info Section #}
                         <div class="mb-4">
-                            <div class="is-flex is-justify-content-space-between" data-owner_id="{{ assessment.owner_id }}">
+                            <div class="is-flex is-justify-content-space-between mb-2" data-owner_id="{{ assessment.owner_id }}">
                                 <span class="has-text-grey">Owner</span>
                                 <span class="has-text-weight-medium">{{ assessment.owner_name }}</span>
+                            </div>
+                            <div class="is-flex is-justify-content-space-between">
+                                <span class="has-text-grey">Coach</span>
+                                <span class="has-text-weight-medium">{% if assessment.coach_name %}{{ assessment.coach_name }}{% else %}<i>None</i>{% endif %}</span>
                             </div>
                         </div>
 
