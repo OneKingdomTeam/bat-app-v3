@@ -51,19 +51,37 @@ def homepage_get(request: Request):
     return response
 
 
-@router.get("/logout", response_class=HTMLResponse, name="logout_page")
-def logout_page_get(request: Request):
+@router.get("/logout", name="logout_page")
+async def logout_page_get(request: Request):
+    """
+    Logout endpoint that:
+    1. Deletes the access_token cookie
+    2. Redirects to login page with success notification
+    3. Works in both SSL and non-SSL environments
+    """
 
-    context: dict = {
-        "request": request,
-        "title": "Logout",
-        "description": "Logout from your current session.",
-    }
-
-    response = jinja.TemplateResponse(
-        name="public/logout.html",
-        context=context,
+    # Redirect to login page with logout flag
+    login_url = request.url_for("login_page")
+    response = RedirectResponse(
+        status_code=303,
+        url=f"{login_url}?logout=1"
     )
+
+    # Delete the access_token cookie
+    # Check environment to set secure flag appropriately
+    if os.getenv("FORCE_HTTPS_PATHS_ENV"):
+        response.delete_cookie(
+            key="access_token",
+            httponly=True,
+            secure=True,
+            samesite="strict"
+        )
+    else:
+        response.delete_cookie(
+            key="access_token",
+            httponly=True,
+            samesite="strict"
+        )
 
     return response
 
@@ -232,8 +250,40 @@ async def login_page_get(
     next: str | None = None,
     notification: Notification | None = None,
     expired_session: int = 0,
+    logout: int = 0,
     status_code: int | None = None,
 ):
+    # Check if user already has a valid token
+    access_token = request.cookies.get("access_token")
+
+    if access_token:
+        try:
+            # Extract and validate token
+            token_stripped = access_token.split("Bearer ")[1]
+            current_user = get_current_user(token=token_stripped)
+
+            # User is authenticated - redirect based on role or 'next' parameter
+            if current_user:
+                # Handle 'next' parameter if present and valid
+                if next:
+                    validated_next = validate_redirect_url(next, request)
+                    if validated_next:
+                        return RedirectResponse(status_code=303, url=validated_next)
+
+                # Default role-based redirect
+                user_role = current_user.role.value
+                if user_role == "user":
+                    return RedirectResponse(
+                        status_code=303, url=request.url_for("app_assessments_page")
+                    )
+                if user_role == "coach" or user_role == "admin":
+                    return RedirectResponse(
+                        status_code=303, url=request.url_for("dashboard_assessments_page")
+                    )
+        except (IndexError, InvalidBearerToken, RecordNotFound):
+            # Token is invalid or expired - continue to login form
+            pass
+
     # Validate 'next' parameter to prevent open redirects
     validated_next = validate_redirect_url(next, request) if next else None
 
@@ -247,6 +297,12 @@ async def login_page_get(
     if CF_TURNSTILE_ENABLED:
         context["cf_turnstile_enabled"] = True
         context["cf_turnstile_site_key"] = CF_TURNSTILE_SITE_KEY
+
+    if logout:
+        logout_notification = Notification(
+            style="success", content="You've been successfully logged out."
+        )
+        context["notification"] = logout_notification
 
     if expired_session:
         expired_notification = Notification(
