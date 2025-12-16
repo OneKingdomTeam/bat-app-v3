@@ -21,7 +21,7 @@
                         By answering these questions we hope to have better idea about how we can be more helpful for you.
                         </p>
                         <p>
-                        Asnwers are automatically saved every dozen of seconds. The wheel on the left also changes colors based 
+                        Asnwers are automatically saved every dozen of seconds. The wheel on the left also changes colors based
                         on your answers, so you can easily see what parts you already filled in.
                         </p>
                         <p>
@@ -37,22 +37,22 @@
                             hx-swap="outerHTML"
                             >Let's do it!</button>
                     </div>
-                    {% if SMTP_ENABLED and assessment.coach_id %}
-                    <div class="block pt-5 has-text-centered">
-                        <button class="button is-warning pl-6 pr-6 mt-4"
-                            hx-post="{{ url_for('app_assessments_page') }}/notify/{{ assessment.assessment_id }}"
-                            hx-target=".bat-main-content"
-                            hx-select=".bat-main-content"
-                            hx-swap="outerHTML">
-                            Notify Coach
-                        </button>
-                        <p class="help mt-2">Let your coach know you've completed the assessment</p>
-                    </div>
-                    {% endif %}
-                </div> 
+                </div>
                 {% endblock %}
             </div>
         </div>
+        {% if SMTP_ENABLED and assessment.coach_id %}
+        <div class="block pt-4 has-text-centered">
+            <button class="button is-warning pl-6 pr-6"
+                hx-post="{{ url_for('app_assessments_page') }}/notify/{{ assessment.assessment_id }}"
+                hx-target=".bat-main-content"
+                hx-select=".bat-main-content"
+                hx-swap="outerHTML">
+                Notify Coach
+            </button>
+            <p class="help mt-2">Let your coach know you've completed the assessment</p>
+        </div>
+        {% endif %}
         {% endblock %}
     </div>
     <script src="{{ url_for("js", path="wheel-labels.js") }}"></script>
