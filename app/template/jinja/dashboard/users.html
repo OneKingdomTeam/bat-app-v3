@@ -29,24 +29,32 @@
                                 {{ user.role.value }}
                             </td>
                             <td class="is-flex is-flex-direction-row has-gap">
-                                <button
+                                <a
                                     class="button is-info is-light"
-                                    hx-get="{{ url_for("dashboard_users_page") }}/{{ user.user_id }}"
-                                    hx-target="body"
-                                    hx-swap="outerHTML"
-                                    hx-push-url="true"
+                                    {% if not current_user.can_modify_user(user) %}
+                                    disabled
+                                    title="You do not have permission to edit this user"
+                                    {% else %}
+                                    href="{{ url_for("dashboard_users_page") }}/{{ user.user_id }}"
+                                    {% endif %}
                                     >
                                     Edit
-                                </button>
+                                </a>
                                 {% if current_user.user_id != user.user_id %}
-                                <button
+                                <a
                                     class="button is-danger is-light"
+                                    {% if not current_user.can_delete_user(user) %}
+                                    disabled
+                                    title="You do not have permission to delete this user"
+                                    {% else %}
                                     hx-delete="{{ url_for("dashboard_users_page") }}/{{ user.user_id }}"
                                     hx-confirm="Delete user {{ user.username }}?"
                                     hx-select=".bat-body"
                                     hx-target=".bat-body"
                                     hx-push-url="false"
-                                    hx-swap="outerHTML">
+                                    hx-swap="outerHTML"
+                                    {% endif %}
+                                    >
                                     Delete
                                 </button>
                                 {% endif %}

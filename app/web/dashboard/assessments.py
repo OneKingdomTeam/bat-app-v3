@@ -32,8 +32,8 @@ def get_assessments(request: Request, current_user: User = Depends(user_htmx_dep
 
     try:
         assessments = service.get_all(current_user=current_user)
-    except:
-        # NotImplemented
+    except Unauthorized as e:
+        # TODO: Implement HTML return exception for this occasion.
         raise
 
     context = {
@@ -745,9 +745,7 @@ def post_grant_collaborator_access(
     )
 
 
-@router.delete(
-    "/collaborators/{assessment_id}/{user_id}", response_class=HTMLResponse
-)
+@router.delete("/collaborators/{assessment_id}/{user_id}", response_class=HTMLResponse)
 def delete_revoke_collaborator_access(
     request: Request,
     assessment_id: str,

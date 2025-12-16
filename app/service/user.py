@@ -136,6 +136,11 @@ def get(user_id: str, current_user: User) -> User:
         raise Unauthorized(msg="You cannot list this user. Insufficient permissions.")
 
     user = data.get_one(user_id)
+
+    # Additional check: coaches cannot access admin profiles
+    if not requesting_own_profile and not current_user.can_modify_user(user):
+        raise Unauthorized(msg="You cannot access this user. Insufficient permissions.")
+
     return user
 
 
