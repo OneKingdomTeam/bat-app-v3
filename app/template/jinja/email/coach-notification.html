@@ -1,0 +1,22 @@
+{% extends "email/index.html" %}
+{% block body %}
+<div class="container">
+    <h1>Hello, {{ coach_username }}!</h1>
+    <p>{{ user_username }} has completed their assessment and would like you to review it.</p>
+
+    <p><strong>Assessment:</strong> {{ assessment_name }}</p>
+
+    <p>You can review the assessment by clicking the button below:</p>
+
+    <div class="button-container">
+        <a href="{{ review_url }}" class="button">Review Assessment</a>
+    </div>
+
+    <p style="margin-top: 20px; font-size: 14px; color: #666;">If the button doesn't work, you can copy this link:</p>
+    <p style="font-size: 12px; color: #666; word-break: break-all;">{{ review_url }}</p>
+
+    <div class="footer">
+        <p>Best regards,<br>The <span class="highlight">{{ get_branding().organization_name }}</span> Team</p>
+    </div>
+</div>
+{% endblock %}

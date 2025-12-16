@@ -13,6 +13,7 @@ from app.exception.service import Unauthorized
 from app.template.init import jinja
 
 import app.data.assessment as data
+import app.data.user as user_data
 from app.service import report as report_service
 
 
@@ -23,10 +24,21 @@ def create_assessment(
     if not current_user.can_manage_assessments():
         raise Unauthorized(msg="You cannot manage assessments.")
 
+    # Validate that coach_id references a user with admin or coach role
+    from app.model.user import UserRoleEnum
+    from app.exception.service import InvalidCoachAssignment
+
+    coach_user = user_data.get_one(user_id=assessment_post.coach_id)
+    if coach_user.role not in [UserRoleEnum.admin, UserRoleEnum.coach]:
+        raise InvalidCoachAssignment(
+            msg="Selected coach must have admin or coach role."
+        )
+
     assessment_new: AssessmentNew = AssessmentNew(
         assessment_id=str(uuid4()),
         assessment_name=assessment_post.assessment_name,
         owner_id=assessment_post.owner_id,
+        coach_id=assessment_post.coach_id,
     )
     created_assessment: Assessment = data.create_assessment(
         assessment_new=assessment_new
@@ -38,13 +50,20 @@ def get_assessment(assessment_id: str, current_user: User) -> Assessment:
 
     assessment = data.get_one(assessment_id=assessment_id)
 
-    if (
-        not current_user.can_manage_assessments()
-        and assessment.owner_id != current_user.user_id
-    ):
-        raise Unauthorized(msg="You cannot access this assessment.")
+    # Admins/coaches can access all assessments
+    if current_user.can_manage_assessments():
+        return assessment
 
-    return assessment
+    # Check if user is owner OR collaborator
+    if assessment.owner_id == current_user.user_id:
+        return assessment
+
+    if data.is_collaborator(
+        assessment_id=assessment_id, user_id=current_user.user_id
+    ):
+        return assessment
+
+    raise Unauthorized(msg="You cannot access this assessment.")
 
 
 def delete_assessment(assessment_id: str, current_user: User) -> Assessment:
@@ -80,6 +99,9 @@ def get_all_for_user(current_user: User) -> list[Assessment]:
         if reports:
             assessment.has_reports = True
 
+        # Set is_shared flag to indicate if user is collaborator (not owner)
+        assessment.is_shared = assessment.owner_id != current_user.user_id
+
     return assessments
 
 
@@ -102,15 +124,21 @@ def get_all_qa(assessment_id: str, current_user: User) -> list[AssessmentQA]:
 
     assessment = data.get_one(assessment_id=assessment_id)
 
-    if (
-        not current_user.can_manage_assessments()
-        and current_user.user_id != assessment.owner_id
-    ):
-        raise Unauthorized(msg="You cannot access this assessment data.")
+    # Admins/coaches can access all
+    if current_user.can_manage_assessments():
+        return data.filter_assessment_qa_by_category_order_and_question_id(
+            assessment_id=assessment_id
+        )
 
-    return data.filter_assessment_qa_by_category_order_and_question_id(
-        assessment_id=assessment_id
-    )
+    # Check if user is owner OR collaborator
+    if current_user.user_id == assessment.owner_id or data.is_collaborator(
+        assessment_id=assessment_id, user_id=current_user.user_id
+    ):
+        return data.filter_assessment_qa_by_category_order_and_question_id(
+            assessment_id=assessment_id
+        )
+
+    raise Unauthorized(msg="You cannot access this assessment data.")
 
 
 def prepare_wheel_context(assessment_qa: list[AssessmentQA]) -> dict:
@@ -237,14 +265,25 @@ def save_answer(answer_data: AssessmentAnswerPost, current_user: User):
         assessment_id=answer_data.assessment_id, current_user=current_user
     )
 
-    if (
-        current_user.can_manage_assessments()
-        or current_user.user_id == targeted_assessment.owner_id
+    # Admins/coaches can edit all
+    if current_user.can_manage_assessments():
+        data.save_answer(answer_data=answer_data)
+        data.update_last_edit(
+            assessment_id=answer_data.assessment_id, current_user=current_user
+        )
+        return
+
+    # Check if user is owner OR collaborator
+    if current_user.user_id == targeted_assessment.owner_id or data.is_collaborator(
+        assessment_id=answer_data.assessment_id, user_id=current_user.user_id
     ):
         data.save_answer(answer_data=answer_data)
         data.update_last_edit(
             assessment_id=answer_data.assessment_id, current_user=current_user
         )
+        return
+
+    raise Unauthorized(msg="You cannot edit this assessment.")
 
 
 def chown(assessment_chown: AssessmentChown, current_user: User) -> bool:
@@ -255,6 +294,25 @@ def chown(assessment_chown: AssessmentChown, current_user: User) -> bool:
     return data.chown(assessment_chown=assessment_chown)
 
 
+def change_coach(assessment_id: str, new_coach_id: str, current_user: User) -> bool:
+    """Change the coach assigned to an assessment"""
+
+    if not current_user.can_manage_assessments():
+        raise Unauthorized(msg="You cannot manage assessments.")
+
+    # Validate that new_coach_id references a user with admin or coach role
+    from app.model.user import UserRoleEnum
+    from app.exception.service import InvalidCoachAssignment
+
+    coach_user = user_data.get_one(user_id=new_coach_id)
+    if coach_user.role not in [UserRoleEnum.admin, UserRoleEnum.coach]:
+        raise InvalidCoachAssignment(
+            msg="Selected coach must have admin or coach role."
+        )
+
+    return data.change_coach(assessment_id=assessment_id, new_coach_id=new_coach_id)
+
+
 def rename(assessment_id: str, new_name: str, current_user: User) -> bool:
 
     if not current_user.can_manage_assessments():
@@ -263,3 +321,149 @@ def rename(assessment_id: str, new_name: str, current_user: User) -> bool:
     assessment = get_assessment(assessment_id=assessment_id, current_user=current_user)
     assessment.assessment_name = new_name
     return data.rename(assessment=assessment)
+
+
+def grant_collaborator_access(
+    assessment_id: str, user_id: str, current_user: User
+) -> bool:
+    """Grant a user access to an assessment (admin/coach only)"""
+
+    if not current_user.can_manage_assessments():
+        raise Unauthorized(msg="Only admins and coaches can manage collaborators.")
+
+    # Verify assessment exists
+    assessment = data.get_one(assessment_id=assessment_id)
+
+    # Verify target user exists
+    target_user = user_data.get_one(user_id=user_id)
+
+    # Don't allow adding owner as collaborator
+    if assessment.owner_id == user_id:
+        raise ValueError("Cannot add owner as collaborator.")
+
+    return data.grant_access(
+        assessment_id=assessment_id, user_id=user_id, granted_by_user=current_user
+    )
+
+
+def revoke_collaborator_access(
+    assessment_id: str, user_id: str, current_user: User
+) -> bool:
+    """Revoke a user's access to an assessment (admin/coach only)"""
+
+    if not current_user.can_manage_assessments():
+        raise Unauthorized(msg="Only admins and coaches can manage collaborators.")
+
+    return data.revoke_access(assessment_id=assessment_id, user_id=user_id)
+
+
+def get_assessment_collaborators(assessment_id: str, current_user: User) -> list[dict]:
+    """Get all collaborators for an assessment (admin/coach only)"""
+
+    if not current_user.can_manage_assessments():
+        raise Unauthorized(msg="Only admins and coaches can view collaborators.")
+
+    # Verify assessment exists
+    assessment = data.get_one(assessment_id=assessment_id)
+
+    return data.get_collaborators(assessment_id=assessment_id)
+
+
+def get_available_collaborators(assessment_id: str, current_user: User) -> list[User]:
+    """Get users who can be added as collaborators (excludes current collaborators and owner)"""
+
+    if not current_user.can_manage_assessments():
+        raise Unauthorized(msg="Only admins and coaches can manage collaborators.")
+
+    # Get assessment
+    assessment = data.get_one(assessment_id=assessment_id)
+
+    # Get all users
+    all_users = user_data.get_all()
+
+    # Get current collaborators (returns list of dicts)
+    current_collaborators = data.get_collaborators(assessment_id=assessment_id)
+    collaborator_ids = {c["user_id"] for c in current_collaborators}
+
+    # Filter out owner and existing collaborators
+    available = [
+        u
+        for u in all_users
+        if u.user_id != assessment.owner_id and u.user_id not in collaborator_ids
+    ]
+
+    return available
+
+
+def get_available_coaches_for_assessment(current_user: User) -> list[User]:
+    """Get all users with admin or coach role for coach assignment"""
+
+    if not current_user.can_manage_assessments():
+        raise Unauthorized(msg="Only admins and coaches can create assessments.")
+
+    from app.model.user import UserRoleEnum
+
+    # Get all users
+    all_users = user_data.get_all()
+
+    # Filter to only admin and coach roles
+    coaches = [
+        u
+        for u in all_users
+        if u.role in [UserRoleEnum.admin, UserRoleEnum.coach]
+    ]
+
+    return coaches
+
+
+def notify_coach(assessment_id: str, current_user: User, request) -> dict:
+    """Send notification email to the assigned coach"""
+
+    from app.exception.service import RateLimitExceeded, SMTPCredentialsNotSet, SendingEmailFailed
+    from app.config import SMTP_ENABLED
+    import app.service.mail as mail_service
+
+    # Check if SMTP is enabled
+    if not SMTP_ENABLED:
+        raise SMTPCredentialsNotSet(
+            msg="Email notifications are not configured. Please contact your coach directly."
+        )
+
+    # Get assessment and verify user has access
+    try:
+        assessment = data.get_one_for_user(
+            assessment_id=assessment_id, user_id=current_user.user_id
+        )
+    except RecordNotFound:
+        raise Unauthorized(msg="You don't have access to this assessment.")
+
+    # Check if coach is assigned
+    if not assessment.coach_id:
+        raise Unauthorized(
+            msg="No coach assigned to this assessment. Please contact an administrator."
+        )
+
+    # Check rate limit
+    if not data.can_send_notification(assessment_id=assessment_id):
+        raise RateLimitExceeded(
+            msg="You can only send one notification every 30 minutes. If you need urgent assistance, please contact your coach directly."
+        )
+
+    # Get coach user object
+    coach = user_data.get_one(user_id=assessment.coach_id)
+
+    # Send notification email
+    try:
+        mail_service.notify_coach_assessment_complete(
+            assessment=assessment, user=current_user, coach=coach, request=request
+        )
+    except Exception as e:
+        raise SendingEmailFailed(msg="Failed to send notification email.")
+
+    # Update notification timestamp
+    data.update_notification_timestamp(assessment_id=assessment_id)
+
+    return {
+        "success": True,
+        "message": "Notification sent successfully to your coach!"
+    }

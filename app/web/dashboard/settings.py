@@ -1,32 +1,22 @@
-from fastapi import APIRouter, Request, Depends, UploadFile, File, Form
-from fastapi.responses import HTMLResponse, Response
+from fastapi import APIRouter, Request, UploadFile, File, Form, Depends
+from fastapi.responses import HTMLResponse
 from pathlib import Path
-from typing import Optional
 
-from app.exception.database import RecordNotFound
-from app.exception.service import Unauthorized
-from app.model.user import User, UserRoleEnum
+from app.model.user import User
 from app.model.notification import Notification
 from app.model.setting import BrandingSettings
 from app.template.init import jinja
-from app.service.authentication import user_htmx_dep
+from app.service.authentication import admin_only
 from app.service import setting as service
-from app.config import APP_ROOT
+from app.config import (
+    ALLOWED_LOGO_EXTENSIONS,
+    ALLOWED_FAVICON_EXTENSIONS,
+    MAX_LOGO_SIZE,
+    MAX_FAVICON_SIZE,
+    IMAGES_DIR,
+)
 
 router = APIRouter()
-
-ALLOWED_LOGO_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".svg"}
-ALLOWED_FAVICON_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".ico"}
-MAX_LOGO_SIZE = 512 * 1024  # 512 KB
-MAX_FAVICON_SIZE = 128 * 1024  # 128 KB
-IMAGES_DIR = APP_ROOT / "static" / "images"
-
-
-def admin_only(current_user: User = Depends(user_htmx_dep)) -> User:
-    """Dependency to ensure only admins can access settings."""
-    if current_user.role != UserRoleEnum.admin:
-        raise Unauthorized(msg="Only administrators can access settings")
-    return current_user
 
 
 # -------------------------------------
@@ -48,9 +38,7 @@ def get_settings_page(request: Request, current_user: User = Depends(admin_only)
         "branding": branding,
     }
 
-    return jinja.TemplateResponse(
-        name="dashboard/settings.html", context=context
-    )
+    return jinja.TemplateResponse(name="dashboard/settings.html", context=context)
 
 
 # -------------------------------------
@@ -58,8 +46,12 @@ def get_settings_page(request: Request, current_user: User = Depends(admin_only)
 # -------------------------------------
 
 
-@router.get("/branding", response_class=HTMLResponse, name="dashboard_settings_branding")
-def get_branding_settings_partial(request: Request, current_user: User = Depends(admin_only)):
+@router.get(
+    "/branding", response_class=HTMLResponse, name="dashboard_settings_branding"
+)
+def get_branding_settings_partial(
+    request: Request, current_user: User = Depends(admin_only)
+):
     """Get branding settings partial for HTMX."""
 
     branding = service.get_branding_settings()
@@ -111,20 +103,15 @@ async def update_branding_settings(
         service.update_branding_settings(updated_branding)
 
         notification = Notification(
-            style="success",
-            content="Branding settings updated successfully"
+            style="success", content="Branding settings updated successfully"
         )
 
     except ValueError as e:
-        notification = Notification(
-            style="warning",
-            content=str(e)
-        )
+        notification = Notification(style="warning", content=str(e))
         updated_branding = service.get_branding_settings()
     except Exception as e:
         notification = Notification(
-            style="danger",
-            content=f"Failed to update settings: {str(e)}"
+            style="danger", content=f"Failed to update settings: {str(e)}"
         )
         updated_branding = service.get_branding_settings()
 
@@ -201,28 +188,23 @@ async def upload_logo(
 
         notification = Notification(
             style="success",
-            content=f"Logo uploaded successfully ({file_size / 1024:.1f} KB)"
+            content=f"Logo uploaded successfully ({file_size / 1024:.1f} KB)",
         )
 
     except ValueError as e:
-        notification = Notification(
-            style="warning",
-            content=str(e)
-        )
+        notification = Notification(style="warning", content=str(e))
     except PermissionError:
         notification = Notification(
             style="danger",
-            content="Failed to save file: Permission denied. Check directory permissions."
+            content="Failed to save file: Permission denied. Check directory permissions.",
         )
     except OSError as e:
         notification = Notification(
-            style="danger",
-            content=f"Failed to save file: {str(e)}"
+            style="danger", content=f"Failed to save file: {str(e)}"
         )
     except Exception as e:
         notification = Notification(
-            style="danger",
-            content=f"Unexpected error: {str(e)}"
+            style="danger", content=f"Unexpected error: {str(e)}"
         )
 
     context = {
@@ -298,28 +280,23 @@ async def upload_favicon(
 
         notification = Notification(
             style="success",
-            content=f"Favicon uploaded successfully ({file_size / 1024:.1f} KB)"
+            content=f"Favicon uploaded successfully ({file_size / 1024:.1f} KB)",
         )
 
     except ValueError as e:
-        notification = Notification(
-            style="warning",
-            content=str(e)
-        )
+        notification = Notification(style="warning", content=str(e))
     except PermissionError:
         notification = Notification(
             style="danger",
-            content="Failed to save file: Permission denied. Check directory permissions."
+            content="Failed to save file: Permission denied. Check directory permissions.",
         )
     except OSError as e:
         notification = Notification(
-            style="danger",
-            content=f"Failed to save file: {str(e)}"
+            style="danger", content=f"Failed to save file: {str(e)}"
         )
     except Exception as e:
         notification = Notification(
-            style="danger",
-            content=f"Unexpected error: {str(e)}"
+            style="danger", content=f"Unexpected error: {str(e)}"
         )
 
     context = {

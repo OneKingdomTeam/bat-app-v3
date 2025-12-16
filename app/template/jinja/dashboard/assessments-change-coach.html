@@ -1,5 +1,5 @@
-<div class="is-flex is-justify-content-space-between is-align-items-center mb-2 owner-row">
-    <span class="has-text-grey">Owner</span>
+<div class="is-flex is-justify-content-space-between is-align-items-center mb-2 coach-row">
+    <span class="has-text-grey">Coach</span>
     <div class="field is-grouped is-grouped-right mb-0">
         <form
             hx-put="{{ url_for('dashboard_assessments_page') }}"
@@ -11,9 +11,9 @@
             class="field is-grouped mb-0">
             <div class="control">
                 <div class="select is-small">
-                    <select name="new_owner_id">
-                        {% for user in users %}
-                        <option value="{{ user.user_id }}" {% if assessment.owner_id == user.user_id %}selected{% endif %}>{{ user.username }}</option>
+                    <select name="new_coach_id">
+                        {% for coach in coaches %}
+                        <option value="{{ coach.user_id }}" {% if assessment.coach_id == coach.user_id %}selected{% endif %}>{{ coach.username }}</option>
                         {% endfor %}
                     </select>
                 </div>

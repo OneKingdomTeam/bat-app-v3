@@ -1,4 +1,4 @@
-from fastapi import HTTPException, Request
+from fastapi import HTTPException, Request, Depends
 from app.config import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
     SECRET_KEY,
@@ -7,16 +7,18 @@ from app.config import (
 )
 
 import requests
+from urllib.parse import urlparse
 
 from jose import ExpiredSignatureError, JWTError, jwt
-from passlib.context import CryptContext
+from pwdlib import PasswordHash
+from pwdlib.hashers.bcrypt import BcryptHasher
 from datetime import datetime, timedelta, timezone
 
 from app.exception.auth import CFTurnstileVerificationFailed
 from app.exception.database import RecordNotFound
 from app.exception.web import NonHTMXRequestException, RedirectToLoginException
-from app.exception.service import IncorectCredentials, InvalidBearerToken
-from app.model.user import User
+from app.exception.service import IncorectCredentials, InvalidBearerToken, Unauthorized
+from app.model.user import User, UserRoleEnum
 
 # Function to retrieve the user and pasword hash
 from app.data.user import get_one as get_user_by_user_id
@@ -30,15 +32,15 @@ from app.data.user import get_by as get_user_by
     - takes in token and returns user if token is valid"""
 
 
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+pwd_hash = PasswordHash((BcryptHasher(),))
 
 
 def verify_password(password: str, hash: str) -> bool:
-    return pwd_context.verify(password, hash)
+    return pwd_hash.verify(password, hash)
 
 
 def get_password_hash(plain: str) -> str:
-    return pwd_context.hash(plain)
+    return pwd_hash.hash(plain)
 
 
 def jwt_to_user_id(token: str) -> str | None:
@@ -177,6 +179,13 @@ async def user_htmx_dep(request: Request) -> User | None:
     )
 
 
+def admin_only(current_user: User = Depends(user_htmx_dep)) -> User:
+    """Dependency to ensure only admins can access settings."""
+    if current_user.role != UserRoleEnum.admin:
+        raise Unauthorized(msg="Only administrators can access settings")
+    return current_user
+
+
 # -------------------------------------
 #   Cloudflare turnstile response verification
 # -------------------------------------
@@ -213,3 +222,62 @@ def cf_verify_response(response: str | None) -> bool:
         )
 
     return False
+
+
+# -------------------------------------
+#   URL Validation for Redirects
+# -------------------------------------
+
+
+def validate_redirect_url(url: str, request: Request) -> str | None:
+    """
+    Validate redirect URL to prevent open redirect attacks.
+
+    Only allows:
+    - Relative paths starting with /
+    - Paths within our application
+    - Share assessment URLs
+
+    Returns validated URL or None if invalid.
+    """
+
+    if not url:
+        return None
+
+    # Parse the URL
+    parsed = urlparse(url)
+
+    # Reject if URL has a scheme (http://, https://, etc.) and different host
+    if parsed.scheme and parsed.netloc:
+        # Check if netloc matches our host
+        request_host = request.headers.get("host", "")
+        if parsed.netloc != request_host:
+            return None  # External URL - reject
+
+    # Reject if URL has scheme but no netloc (javascript:, data:, etc.)
+    if parsed.scheme and not parsed.netloc:
+        return None
+
+    # Get the path
+    path = parsed.path
+
+    # Must start with /
+    if not path.startswith("/"):
+        return None
+
+    # Whitelist allowed path patterns
+    allowed_patterns = [
+        "/share/assessment/",
+        "/app/",
+        "/dashboard/",
+    ]
+
+    if not any(path.startswith(pattern) for pattern in allowed_patterns):
+        return None
+
+    # Reconstruct safe URL (path + query only, no fragment)
+    safe_url = path
+    if parsed.query:
+        safe_url += f"?{parsed.query}"
+
+    return safe_url

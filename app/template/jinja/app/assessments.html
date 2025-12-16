@@ -10,22 +10,51 @@
                 {% if assessments %}
                 {% for assessment in assessments %}
                 <div class="cell">
-                    <div class="card p-4 content">
-                        <h3 class="title is-3">{{ assessment.assessment_name }}</h3>
-                        <p data-owner_id="{{ assessment.owner_id }}"><b>Owner:</b> {{ assessment.owner_name }}</p>
-                        <div class="is-flex is-gap-2">
-                            <a href="{{ url_for("app_assessments_page") }}/edit/{{ assessment.assessment_id }}" class="button is-link is-light px-6">
-                                Edit
-                            </a>
-                            {% if assessment.has_reports %}
-                            <a
-                                class="button is-success is-light px-6"
-                                href="{{ url_for("app_reports_for_assessment", assessment_id=assessment.assessment_id) }}">
-                                Reports
-                            </a>
+                    <div class="card p-4">
+                        {# Header Section #}
+                        <div class="mb-4">
+                            <h3 class="title is-4 mb-2 has-text-centered">{{ assessment.assessment_name }}</h3>
+                            {% if assessment.is_shared %}
+                            <div class="has-text-centered">
+                                <span class="tag is-info is-light">Shared with you</span>
+                            </div>
                             {% endif %}
                         </div>
-                    </div> 
+
+                        {# Info Section #}
+                        <div class="mb-4">
+                            <div class="is-flex is-justify-content-space-between mb-2" data-owner_id="{{ assessment.owner_id }}">
+                                <span class="has-text-grey">Owner</span>
+                                <span class="has-text-weight-medium">{{ assessment.owner_name }}</span>
+                            </div>
+                            <div class="is-flex is-justify-content-space-between">
+                                <span class="has-text-grey">Coach</span>
+                                <span class="has-text-weight-medium">{% if assessment.coach_name %}{{ assessment.coach_name }}{% else %}<i>None</i>{% endif %}</span>
+                            </div>
+                        </div>
+
+                        {# Actions - Flexible Layout #}
+                        {% if assessment.has_reports %}
+                        <div class="columns is-mobile is-variable is-1">
+                            <div class="column">
+                                <a href="{{ url_for("app_assessments_page") }}/edit/{{ assessment.assessment_id }}" class="button is-link is-light is-fullwidth">
+                                    Edit
+                                </a>
+                            </div>
+                            <div class="column">
+                                <a
+                                    class="button is-success is-light is-fullwidth"
+                                    href="{{ url_for("app_reports_for_assessment", assessment_id=assessment.assessment_id) }}">
+                                    Reports
+                                </a>
+                            </div>
+                        </div>
+                        {% else %}
+                        <a href="{{ url_for("app_assessments_page") }}/edit/{{ assessment.assessment_id }}" class="button is-link is-light is-fullwidth">
+                            Edit
+                        </a>
+                        {% endif %}
+                    </div>
                 </div>
                 {% endfor %}
                 {% else %}

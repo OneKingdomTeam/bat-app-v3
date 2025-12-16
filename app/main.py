@@ -10,7 +10,13 @@ from app.exception.web import (
 )
 from pathlib import Path
 
-from app.config import FORCE_HTTPS_PATHS_ENV, APP_ROOT, PERSISTENT_ROOT, DB_DIR, UPLOADS_DIR
+from app.config import (
+    FORCE_HTTPS_PATHS_ENV,
+    APP_ROOT,
+    PERSISTENT_ROOT,
+    DB_DIR,
+    UPLOADS_DIR,
+)
 
 from app.service.user import add_default_user
 from app.service.question import add_default_questions
@@ -32,14 +38,15 @@ from app.web.app.reports import router as app_reports_router
 from app.web.app.profile import router as app_profile_router
 
 
+# since mounts happen sooner than lifespan triggers, we need to make sure
+# that the directories exists before the FastAPI tries to mount them
+PERSISTENT_ROOT.mkdir(parents=True, exist_ok=True)
+DB_DIR.mkdir(parents=True, exist_ok=True)
+UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Ensure required directories exist before app starts
-    # Single volume structure: /persistent/ contains all persistent data
-    PERSISTENT_ROOT.mkdir(parents=True, exist_ok=True)
-    DB_DIR.mkdir(parents=True, exist_ok=True)
-    UPLOADS_DIR.mkdir(parents=True, exist_ok=True)
-
     add_default_user()
     add_default_questions()
     add_default_settings()
@@ -68,7 +75,9 @@ app.add_exception_handler(RedirectToLoginException, redirect_to_login_exception_
 # Mount static files directories
 app.mount("/js", StaticFiles(directory=APP_ROOT / "static" / "js"), name="js")
 app.mount("/css", StaticFiles(directory=APP_ROOT / "static" / "css"), name="css")
-app.mount("/images", StaticFiles(directory=APP_ROOT / "static" / "images"), name="images")
+app.mount(
+    "/images", StaticFiles(directory=APP_ROOT / "static" / "images"), name="images"
+)
 app.mount("/uploads", StaticFiles(directory=UPLOADS_DIR), name="uploads")
 
 # Routers

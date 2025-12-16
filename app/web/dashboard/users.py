@@ -52,6 +52,7 @@ async def add_user(request: Request, current_user: User = Depends(user_htmx_dep)
         "request": request,
         "title": "Add User",
         "description": "BAT App dashboard interface",
+        "current_user": current_user,
         "available_roles": current_user.can_grant_roles(),
     }
 
@@ -71,6 +72,7 @@ async def add_user_post(
         "request": request,
         "title": "Add User",
         "description": "BAT App dashboard interface",
+        "current_user": current_user,
         "available_roles": current_user.can_grant_roles(),
     }
 
@@ -132,6 +134,7 @@ async def edit_user(
         "description": f"Edit details of the {user_for_edit.username}",
         "user_for_edit": user_for_edit,
         "available_roles": current_user.can_grant_roles(),
+        "current_user": current_user,
     }
 
     template_response = jinja.TemplateResponse(
@@ -158,6 +161,7 @@ async def update_user(
         "user_for_edit": user_for_edit,
         "title": f"Edit user: {user_for_edit.username}",
         "description": f"Edit details of the {user_for_edit.username}",
+        "current_user": current_user,
     }
 
     status_code = 202

@@ -7,7 +7,9 @@ from app.data.note import get_note
 from app.exception.service import EndpointDataMismatch, Unauthorized
 from app.model.assesment import (
     AssessmentAnswerPost,
+    AssessmentChangeCoach,
     AssessmentChown,
+    AssessmentCollaboratorPost,
     AssessmentNote,
     AssessmentPost,
     AssessmentQA,
@@ -30,8 +32,8 @@ def get_assessments(request: Request, current_user: User = Depends(user_htmx_dep
 
     try:
         assessments = service.get_all(current_user=current_user)
-    except:
-        # NotImplemented
+    except Unauthorized as e:
+        # TODO: Implement HTML return exception for this occasion.
         raise
 
     context = {
@@ -50,14 +52,30 @@ def get_assessments(request: Request, current_user: User = Depends(user_htmx_dep
 
 
 @router.put("", response_class=HTMLResponse)
-def put_assessments_chown(
+async def put_assessments_update(
     request: Request,
-    assessment_chown: AssessmentChown,
     current_user: User = Depends(user_htmx_dep),
 ):
+    """Handle both owner change and coach change"""
+
+    # Get the raw body and parse it
+    body = await request.json()
 
     try:
-        service.chown(assessment_chown=assessment_chown, current_user=current_user)
+        # Check if this is a coach change or owner change
+        if "new_coach_id" in body:
+            # Handle coach change
+            assessment_change_coach = AssessmentChangeCoach(**body)
+            service.change_coach(
+                assessment_id=assessment_change_coach.assessment_id,
+                new_coach_id=assessment_change_coach.new_coach_id,
+                current_user=current_user,
+            )
+        elif "new_owner_id" in body:
+            # Handle owner change
+            assessment_chown = AssessmentChown(**body)
+            service.chown(assessment_chown=assessment_chown, current_user=current_user)
+
         assessments = service.get_all(current_user=current_user)
     except:
         # NotImplemented
@@ -86,6 +104,9 @@ def get_assessment_create(
 ):
 
     try:
+        coaches: list[User] = service.get_available_coaches_for_assessment(
+            current_user=current_user
+        )
         users: list[User] = user_service.get_all(current_user=current_user)
     except:
         # NotImplemented
@@ -95,6 +116,7 @@ def get_assessment_create(
         "request": request,
         "title": "Create Assessment",
         "description": "Create new assessment.",
+        "coaches": coaches,
         "users": users,
         "current_user": current_user,
     }
@@ -124,12 +146,16 @@ def post_assessment_create(
         service.create_assessment(
             assessment_post=assessment_new, current_user=current_user
         )
+        coaches: list[User] = service.get_available_coaches_for_assessment(
+            current_user=current_user
+        )
         users: list[User] = user_service.get_all(current_user=current_user)
         context["notification"] = Notification(
             style="success",
             content=f"Assessment {assessment_new.assessment_name} successfully created.",
         )
-        context["users"] = user_service.get_all(current_user=current_user)
+        context["coaches"] = coaches
+        context["users"] = users
     except:
         # NotImplemented
         raise
@@ -597,3 +623,168 @@ def put_assessment_rename_for(
         raise e
 
     return get_assessments(request=request, current_user=current_user)
+
+
+@router.get(
+    "/change-coach/{assessment_id}",
+    response_class=HTMLResponse,
+    name="dashboard_assessment_change_coach",
+)
+def get_assessment_change_coach(
+    request: Request, assessment_id: str, current_user: User = Depends(user_htmx_dep)
+):
+
+    try:
+        coaches = service.get_available_coaches_for_assessment(
+            current_user=current_user
+        )
+        assessment = service.get_assessment(
+            assessment_id=assessment_id, current_user=current_user
+        )
+    except Unauthorized as e:
+        raise e
+
+    context = {
+        "request": request,
+        "coaches": coaches,
+        "assessment_id": assessment_id,
+        "assessment": assessment,
+    }
+
+    response = jinja.TemplateResponse(
+        name="dashboard/assessments-change-coach.html", context=context
+    )
+
+    return response
+
+
+@router.get(
+    "/collaborators/{assessment_id}",
+    response_class=HTMLResponse,
+    name="dashboard_assessment_collaborators",
+)
+def get_assessment_collaborators_page(
+    request: Request, assessment_id: str, current_user: User = Depends(user_htmx_dep)
+):
+    """Display collaborator management interface"""
+
+    try:
+        assessment = service.get_assessment(
+            assessment_id=assessment_id, current_user=current_user
+        )
+        collaborators = service.get_assessment_collaborators(
+            assessment_id=assessment_id, current_user=current_user
+        )
+        available_users = service.get_available_collaborators(
+            assessment_id=assessment_id, current_user=current_user
+        )
+    except:
+        raise
+
+    context = {
+        "request": request,
+        "title": f"Manage Collaborators - {assessment.assessment_name}",
+        "assessment": assessment,
+        "collaborators": collaborators,
+        "available_users": available_users,
+        "current_user": current_user,
+    }
+
+    return jinja.TemplateResponse(
+        name="dashboard/assessment-collaborators.html", context=context
+    )
+
+
+@router.post("/collaborators/{assessment_id}", response_class=HTMLResponse)
+def post_grant_collaborator_access(
+    request: Request,
+    assessment_id: str,
+    collaborator_post: AssessmentCollaboratorPost,
+    current_user: User = Depends(user_htmx_dep),
+):
+    """Grant a user access to an assessment"""
+
+    if assessment_id != collaborator_post.assessment_id:
+        raise EndpointDataMismatch(msg="Assessment ID mismatch")
+
+    try:
+        service.grant_collaborator_access(
+            assessment_id=assessment_id,
+            user_id=collaborator_post.user_id,
+            current_user=current_user,
+        )
+
+        # Reload data
+        assessment = service.get_assessment(
+            assessment_id=assessment_id, current_user=current_user
+        )
+        collaborators = service.get_assessment_collaborators(
+            assessment_id=assessment_id, current_user=current_user
+        )
+        available_users = service.get_available_collaborators(
+            assessment_id=assessment_id, current_user=current_user
+        )
+
+    except:
+        raise
+
+    context = {
+        "request": request,
+        "title": f"Manage Collaborators - {assessment.assessment_name}",
+        "assessment": assessment,
+        "collaborators": collaborators,
+        "available_users": available_users,
+        "current_user": current_user,
+        "notification": Notification(
+            style="success", content="Collaborator added successfully!"
+        ),
+    }
+
+    return jinja.TemplateResponse(
+        name="dashboard/assessment-collaborators.html", context=context
+    )
+
+
+@router.delete("/collaborators/{assessment_id}/{user_id}", response_class=HTMLResponse)
+def delete_revoke_collaborator_access(
+    request: Request,
+    assessment_id: str,
+    user_id: str,
+    current_user: User = Depends(user_htmx_dep),
+):
+    """Revoke a user's access to an assessment"""
+
+    try:
+        service.revoke_collaborator_access(
+            assessment_id=assessment_id, user_id=user_id, current_user=current_user
+        )
+
+        # Reload data
+        assessment = service.get_assessment(
+            assessment_id=assessment_id, current_user=current_user
+        )
+        collaborators = service.get_assessment_collaborators(
+            assessment_id=assessment_id, current_user=current_user
+        )
+        available_users = service.get_available_collaborators(
+            assessment_id=assessment_id, current_user=current_user
+        )
+
+    except:
+        raise
+
+    context = {
+        "request": request,
+        "title": f"Manage Collaborators - {assessment.assessment_name}",
+        "assessment": assessment,
+        "collaborators": collaborators,
+        "available_users": available_users,
+        "current_user": current_user,
+        "notification": Notification(
+            style="success", content="Collaborator removed successfully!"
+        ),
+    }
+
+    return jinja.TemplateResponse(
+        name="dashboard/assessment-collaborators.html", context=context
+    )

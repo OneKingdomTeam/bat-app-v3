@@ -70,3 +70,10 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(ACCESS_TOKEN_EXPIRE_MINUTES_ENV)
 DEFAULT_USER = str(DEFAULT_USER_ENV)
 DEFAULT_EMAIL = str(DEFAULT_EMAIL_ENV)
 DEFAULT_PASSWORD = str(DEFAULT_PASSWORD_ENV)
+
+# File upload settings for branding
+ALLOWED_LOGO_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".svg"}
+ALLOWED_FAVICON_EXTENSIONS = {".png", ".jpg", ".jpeg", ".webp", ".ico"}
+MAX_LOGO_SIZE = 512 * 1024  # 512 KB
+MAX_FAVICON_SIZE = 128 * 1024  # 128 KB
+IMAGES_DIR = APP_ROOT / "static" / "images"

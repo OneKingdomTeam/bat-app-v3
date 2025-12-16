@@ -1,5 +1,4 @@
 from fastapi import Request
-from passlib import context
 import secrets
 import re
 from datetime import datetime, timedelta, timezone
@@ -78,6 +77,14 @@ def create(user: UserCreate, request: Request, current_user: User) -> User:
     if not current_user.can_create_user(user):
         raise Unauthorized(msg="You cannot create this user")
 
+    # Validate that the role being assigned is grantable by current user
+    grantable_roles = current_user.can_grant_roles()
+    if user.role.value not in grantable_roles:
+        raise Unauthorized(
+            msg=f"You cannot assign the '{user.role.value}' role. "
+                f"You can only assign: {', '.join(grantable_roles)}"
+        )
+
     new_uuid = str(uuid4())
 
     if user.password:
@@ -129,6 +136,11 @@ def get(user_id: str, current_user: User) -> User:
         raise Unauthorized(msg="You cannot list this user. Insufficient permissions.")
 
     user = data.get_one(user_id)
+
+    # Additional check: coaches cannot access admin profiles
+    if not requesting_own_profile and not current_user.can_modify_user(user):
+        raise Unauthorized(msg="You cannot access this user. Insufficient permissions.")
+
     return user
 
 
@@ -220,6 +232,15 @@ def update(user_id: str, user: UserUpdate, current_user: User) -> User:
         raise Unauthorized(msg="You cannot modify this user")
 
     current_data: User = data.get_one(user_id)
+
+    # Validate role changes - prevent privilege escalation
+    if current_data.role != user.role:
+        grantable_roles = current_user.can_grant_roles()
+        if user.role.value not in grantable_roles:
+            raise Unauthorized(
+                msg=f"You cannot assign the '{user.role.value}' role. "
+                    f"You can only assign: {', '.join(grantable_roles)}"
+            )
 
     if user.password:
         password_hash = get_password_hash(user.password)

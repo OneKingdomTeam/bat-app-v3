@@ -159,3 +159,43 @@ def send_html_email(recipient_email: str, subject: str, html_message: str) -> bo
     except Exception as e:
         print(f"Failed to send email: {e}")
         raise SendingEmailFailed(msg=str(e))
+
+
+def notify_coach_assessment_complete(
+    assessment, user: User, coach: User, request: Request
+) -> bool:
+    """Send notification to coach when user completes assessment"""
+
+    if not SMTP_ENABLED:
+        raise SMTPCredentialsNotSet(
+            msg="SMTP credentials are not set. You need to notify coach manually."
+        )
+
+    subject = f"Assessment Completed: {assessment.assessment_name}"
+
+    # Create review URL pointing to dashboard (for coach access)
+    review_url = str(
+        request.url_for(
+            "dashboard_assessment_review_page", assessment_id=assessment.assessment_id
+        )
+    )
+
+    context = {
+        "coach_username": coach.username,
+        "user_username": user.username,
+        "assessment_name": assessment.assessment_name,
+        "review_url": review_url,
+        "website_url": str(request.base_url),
+        "url_for": request.url_for,
+    }
+
+    template = jinja.env.get_template("email/coach-notification.html")
+    content = template.render(context)
+
+    try:
+        send_html_email(
+            recipient_email=coach.email, subject=subject, html_message=content
+        )
+        return True
+    except Exception as e:
+        raise e

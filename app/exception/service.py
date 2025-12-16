@@ -41,3 +41,11 @@ class SendingEmailFailed(Exception):
 class PasswordResetTokenExpired(Exception):
     def __init__(self, msg: str):
         self.msg = msg
+
+class RateLimitExceeded(Exception):
+    def __init__(self, msg: str):
+        self.msg = msg
+
+class InvalidCoachAssignment(Exception):
+    def __init__(self, msg: str):
+        self.msg = msg
