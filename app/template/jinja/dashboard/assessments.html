@@ -11,13 +11,13 @@
             <div class="grid is-gap-4">
                 {% if assessments %}
                 {% for assessment in assessments %}
-                <div class="cell">
+                <div class="cell" id="assessment-{{ assessment.assessment_id }}">
                     <div class="card p-4">
                         {# Header Section #}
                         <div
                             class="assessment-name-row is-flex is-flex-direction-row is-justify-content-center is-align-items-center mb-4 is-clickable"
                             hx-get="{{ url_for("dashboard_assessment_rename", assessment_id=assessment.assessment_id) }}"
-                            hx-target=".assessment-name-row"
+                            hx-target="#assessment-{{ assessment.assessment_id }} .assessment-name-row"
                             hx-swap="outerHTML"
                             >
                             <h3 class="title is-4 mb-0 has-text-centered">{{ assessment.assessment_name }}&nbsp;</h3>
@@ -29,7 +29,7 @@
                             <div class="is-flex is-justify-content-space-between mb-2 is-clickable owner-row"
                                 hx-get="{{ url_for("dashboard_assessment_chown", assessment_id=assessment.assessment_id) }}"
                                 hx-select=".owner-row"
-                                hx-taget=".owner-row"
+                                hx-target="#assessment-{{ assessment.assessment_id }} .owner-row"
                                 hx-swap="outerHTML"
                                 >
                                 <span class="has-text-grey">Owner</span>
@@ -38,7 +38,7 @@
                             <div class="is-flex is-justify-content-space-between mb-2 is-clickable coach-row"
                                 hx-get="{{ url_for("dashboard_assessment_change_coach", assessment_id=assessment.assessment_id) }}"
                                 hx-select=".coach-row"
-                                hx-target=".coach-row"
+                                hx-target="#assessment-{{ assessment.assessment_id }} .coach-row"
                                 hx-swap="outerHTML"
                                 >
                                 <span class="has-text-grey">Coach</span>
