@@ -224,6 +224,8 @@ def freeze_questions_categories(assessment_id: str) -> dict:
         cursor = conn.cursor()
         try:
             cursor.execute(qry, params)
+            # Since the rowid's are being wild in this case, we need the IDs to
+            # correctly map the newely snapshotted questions to thier categories
             category_id_map[category.category_name] = cursor.lastrowid
             conn.commit()
         finally:
@@ -780,16 +782,27 @@ def get_collaborators(assessment_id: str) -> list[dict]:
         if rows:
             collaborators = []
             for row in rows:
-                user_id, username, email, hash_val, role, granted_at, granted_by, granted_by_name = row
-                collaborators.append({
-                    "user_id": user_id,
-                    "username": username,
-                    "email": email,
-                    "role": role,
-                    "granted_at": granted_at,
-                    "granted_by": granted_by,
-                    "granted_by_name": granted_by_name,
-                })
+                (
+                    user_id,
+                    username,
+                    email,
+                    hash_val,
+                    role,
+                    granted_at,
+                    granted_by,
+                    granted_by_name,
+                ) = row
+                collaborators.append(
+                    {
+                        "user_id": user_id,
+                        "username": username,
+                        "email": email,
+                        "role": role,
+                        "granted_at": granted_at,
+                        "granted_by": granted_by,
+                        "granted_by_name": granted_by_name,
+                    }
+                )
             return collaborators
         else:
             return []
@@ -877,6 +890,7 @@ def can_send_notification(assessment_id: str) -> bool:
             last_sent_str = row[0]
             try:
                 from datetime import datetime, timedelta
+
                 # Parse format: "MMM d, y, HH:mm"
                 last_sent = datetime.strptime(last_sent_str, "%b %d, %Y, %H:%M")
                 now = datetime.now()

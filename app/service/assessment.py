@@ -1,5 +1,4 @@
 from uuid import uuid4
-from app.exception.database import RecordNotFound
 from app.model.assesment import (
     Assessment,
     AssessmentAnswerPost,
@@ -8,9 +7,10 @@ from app.model.assesment import (
     AssessmentPost,
     AssessmentQA,
 )
-from app.model.user import User
-from app.exception.service import Unauthorized
-from app.template.init import jinja
+from app.model.user import User, UserRoleEnum
+
+from app.exception.service import Unauthorized, InvalidCoachAssignment
+from app.exception.database import RecordNotFound
 
 import app.data.assessment as data
 import app.data.user as user_data
@@ -25,8 +25,6 @@ def create_assessment(
         raise Unauthorized(msg="You cannot manage assessments.")
 
     # Validate that coach_id references a user with admin or coach role
-    from app.model.user import UserRoleEnum
-    from app.exception.service import InvalidCoachAssignment
 
     coach_user = user_data.get_one(user_id=assessment_post.coach_id)
     if coach_user.role not in [UserRoleEnum.admin, UserRoleEnum.coach]:
@@ -58,9 +56,7 @@ def get_assessment(assessment_id: str, current_user: User) -> Assessment:
     if assessment.owner_id == current_user.user_id:
         return assessment
 
-    if data.is_collaborator(
-        assessment_id=assessment_id, user_id=current_user.user_id
-    ):
+    if data.is_collaborator(assessment_id=assessment_id, user_id=current_user.user_id):
         return assessment
 
     raise Unauthorized(msg="You cannot access this assessment.")
@@ -408,9 +404,7 @@ def get_available_coaches_for_assessment(current_user: User) -> list[User]:
 
     # Filter to only admin and coach roles
     coaches = [
-        u
-        for u in all_users
-        if u.role in [UserRoleEnum.admin, UserRoleEnum.coach]
+        u for u in all_users if u.role in [UserRoleEnum.admin, UserRoleEnum.coach]
     ]
 
     return coaches
@@ -419,7 +413,11 @@ def get_available_coaches_for_assessment(current_user: User) -> list[User]:
 def notify_coach(assessment_id: str, current_user: User, request) -> dict:
     """Send notification email to the assigned coach"""
 
-    from app.exception.service import RateLimitExceeded, SMTPCredentialsNotSet, SendingEmailFailed
+    from app.exception.service import (
+        RateLimitExceeded,
+        SMTPCredentialsNotSet,
+        SendingEmailFailed,
+    )
     from app.config import SMTP_ENABLED
     import app.service.mail as mail_service
 
@@ -463,7 +461,4 @@ def notify_coach(assessment_id: str, current_user: User, request) -> dict:
     # Update notification timestamp
     data.update_notification_timestamp(assessment_id=assessment_id)
 
-    return {
-        "success": True,
-        "message": "Notification sent successfully to your coach!"
-    }
+    return {"success": True, "message": "Notification sent successfully to your coach!"}
