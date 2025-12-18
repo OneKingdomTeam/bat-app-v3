@@ -78,6 +78,12 @@
                                 title="Manage collaborators">
                                 Collaborators
                             </a>
+                            <a
+                                class="button is-small is-warning is-light"
+                                href="{{ url_for('dashboard_assessment_manage_segments', assessment_id=assessment.assessment_id) }}"
+                                title="Manage segments">
+                                Segments
+                            </a>
                             <button
                                 class="button is-small is-link is-light share-assessment-btn"
                                 data-assessment-id="{{ assessment.assessment_id }}"

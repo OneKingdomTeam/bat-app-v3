@@ -29,8 +29,15 @@
                         </p>
                     </div>
                     <div class="block pt-5 has-text-centered">
+                        {% set first_enabled_category = namespace(found=false, order=0) %}
+                        {% for i in range(13) %}
+                            {% if not first_enabled_category.found and wheel['category_' ~ '%02d'|format(i) ~ '_enabled'] %}
+                                {% set first_enabled_category.found = true %}
+                                {% set first_enabled_category.order = wheel['category_' ~ '%02d'|format(i) ~ '_order'] %}
+                            {% endif %}
+                        {% endfor %}
                         <button class="button is-info pl-6 pr-6 mt-4 thet-start-assessment"
-                            hx-get="{{ url_for("app_assessments_page") }}/edit/{{ wheel.assessment_id }}/{{ wheel.category_00_order }}/1"
+                            hx-get="{{ url_for("app_assessments_page") }}/edit/{{ wheel.assessment_id }}/{{ first_enabled_category.order }}/1"
                             hx-push-url="true"
                             hx-target=".bat-main-content"
                             hx-select=".bat-main-content"

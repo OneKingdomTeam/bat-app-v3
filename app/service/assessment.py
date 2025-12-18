@@ -150,6 +150,10 @@ def prepare_wheel_context(assessment_qa: list[AssessmentQA]) -> dict:
         if category_order_key not in context:
             context[category_order_key] = f"{qa.category_order}"
 
+        category_enabled_key = f"category_{qa.category_order:02}_enabled"
+        if category_enabled_key not in context:
+            context[category_enabled_key] = qa.enabled
+
         field_color: str = "#000000"
         match qa.answer_option:
             case "yes":
@@ -201,15 +205,23 @@ def get_neighbouring_questions(
     assessment_qa: list[AssessmentQA], category_order: int, question_order: int
 ):
 
+    # Build list of (category, question) tuples for ENABLED categories only
     orders: list = []
-    for i in range(0, 13):
-        for y in range(1, 5):
-            orders.append((i, y))
+    enabled_categories = sorted(set([qa.category_order for qa in assessment_qa if qa.enabled]))
+
+    for cat_order in enabled_categories:
+        for question_num in range(1, 5):
+            orders.append((cat_order, question_num))
 
     previous_question = None
     next_question = None
 
-    current_index = orders.index((category_order, question_order))
+    try:
+        current_index = orders.index((category_order, question_order))
+    except ValueError:
+        # Current category is disabled, return None for both
+        return (None, None)
+
     if current_index == 0:
         previous_question = None
         next_question = filter_assessment_qa_by_category_order_and_question_id(
@@ -239,20 +251,27 @@ def get_neighbouring_questions(
     return (previous_question, next_question)
 
 
-def get_neighbouring_categories_number(category_order: int):
+def get_neighbouring_categories_number(assessment_id: str, category_order: int):
+    """Get neighbouring category orders, skipping disabled ones"""
+
+    enabled_categories = data.get_enabled_categories(assessment_id=assessment_id)
+
+    if category_order not in enabled_categories:
+        # Current category is disabled
+        return (None, None)
+
+    current_index = enabled_categories.index(category_order)
 
     previous_category = None
     next_category = None
 
-    if category_order == 0:
-        next_category = 1
-    elif category_order == 13:
-        previous_category = 12
-    else:
-        previous_category = category_order - 1
-        next_category = category_order + 1
+    if current_index > 0:
+        previous_category = enabled_categories[current_index - 1]
 
-    return previous_category, next_category
+    if current_index < len(enabled_categories) - 1:
+        next_category = enabled_categories[current_index + 1]
+
+    return (previous_category, next_category)
 
 
 def save_answer(answer_data: AssessmentAnswerPost, current_user: User):
@@ -462,3 +481,51 @@ def notify_coach(assessment_id: str, current_user: User, request) -> dict:
     data.update_notification_timestamp(assessment_id=assessment_id)
 
     return {"success": True, "message": "Notification sent successfully to your coach!"}
+
+
+def toggle_category(
+    assessment_id: str, category_order: int, enabled: bool, current_user: User
+) -> bool:
+    """Toggle a category's enabled state (admin/coach only)"""
+
+    if not current_user.can_manage_assessments():
+        raise Unauthorized(msg="Only admins and coaches can manage categories.")
+
+    # Verify assessment exists and user has access
+    _ = get_assessment(assessment_id=assessment_id, current_user=current_user)
+
+    # Prevent disabling the last enabled category
+    enabled_categories = data.get_enabled_categories(assessment_id=assessment_id)
+    if (
+        not enabled
+        and len(enabled_categories) == 1
+        and category_order in enabled_categories
+    ):
+        raise ValueError("Cannot disable the last enabled category.")
+
+    return data.toggle_category_enabled(
+        assessment_id=assessment_id, category_order=category_order, enabled=enabled
+    )
+
+
+def get_category_states(assessment_id: str, current_user: User) -> dict[int, bool]:
+    """Get enabled/disabled state for all categories (admin/coach only)"""
+
+    if not current_user.can_manage_assessments():
+        raise Unauthorized(msg="Only admins and coaches can view category states.")
+
+    # Verify assessment exists and user has access
+    _ = get_assessment(assessment_id=assessment_id, current_user=current_user)
+
+    # Get all QA data
+    assessment_qa = data.filter_assessment_qa_by_category_order_and_question_id(
+        assessment_id=assessment_id
+    )
+
+    # Build dict of category_order -> enabled
+    category_states = {}
+    for qa in assessment_qa:
+        if qa.category_order not in category_states:
+            category_states[qa.category_order] = qa.enabled
+
+    return category_states

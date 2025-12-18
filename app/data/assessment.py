@@ -48,7 +48,8 @@ curs.execute(
     category_id integer primary key,
     assessment_id text references assessments( assessment_id ),
     category_name text,
-    category_order integer
+    category_order integer,
+    enabled integer default 1
     )"""
 )
 
@@ -86,6 +87,24 @@ curs.execute(
     """CREATE INDEX IF NOT EXISTS idx_assessment_collaborators_user
     ON assessment_collaborators(user_id)"""
 )
+
+
+# Migration: Add enabled column to existing databases
+def migrate_add_enabled_column():
+    """Add enabled column if it doesn't exist"""
+    cursor = conn.cursor()
+    try:
+        cursor.execute("PRAGMA table_info(assessments_questions_categories)")
+        columns = [row[1] for row in cursor.fetchall()]
+        if 'enabled' not in columns:
+            cursor.execute("ALTER TABLE assessments_questions_categories ADD COLUMN enabled INTEGER DEFAULT 1")
+            conn.commit()
+    finally:
+        cursor.close()
+
+
+# Run migration
+migrate_add_enabled_column()
 
 
 # -------------------------------
@@ -141,6 +160,7 @@ def assessment_question_row_to_model(row: tuple) -> AssessmentQA:
         category_id,
         category_name,
         category_order,
+        enabled,
         answer_id,
         answer_option,
         answer_description,
@@ -162,6 +182,7 @@ def assessment_question_row_to_model(row: tuple) -> AssessmentQA:
         category_id=category_id,
         category_name=category_name,
         category_order=category_order,
+        enabled=bool(enabled),
         answer_id=answer_id,
         answer_option=answer_option,
         answer_description=answer_description,
@@ -212,13 +233,14 @@ def freeze_questions_categories(assessment_id: str) -> dict:
     for category in questions_cateogies:
 
         qry = """insert into
-        assessments_questions_categories(assessment_id, category_name, category_order)
-        values(:assessment_id, :category_name, :category_order)"""
+        assessments_questions_categories(assessment_id, category_name, category_order, enabled)
+        values(:assessment_id, :category_name, :category_order, :enabled)"""
 
         params = {
             "assessment_id": assessment_id,
             "category_name": category.category_name,
             "category_order": category.category_order,
+            "enabled": 1,
         }
 
         cursor = conn.cursor()
@@ -523,18 +545,19 @@ def filter_assessment_qa_by_category_order_and_question_id(
         qc.category_id,
         qc.category_name,
         qc.category_order,
+        qc.enabled,
         aw.answer_id,
         aw.answer_option,
         aw.answer_description
-    from 
+    from
         assessments_questions as q
-    left join 
+    left join
         assessments as a
         on q.assessment_id = a.assessment_id
     left join
         assessments_questions_categories as qc
         on q.category_id = qc.category_id
-    left join 
+    left join
         assessments_answers as aw
         on q.question_id = aw.question_id
         and q.assessment_id = aw.assessment_id
@@ -929,5 +952,59 @@ def update_notification_timestamp(assessment_id: str) -> bool:
         cursor.execute(qry, params)
         conn.commit()
         return True
+    finally:
+        cursor.close()
+
+
+# -------------------------------
+#   Category Management Functions
+# -------------------------------
+
+
+def toggle_category_enabled(assessment_id: str, category_order: int, enabled: bool) -> bool:
+    """Toggle the enabled state of a category in an assessment"""
+
+    qry = """
+    UPDATE
+        assessments_questions_categories
+    SET
+        enabled = :enabled
+    WHERE
+        assessment_id = :assessment_id
+        AND category_order = :category_order
+    """
+
+    params = {
+        "enabled": 1 if enabled else 0,
+        "assessment_id": assessment_id,
+        "category_order": category_order,
+    }
+
+    cursor = conn.cursor()
+    try:
+        cursor.execute(qry, params)
+        conn.commit()
+        return cursor.rowcount > 0
+    finally:
+        cursor.close()
+
+
+def get_enabled_categories(assessment_id: str) -> list[int]:
+    """Get list of enabled category orders for an assessment"""
+
+    qry = """
+    SELECT category_order
+    FROM assessments_questions_categories
+    WHERE assessment_id = :assessment_id AND enabled = 1
+    ORDER BY category_order ASC
+    """
+
+    params = {"assessment_id": assessment_id}
+
+    cursor = conn.cursor()
+    try:
+        cursor.execute(qry, params)
+        rows = cursor.fetchall()
+        return [row[0] for row in rows]
     finally:
         cursor.close()

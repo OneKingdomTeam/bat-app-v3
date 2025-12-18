@@ -54,6 +54,7 @@ class AssessmentQA(BaseModel):
     category_id: int
     category_name: str
     category_order: int
+    enabled: bool = True
     answer_id: str | None
     answer_option: str | None
     answer_description: str | None
@@ -64,6 +65,7 @@ class AssessmentQuestionCategory(BaseModel):
     assessment_id: str
     category_name: str
     category_order: int
+    enabled: bool = True
 
 
 class AssessmentNote(BaseModel):
