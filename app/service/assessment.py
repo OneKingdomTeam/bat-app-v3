@@ -207,7 +207,9 @@ def get_neighbouring_questions(
 
     # Build list of (category, question) tuples for ENABLED categories only
     orders: list = []
-    enabled_categories = sorted(set([qa.category_order for qa in assessment_qa if qa.enabled]))
+    enabled_categories = sorted(
+        set([qa.category_order for qa in assessment_qa if qa.enabled])
+    )
 
     for cat_order in enabled_categories:
         for question_num in range(1, 5):

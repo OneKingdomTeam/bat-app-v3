@@ -1,4 +1,3 @@
-from uuid import uuid4
 from babel.dates import format_datetime
 from datetime import datetime
 from app.data.init import conn, curs
@@ -56,7 +55,7 @@ curs.execute(
 
 curs.execute(
     """create table if not exists assessments_answers(
-    answer_id text pirmary key,
+    answer_id integer primary key,
     assessment_id text references assessments( assessment_id ),
     question_id integer references assessments_questions( question_id ),
     answer_option text,
@@ -103,8 +102,45 @@ def migrate_add_enabled_column():
         cursor.close()
 
 
-# Run migration
+def migrate_answer_id_to_integer():
+    """Migrate answer_id from text (UUID) to integer (auto-increment)"""
+    cursor = conn.cursor()
+    try:
+        cursor.execute("PRAGMA table_info(assessments_answers)")
+        columns = {row[1]: row[2] for row in cursor.fetchall()}
+
+        # Check if answer_id is still text type
+        if columns.get('answer_id', '').lower() == 'text':
+            # Create new table with integer primary key
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS assessments_answers_new(
+                    answer_id INTEGER PRIMARY KEY,
+                    assessment_id TEXT REFERENCES assessments(assessment_id),
+                    question_id INTEGER REFERENCES assessments_questions(question_id),
+                    answer_option TEXT,
+                    answer_description TEXT
+                )
+            """)
+
+            # Copy data (answer_id will be auto-generated)
+            cursor.execute("""
+                INSERT INTO assessments_answers_new(assessment_id, question_id, answer_option, answer_description)
+                SELECT assessment_id, question_id, answer_option, answer_description
+                FROM assessments_answers
+                ORDER BY rowid
+            """)
+
+            # Drop old table and rename new one
+            cursor.execute("DROP TABLE assessments_answers")
+            cursor.execute("ALTER TABLE assessments_answers_new RENAME TO assessments_answers")
+            conn.commit()
+    finally:
+        cursor.close()
+
+
+# Run migrations
 migrate_add_enabled_column()
+migrate_answer_id_to_integer()
 
 
 # -------------------------------
@@ -299,14 +335,13 @@ def prepare_answers(assessment_id: str) -> bool:
         )
     )
 
-    qry = """insert into assessments_answers(answer_id, assessment_id, question_id)
-    values(:answer_id, :assessment_id, :question_id)"""
+    qry = """insert into assessments_answers(assessment_id, question_id)
+    values(:assessment_id, :question_id)"""
 
     cursor = conn.cursor()
     try:
         for question in questions:
             params = {
-                "answer_id": str(uuid4()),
                 "assessment_id": assessment_id,
                 "question_id": question.question_id,
             }
