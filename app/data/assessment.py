@@ -109,8 +109,8 @@ def migrate_answer_id_to_integer():
         cursor.execute("PRAGMA table_info(assessments_answers)")
         columns = {row[1]: row[2] for row in cursor.fetchall()}
 
-        # Check if answer_id is still text type
-        if columns.get('answer_id', '').lower() == 'text':
+        # Check if answer_id is still text type (handles "text pirmary key" typo from old schema)
+        if columns.get('answer_id', '').lower().startswith('text'):
             # Create new table with integer primary key
             cursor.execute("""
                 CREATE TABLE IF NOT EXISTS assessments_answers_new(
