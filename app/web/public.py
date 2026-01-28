@@ -62,26 +62,16 @@ async def logout_page_get(request: Request):
 
     # Redirect to login page with logout flag
     login_url = request.url_for("login_page")
-    response = RedirectResponse(
-        status_code=303,
-        url=f"{login_url}?logout=1"
-    )
+    response = RedirectResponse(status_code=303, url=f"{login_url}?logout=1")
 
     # Delete the access_token cookie
     # Check environment to set secure flag appropriately
     if os.getenv("FORCE_HTTPS_PATHS_ENV"):
         response.delete_cookie(
-            key="access_token",
-            httponly=True,
-            secure=True,
-            samesite="strict"
+            key="access_token", httponly=True, secure=True, samesite="strict"
         )
     else:
-        response.delete_cookie(
-            key="access_token",
-            httponly=True,
-            samesite="strict"
-        )
+        response.delete_cookie(key="access_token", httponly=True, samesite="strict")
 
     return response
 
@@ -114,6 +104,16 @@ def token_check_get(request: Request):
         redirect_to = request.url_for("dashboard_assessments_page")
 
     return {"redirect_to": f"{redirect_to}"}
+
+
+@router.get("/token-renew", name="token_renew_endpoint")
+async def post_token_refresh(
+    request: Request, current_user: User = Depends(user_htmx_dep)
+):
+
+    new_token = handle_token_renewal(current_user=current_user)
+
+    return {"access_token": new_token}
 
 
 @router.get("/password-reset", response_class=HTMLResponse, name="password_reset_page")
@@ -234,16 +234,6 @@ def post_set_password(request: Request, set_new_password: UserSetNewPassword):
     return response
 
 
-@router.get("/token-renew", name="token_renew_endpoint")
-async def post_token_refresh(
-    request: Request, current_user: User = Depends(user_htmx_dep)
-):
-
-    new_token = handle_token_renewal(current_user=current_user)
-
-    return {"access_token": new_token}
-
-
 @router.get("/login", response_class=HTMLResponse, name="login_page")
 async def login_page_get(
     request: Request,
@@ -278,7 +268,8 @@ async def login_page_get(
                     )
                 if user_role == "coach" or user_role == "admin":
                     return RedirectResponse(
-                        status_code=303, url=request.url_for("dashboard_assessments_page")
+                        status_code=303,
+                        url=request.url_for("dashboard_assessments_page"),
                     )
         except (IndexError, InvalidBearerToken, RecordNotFound):
             # Token is invalid or expired - continue to login form
@@ -381,7 +372,10 @@ async def login_page_post(
                         )
                     else:
                         response.set_cookie(
-                            key="access_token", value=token, httponly=True, samesite="strict"
+                            key="access_token",
+                            value=token,
+                            httponly=True,
+                            samesite="strict",
                         )
                     return response
 
@@ -433,7 +427,11 @@ async def login_page_post(
     )
 
 
-@router.get("/share/assessment/{assessment_id}", response_class=HTMLResponse, name="share_assessment")
+@router.get(
+    "/share/assessment/{assessment_id}",
+    response_class=HTMLResponse,
+    name="share_assessment",
+)
 async def share_assessment_get(
     request: Request,
     assessment_id: str,
@@ -475,8 +473,7 @@ async def share_assessment_get(
     # Step 3: Validate assessment exists and user has access
     try:
         assessment = assessment_service.get_assessment(
-            assessment_id=assessment_id,
-            current_user=current_user
+            assessment_id=assessment_id, current_user=current_user
         )
     except RecordNotFound:
         # Assessment doesn't exist - redirect to home
@@ -497,14 +494,12 @@ async def share_assessment_get(
     if current_user.can_manage_assessments():
         # Coaches/admins go to dashboard edit page
         target_url = request.url_for(
-            "dashboard_assessment_edit_page",
-            assessment_id=assessment_id
+            "dashboard_assessment_edit_page", assessment_id=assessment_id
         )
     else:
         # Regular users go to app edit page
         target_url = request.url_for(
-            "app_assessment_edit_page",
-            assessment_id=assessment_id
+            "app_assessment_edit_page", assessment_id=assessment_id
         )
 
     return RedirectResponse(status_code=303, url=target_url)

@@ -1,4 +1,3 @@
-from uuid import uuid4
 from babel.dates import format_datetime
 from datetime import datetime
 from app.data.init import conn, curs
@@ -48,14 +47,15 @@ curs.execute(
     category_id integer primary key,
     assessment_id text references assessments( assessment_id ),
     category_name text,
-    category_order integer
+    category_order integer,
+    enabled integer default 1
     )"""
 )
 
 
 curs.execute(
     """create table if not exists assessments_answers(
-    answer_id text pirmary key,
+    answer_id integer primary key,
     assessment_id text references assessments( assessment_id ),
     question_id integer references assessments_questions( question_id ),
     answer_option text,
@@ -86,6 +86,61 @@ curs.execute(
     """CREATE INDEX IF NOT EXISTS idx_assessment_collaborators_user
     ON assessment_collaborators(user_id)"""
 )
+
+
+# Migration: Add enabled column to existing databases
+def migrate_add_enabled_column():
+    """Add enabled column if it doesn't exist"""
+    cursor = conn.cursor()
+    try:
+        cursor.execute("PRAGMA table_info(assessments_questions_categories)")
+        columns = [row[1] for row in cursor.fetchall()]
+        if 'enabled' not in columns:
+            cursor.execute("ALTER TABLE assessments_questions_categories ADD COLUMN enabled INTEGER DEFAULT 1")
+            conn.commit()
+    finally:
+        cursor.close()
+
+
+def migrate_answer_id_to_integer():
+    """Migrate answer_id from text (UUID) to integer (auto-increment)"""
+    cursor = conn.cursor()
+    try:
+        cursor.execute("PRAGMA table_info(assessments_answers)")
+        columns = {row[1]: row[2] for row in cursor.fetchall()}
+
+        # Check if answer_id is still text type
+        if columns.get('answer_id', '').lower() == 'text':
+            # Create new table with integer primary key
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS assessments_answers_new(
+                    answer_id INTEGER PRIMARY KEY,
+                    assessment_id TEXT REFERENCES assessments(assessment_id),
+                    question_id INTEGER REFERENCES assessments_questions(question_id),
+                    answer_option TEXT,
+                    answer_description TEXT
+                )
+            """)
+
+            # Copy data (answer_id will be auto-generated)
+            cursor.execute("""
+                INSERT INTO assessments_answers_new(assessment_id, question_id, answer_option, answer_description)
+                SELECT assessment_id, question_id, answer_option, answer_description
+                FROM assessments_answers
+                ORDER BY rowid
+            """)
+
+            # Drop old table and rename new one
+            cursor.execute("DROP TABLE assessments_answers")
+            cursor.execute("ALTER TABLE assessments_answers_new RENAME TO assessments_answers")
+            conn.commit()
+    finally:
+        cursor.close()
+
+
+# Run migrations
+migrate_add_enabled_column()
+migrate_answer_id_to_integer()
 
 
 # -------------------------------
@@ -141,6 +196,7 @@ def assessment_question_row_to_model(row: tuple) -> AssessmentQA:
         category_id,
         category_name,
         category_order,
+        enabled,
         answer_id,
         answer_option,
         answer_description,
@@ -162,6 +218,7 @@ def assessment_question_row_to_model(row: tuple) -> AssessmentQA:
         category_id=category_id,
         category_name=category_name,
         category_order=category_order,
+        enabled=bool(enabled),
         answer_id=answer_id,
         answer_option=answer_option,
         answer_description=answer_description,
@@ -212,13 +269,14 @@ def freeze_questions_categories(assessment_id: str) -> dict:
     for category in questions_cateogies:
 
         qry = """insert into
-        assessments_questions_categories(assessment_id, category_name, category_order)
-        values(:assessment_id, :category_name, :category_order)"""
+        assessments_questions_categories(assessment_id, category_name, category_order, enabled)
+        values(:assessment_id, :category_name, :category_order, :enabled)"""
 
         params = {
             "assessment_id": assessment_id,
             "category_name": category.category_name,
             "category_order": category.category_order,
+            "enabled": 1,
         }
 
         cursor = conn.cursor()
@@ -277,14 +335,13 @@ def prepare_answers(assessment_id: str) -> bool:
         )
     )
 
-    qry = """insert into assessments_answers(answer_id, assessment_id, question_id)
-    values(:answer_id, :assessment_id, :question_id)"""
+    qry = """insert into assessments_answers(assessment_id, question_id)
+    values(:assessment_id, :question_id)"""
 
     cursor = conn.cursor()
     try:
         for question in questions:
             params = {
-                "answer_id": str(uuid4()),
                 "assessment_id": assessment_id,
                 "question_id": question.question_id,
             }
@@ -523,18 +580,19 @@ def filter_assessment_qa_by_category_order_and_question_id(
         qc.category_id,
         qc.category_name,
         qc.category_order,
+        qc.enabled,
         aw.answer_id,
         aw.answer_option,
         aw.answer_description
-    from 
+    from
         assessments_questions as q
-    left join 
+    left join
         assessments as a
         on q.assessment_id = a.assessment_id
     left join
         assessments_questions_categories as qc
         on q.category_id = qc.category_id
-    left join 
+    left join
         assessments_answers as aw
         on q.question_id = aw.question_id
         and q.assessment_id = aw.assessment_id
@@ -929,5 +987,59 @@ def update_notification_timestamp(assessment_id: str) -> bool:
         cursor.execute(qry, params)
         conn.commit()
         return True
+    finally:
+        cursor.close()
+
+
+# -------------------------------
+#   Category Management Functions
+# -------------------------------
+
+
+def toggle_category_enabled(assessment_id: str, category_order: int, enabled: bool) -> bool:
+    """Toggle the enabled state of a category in an assessment"""
+
+    qry = """
+    UPDATE
+        assessments_questions_categories
+    SET
+        enabled = :enabled
+    WHERE
+        assessment_id = :assessment_id
+        AND category_order = :category_order
+    """
+
+    params = {
+        "enabled": 1 if enabled else 0,
+        "assessment_id": assessment_id,
+        "category_order": category_order,
+    }
+
+    cursor = conn.cursor()
+    try:
+        cursor.execute(qry, params)
+        conn.commit()
+        return cursor.rowcount > 0
+    finally:
+        cursor.close()
+
+
+def get_enabled_categories(assessment_id: str) -> list[int]:
+    """Get list of enabled category orders for an assessment"""
+
+    qry = """
+    SELECT category_order
+    FROM assessments_questions_categories
+    WHERE assessment_id = :assessment_id AND enabled = 1
+    ORDER BY category_order ASC
+    """
+
+    params = {"assessment_id": assessment_id}
+
+    cursor = conn.cursor()
+    try:
+        cursor.execute(qry, params)
+        rows = cursor.fetchall()
+        return [row[0] for row in rows]
     finally:
         cursor.close()

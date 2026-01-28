@@ -24,7 +24,7 @@ class AssessmentPost(BaseModel):
 
 
 class AssessmentAnswerPost(BaseModel):
-    answer_id: str
+    answer_id: int
     assessment_id: str
     question_order: int
     answer_option: str
@@ -54,7 +54,8 @@ class AssessmentQA(BaseModel):
     category_id: int
     category_name: str
     category_order: int
-    answer_id: str | None
+    enabled: bool = True
+    answer_id: int | None
     answer_option: str | None
     answer_description: str | None
 
@@ -64,6 +65,7 @@ class AssessmentQuestionCategory(BaseModel):
     assessment_id: str
     category_name: str
     category_order: int
+    enabled: bool = True
 
 
 class AssessmentNote(BaseModel):

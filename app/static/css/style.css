@@ -124,3 +124,26 @@ input.disabled {
 .bat-main-content .edit-report .ql-container ul {
     padding-bottom: 0px;
 }
+
+/* Disabled category styling */
+.category.disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.category.disabled .question-1,
+.category.disabled .question-2,
+.category.disabled .question-3,
+.category.disabled .question-4 {
+    filter: grayscale(100%);
+}
+
+.category.disabled path {
+    pointer-events: none !important;
+    cursor: not-allowed;
+}
+
+.disabled-overlay {
+    pointer-events: none;
+    fill: rgba(100, 100, 100, 0.3);
+}

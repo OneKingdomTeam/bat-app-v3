@@ -1,0 +1,110 @@
+{% extends "dashboard/dashboard.html" %}
+
+{% block body %}
+<section class="bat-main-content is-flex pt-6">
+    <div class="container is-max-desktop">
+        {% block body_content %}
+        <h2 class="title is-2 has-text-centered">{{ title }}</h2>
+        {% include "helpers/notification.html" %}
+
+        <div class="mb-4">
+            <a href="{{ url_for('dashboard_assessments_page') }}" class="button is-light">
+                ← Back to Assessments
+            </a>
+        </div>
+
+        <div class="box mb-5">
+            <h3 class="title is-4">{{ assessment.assessment_name }}</h3>
+            <p><strong>Owner:</strong> {{ assessment.owner_name }}</p>
+        </div>
+
+        <div class="box">
+            <h3 class="title is-4">Manage Assessment Segments</h3>
+            <p class="mb-4">Enable or disable segments for this assessment. Disabled segments will be hidden from the wheel and skipped during navigation. Answer data is preserved when segments are disabled.</p>
+
+            <div class="notification is-warning is-light">
+                <strong>Note:</strong> You must keep at least one segment enabled.
+            </div>
+
+            <div class="table-container mt-4">
+                <table class="table is-fullwidth is-striped">
+                    <thead>
+                        <tr>
+                            <th>Order</th>
+                            <th>Status</th>
+                            <th>Category Name</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for category_order in range(13) %}
+                        {% set category_qa = assessment_qa | selectattr("category_order", "equalto", category_order) | list %}
+                        {% if category_qa %}
+                        {% set category = category_qa[0] %}
+                        {% set is_enabled = category_states.get(category_order, True) %}
+                        <tr {% if not is_enabled %}class="has-text-grey"{% endif %}>
+                            <td>{{ category_order }}</td>
+                            <td>
+                                <span class="tag {% if is_enabled %}is-success{% else %}is-danger{% endif %} is-light">
+                                    {% if is_enabled %}Enabled{% else %}Disabled{% endif %}
+                                </span>
+                            </td>
+                            <td>{{ category.category_name }}</td>
+                            <td>
+                                {% if is_enabled %}
+                                <button
+                                    class="button is-small is-warning"
+                                    onclick="toggleSegment('{{ assessment.assessment_id }}', {{ category_order }}, false)">
+                                    Disable
+                                </button>
+                                {% else %}
+                                <button
+                                    class="button is-small is-success"
+                                    onclick="toggleSegment('{{ assessment.assessment_id }}', {{ category_order }}, true)">
+                                    Enable
+                                </button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        {% endblock %}
+    </div>
+</section>
+
+<script>
+async function toggleSegment(assessmentId, categoryOrder, enabled) {
+    const url = `/dashboard/assessments/manage-segments/${assessmentId}/toggle/${categoryOrder}`;
+
+    try {
+        const response = await fetch(url, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ enabled: enabled })
+        });
+
+        if (response.ok) {
+            // Reload the page to show updated state
+            window.location.reload();
+        } else {
+            const data = await response.json();
+            if (data.error) {
+                alert(data.error);
+            } else {
+                alert('Failed to toggle segment');
+            }
+        }
+    } catch (error) {
+        console.error('Error toggling segment:', error);
+        alert('Error toggling segment');
+    }
+}
+</script>
+{% endblock %}

@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, Form, Request
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from typing import Annotated
 import json
 
@@ -226,6 +226,19 @@ def get_answer_question_page(
         assessment_qa: list[AssessmentQA] = service.get_all_qa(
             assessment_id=assessment_id, current_user=current_user
         )
+
+        # Check if current category is enabled
+        current_category_qa = [
+            qa for qa in assessment_qa if qa.category_order == category_order
+        ]
+        if current_category_qa and not current_category_qa[0].enabled:
+            # Category is disabled, redirect to assessment overview
+            from fastapi.responses import RedirectResponse
+
+            return RedirectResponse(
+                url=f"/dashboard/assessments/edit/{assessment_id}", status_code=303
+            )
+
         current_question: AssessmentQA = (
             service.filter_assessment_qa_by_category_order_and_question_id(
                 assessment_qa=assessment_qa,
@@ -386,6 +399,7 @@ def get_answer_question_category_review_page(
         )
 
         previous_category, next_category = service.get_neighbouring_categories_number(
+            assessment_id=assessment_id,
             category_order=category_order
         )
 
@@ -449,6 +463,7 @@ def put_answer_question_category_review_page(
         )
 
         previous_category, next_category = service.get_neighbouring_categories_number(
+            assessment_id=assessment_id,
             category_order=category_order
         )
 
@@ -788,3 +803,82 @@ def delete_revoke_collaborator_access(
     return jinja.TemplateResponse(
         name="dashboard/assessment-collaborators.html", context=context
     )
+
+
+@router.get(
+    "/manage-segments/{assessment_id}",
+    response_class=HTMLResponse,
+    name="dashboard_assessment_manage_segments",
+)
+def get_manage_segments(
+    request: Request,
+    assessment_id: str,
+    current_user: User = Depends(user_htmx_dep),
+):
+    """Show segment management interface (admin/coach only)"""
+
+    try:
+        assessment = service.get_assessment(
+            assessment_id=assessment_id, current_user=current_user
+        )
+        assessment_qa = service.get_all_qa(
+            assessment_id=assessment_id, current_user=current_user
+        )
+        category_states = service.get_category_states(
+            assessment_id=assessment_id, current_user=current_user
+        )
+
+        context = {
+            "request": request,
+            "title": f"Manage Segments - {assessment.assessment_name}",
+            "current_user": current_user,
+            "assessment": assessment,
+            "assessment_qa": assessment_qa,
+            "category_states": category_states,
+        }
+
+        return jinja.TemplateResponse(
+            name="dashboard/assessment-manage-segments.html", context=context
+        )
+    except Unauthorized:
+        raise
+    except:
+        raise
+
+
+@router.post(
+    "/manage-segments/{assessment_id}/toggle/{category_order}",
+    response_class=HTMLResponse,
+)
+async def post_toggle_segment(
+    request: Request,
+    assessment_id: str,
+    category_order: int,
+    current_user: User = Depends(user_htmx_dep),
+):
+    """Toggle a segment's enabled state"""
+
+    try:
+        body = await request.json()
+        enabled = body.get("enabled", True)
+
+        service.toggle_category(
+            assessment_id=assessment_id,
+            category_order=category_order,
+            enabled=enabled,
+            current_user=current_user,
+        )
+
+        # Return success response
+        return JSONResponse(
+            content={"success": True, "message": "Segment updated successfully"}
+        )
+    except ValueError as e:
+        # Handle error (e.g., last category)
+        return JSONResponse(status_code=400, content={"error": str(e)})
+    except Unauthorized:
+        raise
+    except Exception as e:
+        return JSONResponse(
+            status_code=500, content={"error": "Failed to update segment"}
+        )
