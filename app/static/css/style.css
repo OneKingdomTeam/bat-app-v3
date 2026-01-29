@@ -147,3 +147,33 @@ input.disabled {
     pointer-events: none;
     fill: rgba(100, 100, 100, 0.3);
 }
+
+/* Overlapping assessments view */
+.overlapping-wheels-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+}
+
+.wheels-stack {
+    position: relative;
+    width: 100%;
+    max-width: 607px;
+    aspect-ratio: 607 / 608;
+    margin: 0 auto;
+}
+
+.wheel-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    transition: opacity 0.3s ease;
+}
+
+.wheel-layer svg {
+    width: 100%;
+    height: auto;
+}

@@ -486,6 +486,62 @@ def put_answer_question_category_review_page(
 
 
 @router.get(
+    "/overlapping",
+    response_class=HTMLResponse,
+    name="dashboard_assessments_overlapping_page",
+)
+def get_assessments_overlapping(
+    request: Request, current_user: User = Depends(user_htmx_dep)
+):
+    """Display overlapping assessments view for coaches/admins"""
+
+    try:
+        assessments = service.get_all(current_user=current_user)
+    except Unauthorized:
+        raise
+
+    context = {
+        "request": request,
+        "title": "Overlapping Assessments",
+        "description": "View multiple assessments overlapped to identify weak areas.",
+        "current_user": current_user,
+        "assessments": assessments,
+    }
+
+    return jinja.TemplateResponse(
+        name="dashboard/assessments-overlapping.html", context=context
+    )
+
+
+@router.get(
+    "/overlapping/wheel/{assessment_id}",
+    response_class=HTMLResponse,
+    name="dashboard_assessment_wheel_svg",
+)
+def get_assessment_wheel_svg(
+    assessment_id: str, request: Request, current_user: User = Depends(user_htmx_dep)
+):
+    """Return just the wheel SVG for an assessment (for overlapping view)"""
+
+    try:
+        assessment_qa: list[AssessmentQA] = service.get_all_qa(
+            assessment_id=assessment_id, current_user=current_user
+        )
+        wheel_context = service.prepare_wheel_context(assessment_qa=assessment_qa)
+    except Unauthorized:
+        raise
+
+    context = {
+        "request": request,
+        "wheel": wheel_context,
+    }
+
+    return jinja.TemplateResponse(
+        name="wheel/wheel-report.svg", context=context, media_type="image/svg+xml"
+    )
+
+
+@router.get(
     "/{assessment_id}", response_class=HTMLResponse, name="dashboard_assessment_page"
 )
 def get_assessment(

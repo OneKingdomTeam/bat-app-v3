@@ -1,0 +1,84 @@
+{# Overlapping assessments view - stack multiple wheels to identify weak areas #}
+
+{% extends "dashboard/dashboard.html" %}
+{% block body %}
+<section class="bat-main-content is-flex pt-6">
+    <div class="container">
+        {% block body_content %}
+        <h2 class="title is-2 has-text-centered">{{ title }}</h2>
+        <div class="columns">
+            <div class="column">
+                <div class="button is-warning is-light px-5"
+                    hx-get="{{ url_for("dashboard_assessments_page") }}"
+                    hx-select=".bat-main-content"
+                    hx-target=".bat-main-content"
+                    hx-swap="outerHTML"
+                    hx-push-url="true"
+                    >
+                    &#11013;&nbsp;Return
+                </div>
+            </div>
+        </div>
+        <div class="columns">
+            {# Left panel: Assessment selection #}
+            <div class="column is-one-third">
+                <div class="card p-4">
+                    <h4 class="title is-5 mb-4">Select Assessments</h4>
+                    <p class="subtitle is-6 has-text-grey mb-4">Check assessments to overlay. Opacity adjusts automatically.</p>
+                    <div class="field">
+                        <div class="control">
+                            <label class="checkbox mb-2">
+                                <input type="checkbox" id="select-all-assessments">
+                                <strong>Select All</strong>
+                            </label>
+                        </div>
+                    </div>
+                    <hr class="my-3">
+                    <div id="assessment-list">
+                        {% for assessment in assessments %}
+                        <div class="field">
+                            <div class="control">
+                                <label class="checkbox">
+                                    <input type="checkbox"
+                                           class="assessment-checkbox"
+                                           data-assessment-id="{{ assessment.assessment_id }}"
+                                           data-assessment-name="{{ assessment.assessment_name }}">
+                                    {{ assessment.assessment_name }}
+                                    <span class="has-text-grey is-size-7">({{ assessment.owner_name }})</span>
+                                </label>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    <hr class="my-3">
+                    <div class="has-text-centered">
+                        <p class="is-size-7 has-text-grey">
+                            Selected: <span id="selected-count">0</span> / {{ assessments|length }}
+                        </p>
+                        <p class="is-size-7 has-text-grey">
+                            Opacity: <span id="opacity-value">0%</span>
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            {# Right panel: Overlapping wheels visualization #}
+            <div class="column">
+                <div class="card p-4">
+                    <div id="overlapping-wheels-container" class="overlapping-wheels-container">
+                        <div id="wheels-placeholder" class="has-text-centered has-text-grey py-6">
+                            <p class="is-size-5">Select assessments to view overlapping wheels</p>
+                            <p class="is-size-7 mt-2">Red areas that overlap indicate common weak points across teams</p>
+                        </div>
+                        <div id="wheels-stack" class="wheels-stack" style="display: none;">
+                            {# Wheels will be dynamically loaded here #}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endblock %}
+    </div>
+    <script src="{{ url_for("js", path="overlapping-assessments.js") }}"></script>
+</section>
+{% endblock %}
