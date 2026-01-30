@@ -95,8 +95,10 @@ def migrate_add_enabled_column():
     try:
         cursor.execute("PRAGMA table_info(assessments_questions_categories)")
         columns = [row[1] for row in cursor.fetchall()]
-        if 'enabled' not in columns:
-            cursor.execute("ALTER TABLE assessments_questions_categories ADD COLUMN enabled INTEGER DEFAULT 1")
+        if "enabled" not in columns:
+            cursor.execute(
+                "ALTER TABLE assessments_questions_categories ADD COLUMN enabled INTEGER DEFAULT 1"
+            )
             conn.commit()
     finally:
         cursor.close()
@@ -110,9 +112,10 @@ def migrate_answer_id_to_integer():
         columns = {row[1]: row[2] for row in cursor.fetchall()}
 
         # Check if answer_id is still text type (handles "text pirmary key" typo from old schema)
-        if columns.get('answer_id', '').lower().startswith('text'):
+        if columns.get("answer_id", "").lower().startswith("text"):
             # Create new table with integer primary key
-            cursor.execute("""
+            cursor.execute(
+                """
                 CREATE TABLE IF NOT EXISTS assessments_answers_new(
                     answer_id INTEGER PRIMARY KEY,
                     assessment_id TEXT REFERENCES assessments(assessment_id),
@@ -120,19 +123,24 @@ def migrate_answer_id_to_integer():
                     answer_option TEXT,
                     answer_description TEXT
                 )
-            """)
+            """
+            )
 
             # Copy data (answer_id will be auto-generated)
-            cursor.execute("""
+            cursor.execute(
+                """
                 INSERT INTO assessments_answers_new(assessment_id, question_id, answer_option, answer_description)
                 SELECT assessment_id, question_id, answer_option, answer_description
                 FROM assessments_answers
                 ORDER BY rowid
-            """)
+            """
+            )
 
             # Drop old table and rename new one
             cursor.execute("DROP TABLE assessments_answers")
-            cursor.execute("ALTER TABLE assessments_answers_new RENAME TO assessments_answers")
+            cursor.execute(
+                "ALTER TABLE assessments_answers_new RENAME TO assessments_answers"
+            )
             conn.commit()
     finally:
         cursor.close()
@@ -996,7 +1004,9 @@ def update_notification_timestamp(assessment_id: str) -> bool:
 # -------------------------------
 
 
-def toggle_category_enabled(assessment_id: str, category_order: int, enabled: bool) -> bool:
+def toggle_category_enabled(
+    assessment_id: str, category_order: int, enabled: bool
+) -> bool:
     """Toggle the enabled state of a category in an assessment"""
 
     qry = """
