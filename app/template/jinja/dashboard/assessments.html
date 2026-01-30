@@ -113,10 +113,15 @@
             </div>
             {% endif %}
         </div>
-        <div class="content pt-5 is-flex is-justify-content-center">
+        <div class="content pt-5 is-flex is-justify-content-center is-gap-3">
             <a href="{{ url_for("dashboard_assessment_create_page") }}">
                 <button class="button is-link">Create Assessment</button>
             </a>
+            {% if assessments and assessments|length > 1 %}
+            <a href="{{ url_for("dashboard_assessments_overlapping_page") }}">
+                <button class="button is-info">Overlapping View</button>
+            </a>
+            {% endif %}
         </div>
         {% endblock %}
     </div>

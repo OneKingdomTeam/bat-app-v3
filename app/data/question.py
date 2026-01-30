@@ -1,14 +1,23 @@
 from app.data.init import conn, curs
-from app.model.question import Question, QuestionCategory, QuestionCategoryRename, QuestionCategoryReorderItem, QuestionEditContent
+from app.model.question import (
+    Question,
+    QuestionCategory,
+    QuestionCategoryRename,
+    QuestionCategoryReorderItem,
+    QuestionEditContent,
+)
 from app.exception.database import RecordNotFound
 
-curs.execute("""create table if not exists questions_categories(
+curs.execute(
+    """create table if not exists questions_categories(
     category_id integer primary key,
     category_name text,
     category_order integer
-    )""")
+    )"""
+)
 
-curs.execute("""create table if not exists questions(
+curs.execute(
+    """create table if not exists questions(
     question_id integer PRIMARY KEY,
     category_id integer references questions_categories,
     question text,
@@ -17,42 +26,54 @@ curs.execute("""create table if not exists questions(
     option_yes text,
     option_mid text,
     option_no text
-    )""")
-
+    )"""
+)
 
 
 # -------------------------------
 #   CRUDs
 # -------------------------------
 
+
 def row_to_model_question(row: tuple) -> Question:
 
-    question_id, question, question_description, question_order, \
-    option_yes, option_mid, option_no, category_id, category_name, \
-    category_order = row
+    (
+        question_id,
+        question,
+        question_description,
+        question_order,
+        option_yes,
+        option_mid,
+        option_no,
+        category_id,
+        category_name,
+        category_order,
+    ) = row
 
     return Question(
-            question_id=question_id,
-            question=question,
-            question_description=question_description,
-            question_order=question_order,
-            option_yes=option_yes,
-            option_mid=option_mid,
-            option_no=option_no,
-            category_id=category_id,
-            category_name=category_name,
-            category_order=category_order
-            )
+        question_id=question_id,
+        question=question,
+        question_description=question_description,
+        question_order=question_order,
+        option_yes=option_yes,
+        option_mid=option_mid,
+        option_no=option_no,
+        category_id=category_id,
+        category_name=category_name,
+        category_order=category_order,
+    )
+
 
 def row_to_model_question_category(row: tuple) -> QuestionCategory:
 
     category_id, category_name, category_order = row
 
     return QuestionCategory(
-            category_id=category_id,
-            category_name=category_name,
-            category_order=category_order,
-            )
+        category_id=category_id,
+        category_name=category_name,
+        category_order=category_order,
+    )
+
 
 def get_all() -> list[Question]:
 
@@ -96,7 +117,7 @@ def get_all_questions_for_category(category_id: int) -> list[Question]:
     category_order from questions natural join questions_categories where
     category_id = :category_id order by question_order asc"""
 
-    params = {"category_id":category_id}
+    params = {"category_id": category_id}
 
     cursor = conn.cursor()
     try:
@@ -109,12 +130,13 @@ def get_all_questions_for_category(category_id: int) -> list[Question]:
     finally:
         cursor.close()
 
+
 def get_questions_category(category_id: int) -> QuestionCategory:
 
     qry = """select category_id, category_name,
     category_order from questions_categories where category_id = :category_id"""
 
-    params = {"category_id":category_id}
+    params = {"category_id": category_id}
     cursor = conn.cursor()
     try:
         cursor.execute(qry, params)
@@ -126,15 +148,18 @@ def get_questions_category(category_id: int) -> QuestionCategory:
     finally:
         cursor.close()
 
-def rename_questions_category(category_rename: QuestionCategoryRename) -> QuestionCategory:
+
+def rename_questions_category(
+    category_rename: QuestionCategoryRename,
+) -> QuestionCategory:
 
     qry = """update questions_categories set category_name = :category_name
     where category_id = :category_id"""
 
     params = {
-            "category_id":category_rename.category_id,
-            "category_name":category_rename.category_name,
-            }
+        "category_id": category_rename.category_id,
+        "category_name": category_rename.category_name,
+    }
 
     cursor = conn.cursor()
     try:
@@ -143,15 +168,18 @@ def rename_questions_category(category_rename: QuestionCategoryRename) -> Questi
     finally:
         cursor.close()
 
-def reorder_questions_category(category_reorder_item: QuestionCategoryReorderItem) -> bool:
+
+def reorder_questions_category(
+    category_reorder_item: QuestionCategoryReorderItem,
+) -> bool:
 
     qry = """update questions_categories set category_order = :category_order
     where category_id = :category_id"""
 
     params = {
-            "category_id":category_reorder_item.category_id,
-            "category_order":category_reorder_item.category_order,
-            }
+        "category_id": category_reorder_item.category_id,
+        "category_order": category_reorder_item.category_order,
+    }
 
     cursor = conn.cursor()
     try:
@@ -168,7 +196,7 @@ def get_one(question_id: int) -> Question:
     category_order from questions natural join questions_categories
     where question_id = :question_id"""
 
-    params = {"question_id":question_id}
+    params = {"question_id": question_id}
 
     cursor = conn.cursor()
     try:
@@ -181,8 +209,9 @@ def get_one(question_id: int) -> Question:
     finally:
         cursor.close()
 
+
 def update_question_content(question_edit_content: QuestionEditContent) -> Question:
-    
+
     qry = """update questions set
     question = :question,
     question_description = :question_description,
@@ -192,13 +221,13 @@ def update_question_content(question_edit_content: QuestionEditContent) -> Quest
     where question_id = :question_id"""
 
     params = {
-            "question":question_edit_content.question,
-            "question_description":question_edit_content.question_description,
-            "option_yes":question_edit_content.option_yes,
-            "option_mid":question_edit_content.option_mid,
-            "option_no":question_edit_content.option_no,
-            "question_id":question_edit_content.question_id
-            }
+        "question": question_edit_content.question,
+        "question_description": question_edit_content.question_description,
+        "option_yes": question_edit_content.option_yes,
+        "option_mid": question_edit_content.option_mid,
+        "option_no": question_edit_content.option_no,
+        "question_id": question_edit_content.question_id,
+    }
 
     cursor = conn.cursor()
     try:
@@ -206,25 +235,30 @@ def update_question_content(question_edit_content: QuestionEditContent) -> Quest
         return get_one(question_id=question_edit_content.question_id)
     finally:
         cursor.close()
+
+
 # -------------------------------
 #   Default actions
 # -------------------------------
+
 
 def delete_categories() -> bool:
     conn.execute("delete from questions_categories")
     conn.commit()
     return True
 
+
 def delete_questions() -> bool:
     conn.execute("delete from questions")
     conn.commit()
     return True
 
+
 def load_category(category_name: str, category_order: int) -> int | None:
 
     qry = """insert into questions_categories(category_name, category_order)
     values(:category_name, :category_order)"""
-    
+
     print(f"Loading:\ncategory_name: {category_name}\ncategory_order: {category_order}")
 
     params = {"category_name": category_name, "category_order": category_order}
@@ -237,24 +271,31 @@ def load_category(category_name: str, category_order: int) -> int | None:
     finally:
         temp_cursor.close()
 
-
     return temp_cursor.lastrowid
 
-def load_question(question:str, question_description: str, question_order: int, \
-        option_yes:str, option_mid:str, option_no:str, category_id: int | None) -> int | None:
+
+def load_question(
+    question: str,
+    question_description: str,
+    question_order: int,
+    option_yes: str,
+    option_mid: str,
+    option_no: str,
+    category_id: int | None,
+) -> int | None:
 
     qry = """insert into questions(question, question_description, question_order, option_yes, option_mid, option_no, category_id)
     values(:question, :question_description, :question_order, :option_yes, :option_mid, :option_no, :category_id)"""
 
     params = {
-            "question":question,
-            "question_description":question_description,
-            "question_order": question_order,
-            "option_yes":option_yes,
-            "option_mid":option_mid,
-            "option_no":option_no,
-            "category_id":category_id,
-            }
+        "question": question,
+        "question_description": question_description,
+        "question_order": question_order,
+        "option_yes": option_yes,
+        "option_mid": option_mid,
+        "option_no": option_no,
+        "category_id": category_id,
+    }
 
     cursor = conn.cursor()
     try:
