@@ -1,55 +1,92 @@
 /**
  * Overlapping Assessments View
- * Handles checkbox toggling and opacity calculation for stacked wheel visualization
+ * Handles checkbox toggling, view mode switching, and visualization
+ * Supports: overlay mode (stacked wheels) and heatmap mode (averaged colors)
  */
 document.addEventListener('DOMContentLoaded', function() {
     const checkboxes = document.querySelectorAll('.assessment-checkbox');
     const selectAllCheckbox = document.getElementById('select-all-assessments');
     const wheelsStack = document.getElementById('wheels-stack');
     const wheelsPlaceholder = document.getElementById('wheels-placeholder');
+    const heatmapContainer = document.getElementById('heatmap-container');
+    const heatmapLegend = document.getElementById('heatmap-legend');
     const selectedCountEl = document.getElementById('selected-count');
     const opacityValueEl = document.getElementById('opacity-value');
+    const opacityInfo = document.getElementById('opacity-info');
+    const viewModeRadios = document.querySelectorAll('input[name="view-mode"]');
 
     // Exit early if not on overlapping assessments page
     if (!wheelsStack || !checkboxes.length) {
         return;
     }
 
-    // Store loaded wheel SVGs
+    // Store loaded wheel SVGs for overlay mode
     const loadedWheels = new Map();
 
-    // Update the visualization when checkboxes change
-    function updateVisualization() {
-        const selectedCheckboxes = document.querySelectorAll('.assessment-checkbox:checked');
-        const selectedCount = selectedCheckboxes.length;
+    // Get current view mode
+    function getViewMode() {
+        const checked = document.querySelector('input[name="view-mode"]:checked');
+        return checked ? checked.value : 'overlay';
+    }
 
-        // Update counters
+    // Get selected assessment IDs
+    function getSelectedAssessmentIds() {
+        const selected = document.querySelectorAll('.assessment-checkbox:checked');
+        return Array.from(selected).map(function(cb) {
+            return cb.dataset.assessmentId;
+        });
+    }
+
+    // Update visualization based on current mode and selection
+    function updateVisualization() {
+        const viewMode = getViewMode();
+        const selectedIds = getSelectedAssessmentIds();
+        const selectedCount = selectedIds.length;
+
+        // Update counter
         selectedCountEl.textContent = selectedCount;
 
         if (selectedCount === 0) {
+            // Show placeholder, hide everything else
             wheelsPlaceholder.style.display = 'block';
             wheelsStack.style.display = 'none';
+            heatmapContainer.style.display = 'none';
+            heatmapLegend.style.display = 'none';
             opacityValueEl.textContent = '0%';
+            opacityInfo.style.display = 'block';
             return;
         }
 
+        if (viewMode === 'overlay') {
+            updateOverlayView(selectedIds, selectedCount);
+        } else {
+            updateHeatmapView(selectedIds, viewMode);
+        }
+    }
+
+    // Overlay view: stack multiple semi-transparent wheels
+    function updateOverlayView(selectedIds, selectedCount) {
+        // Show overlay elements, hide heatmap elements
+        wheelsPlaceholder.style.display = 'none';
+        wheelsStack.style.display = 'block';
+        heatmapContainer.style.display = 'none';
+        heatmapLegend.style.display = 'none';
+        opacityInfo.style.display = 'block';
+
         // Calculate opacity so overlapping areas combine to ~95% opacity
-        // Formula: opacity = 1 - (1 - target)^(1/n)
-        // This ensures that when n layers overlap, combined opacity approaches target
         var targetCombinedOpacity = 0.95;
         var opacity = 1 - Math.pow(1 - targetCombinedOpacity, 1 / selectedCount);
         opacityValueEl.textContent = Math.round(opacity * 100) + '%';
-
-        wheelsPlaceholder.style.display = 'none';
-        wheelsStack.style.display = 'block';
 
         // Clear existing wheels
         wheelsStack.innerHTML = '';
 
         // Load and display selected wheels
-        selectedCheckboxes.forEach(function(checkbox) {
-            const assessmentId = checkbox.dataset.assessmentId;
-            const assessmentName = checkbox.dataset.assessmentName;
+        selectedIds.forEach(function(assessmentId) {
+            const checkbox = document.querySelector(
+                '.assessment-checkbox[data-assessment-id="' + assessmentId + '"]'
+            );
+            const assessmentName = checkbox ? checkbox.dataset.assessmentName : '';
 
             // Create layer container
             const layer = document.createElement('div');
@@ -73,11 +110,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     })
                     .then(function(svgContent) {
                         loadedWheels.set(assessmentId, svgContent);
-                        // Only update if still selected
+                        // Only update if still selected and still in overlay mode
                         const stillSelected = document.querySelector(
                             '.assessment-checkbox[data-assessment-id="' + assessmentId + '"]:checked'
                         );
-                        if (stillSelected) {
+                        if (stillSelected && getViewMode() === 'overlay') {
                             layer.innerHTML = svgContent;
                         }
                     })
@@ -87,6 +124,44 @@ document.addEventListener('DOMContentLoaded', function() {
                     });
             }
         });
+    }
+
+    // Heatmap view: single wheel with averaged colors
+    function updateHeatmapView(selectedIds, viewMode) {
+        // Show heatmap elements, hide overlay elements
+        wheelsPlaceholder.style.display = 'none';
+        wheelsStack.style.display = 'none';
+        heatmapContainer.style.display = 'block';
+        heatmapLegend.style.display = 'block';
+        opacityInfo.style.display = 'none';
+
+        // Determine API view_mode parameter
+        var apiViewMode = viewMode === 'heatmap-category' ? 'category' : 'segment';
+
+        // Show loading
+        heatmapContainer.innerHTML = '<div class="has-text-centered py-6">Loading heat map...</div>';
+
+        // Fetch heatmap wheel
+        var url = '/dashboard/assessments/overlapping/heatmap?assessment_ids=' +
+            selectedIds.join(',') + '&view_mode=' + apiViewMode;
+
+        fetch(url)
+            .then(function(response) {
+                if (!response.ok) {
+                    throw new Error('Failed to load heatmap');
+                }
+                return response.text();
+            })
+            .then(function(svgContent) {
+                // Only update if still in heatmap mode
+                if (getViewMode().startsWith('heatmap')) {
+                    heatmapContainer.innerHTML = svgContent;
+                }
+            })
+            .catch(function(error) {
+                console.error('Error loading heatmap:', error);
+                heatmapContainer.innerHTML = '<div class="has-text-danger has-text-centered py-6">Failed to load heat map</div>';
+            });
     }
 
     // Update select all checkbox state
@@ -101,7 +176,7 @@ document.addEventListener('DOMContentLoaded', function() {
         selectAllCheckbox.indeterminate = someChecked && !allChecked;
     }
 
-    // Add event listeners to checkboxes
+    // Add event listeners to assessment checkboxes
     checkboxes.forEach(function(checkbox) {
         checkbox.addEventListener('change', function() {
             updateVisualization();
@@ -119,4 +194,11 @@ document.addEventListener('DOMContentLoaded', function() {
             updateVisualization();
         });
     }
+
+    // View mode toggle
+    viewModeRadios.forEach(function(radio) {
+        radio.addEventListener('change', function() {
+            updateVisualization();
+        });
+    });
 });

@@ -24,7 +24,29 @@
             <div class="column is-one-third">
                 <div class="card p-4">
                     <h4 class="title is-5 mb-4">Select Assessments</h4>
-                    <p class="subtitle is-6 has-text-grey mb-4">Check assessments to overlay. Opacity adjusts automatically.</p>
+                    <p class="subtitle is-6 has-text-grey mb-4">Check assessments to overlay or view as heat map.</p>
+
+                    {# View mode toggle #}
+                    <div class="field">
+                        <label class="label is-small">View Mode</label>
+                        <div class="control is-flex is-flex-direction-column is-gap-sm">
+                            <label class="radio">
+                                <input type="radio" name="view-mode" value="overlay" checked>
+                                Overlay
+                            </label>
+                            <label class="radio">
+                                <input type="radio" name="view-mode" value="heatmap-segment">
+                                Heat Map (Questions)
+                            </label>
+                            <label class="radio">
+                                <input type="radio" name="view-mode" value="heatmap-category">
+                                Heat Map (Categories)
+                            </label>
+                        </div>
+                    </div>
+
+                    <hr class="my-3">
+
                     <div class="field">
                         <div class="control">
                             <label class="checkbox mb-2">
@@ -55,7 +77,7 @@
                         <p class="is-size-7 has-text-grey">
                             Selected: <span id="selected-count">0</span> / {{ assessments|length }}
                         </p>
-                        <p class="is-size-7 has-text-grey">
+                        <p class="is-size-7 has-text-grey" id="opacity-info">
                             Opacity: <span id="opacity-value">0%</span>
                         </p>
                     </div>
@@ -73,6 +95,21 @@
                         <div id="wheels-stack" class="wheels-stack" style="display: none;">
                             {# Wheels will be dynamically loaded here #}
                         </div>
+                        {# Heat map container (single wheel) #}
+                        <div id="heatmap-container" class="heatmap-container" style="display: none;">
+                            {# Heat map wheel will be loaded here #}
+                        </div>
+                    </div>
+                    {# Heat map legend #}
+                    <div id="heatmap-legend" class="heatmap-legend" style="display: none;">
+                        <div class="heatmap-legend-bar">
+                            <span class="heatmap-legend-label">Weak (0%)</span>
+                            <div class="heatmap-gradient"></div>
+                            <span class="heatmap-legend-label">Strong (100%)</span>
+                        </div>
+                        <p class="is-size-7 has-text-grey has-text-centered mt-2">
+                            Colors represent averaged scores: No=0, Mid=1, Yes=2
+                        </p>
                     </div>
                 </div>
             </div>
@@ -80,5 +117,6 @@
         {% endblock %}
     </div>
     <script src="{{ url_for("js", path="overlapping-assessments.js") }}"></script>
+    <script src="{{ url_for("js", path="wheel-labels.js") }}"></script>
 </section>
 {% endblock %}

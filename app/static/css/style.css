@@ -177,3 +177,47 @@ input.disabled {
     width: 100%;
     height: auto;
 }
+
+/* Heatmap view */
+.heatmap-container {
+    width: 100%;
+    max-width: 607px;
+    margin: 0 auto;
+}
+
+.heatmap-container svg {
+    width: 100%;
+    height: auto;
+}
+
+.heatmap-legend {
+    margin-top: 1.5rem;
+    padding: 1rem;
+}
+
+.heatmap-legend-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+}
+
+.heatmap-legend-label {
+    font-size: 0.75rem;
+    color: #666;
+    white-space: nowrap;
+}
+
+.heatmap-gradient {
+    width: 200px;
+    height: 20px;
+    border-radius: 4px;
+    background: linear-gradient(to right, #cd0000, #cdcd00, #00cd00);
+    border: 1px solid #ddd;
+}
+
+.is-gap-xs { gap: 0.25rem; }
+.is-gap-sm { gap: 0.5rem; }
+.is-gap { gap: 1rem; }
+.is-gap-l { gap: 1.5rem; }
+.is-gap-xl { gap: 3rem; }

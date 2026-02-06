@@ -1053,3 +1053,67 @@ def get_enabled_categories(assessment_id: str) -> list[int]:
         return [row[0] for row in rows]
     finally:
         cursor.close()
+
+
+def get_aggregated_answers(assessment_ids: list[str]) -> list[dict]:
+    """
+    Get aggregated answer data across multiple assessments.
+    Returns data grouped by category_order and question_order with summed points.
+
+    Points: no=0, mid=1, yes=2
+    """
+    if not assessment_ids:
+        return []
+
+    # Build placeholders for IN clause
+    placeholders = ",".join([f":id{i}" for i in range(len(assessment_ids))])
+    params = {f"id{i}": aid for i, aid in enumerate(assessment_ids)}
+
+    qry = f"""
+    SELECT
+        qc.category_order,
+        qc.category_name,
+        q.question_order,
+        SUM(CASE
+            WHEN a.answer_option = 'yes' THEN 2
+            WHEN a.answer_option = 'mid' THEN 1
+            WHEN a.answer_option = 'no' THEN 0
+            ELSE 0
+        END) as total_points,
+        COUNT(CASE WHEN a.answer_option IS NOT NULL THEN 1 END) as answer_count,
+        MAX(qc.enabled) as enabled
+    FROM assessments_questions q
+    JOIN assessments_questions_categories qc ON q.category_id = qc.category_id
+    LEFT JOIN assessments_answers a ON q.question_id = a.question_id AND q.assessment_id = a.assessment_id
+    WHERE q.assessment_id IN ({placeholders})
+    GROUP BY qc.category_order, qc.category_name, q.question_order
+    ORDER BY qc.category_order, q.question_order
+    """
+
+    cursor = conn.cursor()
+    try:
+        cursor.execute(qry, params)
+        rows = cursor.fetchall()
+        result = []
+        for row in rows:
+            (
+                category_order,
+                category_name,
+                question_order,
+                total_points,
+                answer_count,
+                enabled,
+            ) = row
+            result.append(
+                {
+                    "category_order": category_order,
+                    "category_name": category_name,
+                    "question_order": question_order,
+                    "total_points": total_points or 0,
+                    "answer_count": answer_count or 0,
+                    "enabled": bool(enabled),
+                }
+            )
+        return result
+    finally:
+        cursor.close()
