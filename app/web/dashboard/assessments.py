@@ -542,6 +542,43 @@ def get_assessment_wheel_svg(
 
 
 @router.get(
+    "/overlapping/heatmap",
+    response_class=HTMLResponse,
+    name="dashboard_assessment_heatmap_svg",
+)
+def get_assessment_heatmap_svg(
+    request: Request,
+    assessment_ids: str,
+    view_mode: str = "segment",
+    current_user: User = Depends(user_htmx_dep),
+):
+    """Return heat map wheel SVG with averaged colors across multiple assessments"""
+
+    if not current_user.can_manage_assessments():
+        raise Unauthorized(msg="Only admins and coaches can view heatmaps.")
+
+    ids = [aid.strip() for aid in assessment_ids.split(",") if aid.strip()]
+
+    if not ids:
+        return HTMLResponse(
+            content="<div>No assessments selected</div>", status_code=400
+        )
+
+    wheel_context = service.prepare_heatmap_context(
+        assessment_ids=ids, view_mode=view_mode
+    )
+
+    context = {
+        "request": request,
+        "wheel": wheel_context,
+    }
+
+    return jinja.TemplateResponse(
+        name="wheel/wheel-report.svg", context=context, media_type="image/svg+xml"
+    )
+
+
+@router.get(
     "/{assessment_id}", response_class=HTMLResponse, name="dashboard_assessment_page"
 )
 def get_assessment(

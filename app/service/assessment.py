@@ -531,3 +531,103 @@ def get_category_states(assessment_id: str, current_user: User) -> dict[int, boo
             category_states[qa.category_order] = qa.enabled
 
     return category_states
+
+
+def score_to_color(score: float) -> str:
+    """
+    Convert normalized score (0-1) to hex color.
+    0.0 = #cd0000 (red)
+    0.5 = #cdcd00 (yellow)
+    1.0 = #00cd00 (green)
+    """
+    score = max(0.0, min(1.0, score))
+
+    if score <= 0.5:
+        # Red to Yellow: R stays at 205, G goes from 0 to 205
+        ratio = score * 2
+        r = 205
+        g = int(205 * ratio)
+    else:
+        # Yellow to Green: R goes from 205 to 0, G stays at 205
+        ratio = (score - 0.5) * 2
+        r = int(205 * (1 - ratio))
+        g = 205
+
+    return f"#{r:02x}{g:02x}00"
+
+
+def prepare_heatmap_context(
+    assessment_ids: list[str], view_mode: str = "segment"
+) -> dict:
+    """
+    Calculate averaged colors for heat map view across multiple assessments.
+
+    Args:
+        assessment_ids: List of assessment IDs to aggregate
+        view_mode: "segment" for per-question colors, "category" for averaged category colors
+
+    Returns:
+        Context dict ready for wheel SVG template with category_XX_question_Y keys
+    """
+    aggregated = data.get_aggregated_answers(assessment_ids=assessment_ids)
+
+    context: dict = {"assessment_count": len(assessment_ids)}
+
+    # Group data by category for category-level averaging
+    category_totals: dict = {}  # {category_order: {"points": 0, "count": 0, "enabled": True}}
+
+    for row in aggregated:
+        category_order = row["category_order"]
+        question_order = row["question_order"]
+        total_points = row["total_points"]
+        answer_count = row["answer_count"]
+        enabled = row["enabled"]
+
+        # Track category-level data
+        if category_order not in category_totals:
+            category_totals[category_order] = {
+                "points": 0,
+                "count": 0,
+                "enabled": enabled,
+                "name": row.get("category_name", f"Category {category_order}"),
+            }
+        category_totals[category_order]["points"] += total_points
+        category_totals[category_order]["count"] += answer_count
+
+        # Calculate segment score: total_points / (answer_count * 2)
+        # Each answer has max 2 points (yes=2, mid=1, no=0)
+        if answer_count > 0:
+            segment_score = total_points / (answer_count * 2)
+        else:
+            segment_score = -1  # No answers, will show as blue
+
+        # For segment view, store per-question colors
+        if view_mode == "segment":
+            if segment_score < 0:
+                color = "#0000cd"  # Blue for unanswered
+            else:
+                color = score_to_color(segment_score)
+
+            question_key = f"category_{category_order:02}_question_{question_order}"
+            context[question_key] = color
+
+    # Add category metadata (name, enabled status)
+    for category_order, cat_data in category_totals.items():
+        context[f"category_name_{category_order:02}"] = cat_data["name"]
+        context[f"category_{category_order:02}_order"] = str(category_order)
+        context[f"category_{category_order:02}_enabled"] = cat_data["enabled"]
+
+        # For category view, calculate category average and apply to all questions
+        if view_mode == "category":
+            if cat_data["count"] > 0:
+                category_score = cat_data["points"] / (cat_data["count"] * 2)
+                color = score_to_color(category_score)
+            else:
+                color = "#0000cd"  # Blue for unanswered
+
+            # Apply same color to all 4 questions in category
+            for q in range(1, 5):
+                question_key = f"category_{category_order:02}_question_{q}"
+                context[question_key] = color
+
+    return context
